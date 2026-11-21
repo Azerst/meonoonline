@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens - Fixed Join</title>
+<title>Exploding Kittens - Bot Modes</title>
 <style>
   :root{
     --red:#d93828; --red-dark:#b52a1c; --bg-main:#eef2f6; --grid:rgba(0,0,0,0.07);
@@ -38,14 +38,18 @@
   input{width:100%;padding:13px 15px;border-radius:8px;border:2px solid rgba(255,255,255,.6);
     background:rgba(255,255,255,.5);font-family:inherit;font-size:15px;color:var(--text);outline:none;transition:all .2s}
   input:focus{background:#fff;border-color:var(--red);box-shadow:0 0 0 4px rgba(217,56,40,.2)}
+  select.mode-select{width:100%;padding:12px 15px;border-radius:8px;border:2px solid rgba(255,255,255,.6);
+    background:rgba(255,255,255,.5);font-family:inherit;font-size:14px;color:var(--text);outline:none;
+    cursor:pointer;font-weight:600;transition:all .2s}
+  select.mode-select:focus{background:#fff;border-color:var(--red);box-shadow:0 0 0 4px rgba(217,56,40,.2)}
   .screen{display:none;width:100%;height:100%;position:absolute;top:0;left:0;flex-direction:column}
   .screen.on{display:flex}
-  #sc-home{justify-content:center;align-items:center;padding:20px}
-  .home-box{width:100%;max-width:400px;padding:40px 30px;display:flex;flex-direction:column;gap:16px;text-align:center}
+  #sc-home{justify-content:center;align-items:center;padding:20px;overflow-y:auto}
+  .home-box{width:100%;max-width:400px;padding:32px 26px;display:flex;flex-direction:column;gap:14px;text-align:center;margin:auto}
   .home-title{font-size:34px;font-weight:900;color:var(--red-dark);letter-spacing:1px;text-transform:uppercase}
   .home-sub{font-size:12px;color:var(--text-l)}
   #sc-lobby{justify-content:center;align-items:center;padding:20px}
-  .lobby-box{width:100%;max-width:500px;padding:30px;display:flex;flex-direction:column;gap:16px}
+  .lobby-box{width:100%;max-width:500px;padding:30px;display:flex;flex-direction:column;gap:14px}
   .room-code{font-size:32px;font-weight:900;letter-spacing:4px;color:var(--red);text-align:center;
     cursor:pointer;padding:12px;border-radius:8px;background:rgba(255,255,255,.4);font-family:monospace}
   .plist{display:flex;flex-direction:column;gap:8px;max-height:250px;overflow-y:auto;min-height:60px}
@@ -91,19 +95,29 @@
   .card:hover:not(.dis){transform:translateY(-12px) scale(1.05);z-index:10;
     box-shadow:0 15px 25px rgba(0,0,0,.3);border-color:var(--red)}
   .card.dis{opacity:.35;filter:grayscale(.8);cursor:not-allowed}
-  .card .ic{font-size:32px;margin-top:4px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
-  .card .tt{font-size:9px;font-weight:900;text-transform:uppercase;text-align:center;line-height:1.1;color:#333}
-  .card .ds{font-size:7px;text-align:center;color:#666;line-height:1.1}
+  .card .ic{font-size:30px;margin-top:2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+  .card .tt{font-size:9px;font-weight:900;text-transform:uppercase;text-align:center;line-height:1.1;color:#333;margin-top:2px}
+  .card .ds{font-size:7.5px;text-align:center;color:#555;line-height:1.15;font-weight:600;
+    background:rgba(0,0,0,.06);padding:2px 3px;border-radius:4px;width:100%;margin-top:2px}
   .c-EK{background:linear-gradient(135deg,#ffcccc,#ff9999);border-color:#ff4d4d}
   .c-DEFUSE{background:linear-gradient(135deg,#ccffcc,#99ff99);border-color:#4dff4d}
   .c-NOPE{background:linear-gradient(135deg,#ffe6cc,#ffcc99);border-color:#ff9933}
   .c-ATTACK{background:linear-gradient(135deg,#ffcccc,#ff6666);border-color:#cc0000}
-  .c-ATTACK .tt,.c-ATTACK .ds{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .c-ATTACK .tt,.c-ATTACK .ds{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);background:rgba(0,0,0,.25)}
   .c-SKIP{background:linear-gradient(135deg,#cce6ff,#99ccff);border-color:#3399ff}
   .c-SEE_FUTURE{background:linear-gradient(135deg,#e6ccff,#cc99ff);border-color:#9933ff}
   .c-SHUFFLE{background:linear-gradient(135deg,#ccffff,#99ffff);border-color:#33ffff}
   .c-FAVOR{background:linear-gradient(135deg,#ffccff,#ff99ff);border-color:#ff33ff}
   .c-CAT{background:linear-gradient(135deg,#fff2cc,#ffe699);border-color:#ffcc00}
+  @keyframes newDrawIn{
+    0%{transform:translateX(-90px) scale(.6) rotate(-10deg);opacity:0}
+    60%{transform:translateX(8px) scale(1.1) rotate(3deg);opacity:1}
+    100%{transform:translateX(0) scale(1) rotate(0);opacity:1}
+  }
+  .card.new-draw{animation:newDrawIn .65s cubic-bezier(.34,1.56,.64,1);
+    border-color:gold !important;
+    box-shadow:0 0 25px gold,0 0 50px rgba(255,215,0,.55),0 8px 20px rgba(0,0,0,.25) !important;
+    z-index:6}
   .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;backdrop-filter:blur(2px)}
   .chat-ov.on{display:block}
   .chat-p{position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);width:320px;height:400px;
@@ -146,9 +160,12 @@
   @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
   .stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.1);font-size:13px;gap:10px}
   .stat-row:last-child{border:none}
+  .mode-hint{font-size:11px;color:var(--text-l);text-align:left;padding:0 4px;line-height:1.3}
   @media (max-width:600px){
-    .card{width:66px;height:98px}
-    .card .ic{font-size:26px} .card .tt{font-size:8px} .card .ds{display:none}
+    .card{width:70px;height:104px;padding:5px 3px}
+    .card .ic{font-size:24px}
+    .card .tt{font-size:8px}
+    .card .ds{font-size:6.5px;padding:1px 2px}
     .pile{width:78px;height:110px;font-size:28px}
     .chat-p{width:100%;right:0;height:50vh;top:auto;bottom:0;transform:translateY(100%);border-radius:20px 20px 0 0}
     .chat-p.on{transform:translateY(0)}
@@ -171,6 +188,12 @@
       <button onclick="UI.joinRoom()">Vào Phòng</button>
     </div>
     <hr style="border:0;border-top:1px solid rgba(0,0,0,.1)">
+    <label style="font-size:12px;font-weight:bold;color:var(--text-l);text-align:left;">Chế độ Bot:</label>
+    <select id="botMode" class="mode-select">
+      <option value="normal">😴 Bot Bình thường - chơi ngẫu nhiên</option>
+      <option value="smart" selected>🧠 Bot Thông minh - có chiến thuật</option>
+      <option value="ultimate">👑 Bot Tối thượng - cực khó</option>
+    </select>
     <button onclick="UI.startSolo()">🎮 Chơi với Bot (3 người)</button>
   </div>
 </div>
@@ -181,6 +204,14 @@
     <div class="room-code" id="lobbyCode" onclick="UI.copyCode()">------</div>
     <div style="text-align:center;font-size:11px;color:#666">Nhấn mã để copy · Chia sẻ cho bạn bè cùng browser</div>
     <div class="plist" id="lobbyPlayers"></div>
+    <div id="lobbyBotControls" style="display:none; flex-direction:column; gap:6px;">
+      <label style="font-size:12px;font-weight:bold;color:var(--text-l);">Chế độ Bot trong phòng:</label>
+      <select id="lobbyBotMode" class="mode-select">
+        <option value="normal">😴 Bình thường</option>
+        <option value="smart" selected>🧠 Thông minh</option>
+        <option value="ultimate">👑 Tối thượng</option>
+      </select>
+    </div>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
       <button id="btnAddBot" style="display:none" onclick="UI.addBot()" class="btn-o">+ Bot</button>
       <button class="btn-p" id="btnStart" style="display:none" onclick="UI.startMultiplayerGame()">Bắt Đầu</button>
@@ -227,24 +258,31 @@
 </div>
 
 <script>
-/* ========== CONSTANTS ========== */
+/* ========== CARD DEFINITIONS (mô tả rõ chức năng) ========== */
 const CARDS = {
-  EK:          { name:'Mèo Nổ',       icon:'💥', class:'EK',         desc:'Rút trúng là nổ' },
-  DEFUSE:      { name:'Gỡ Bom',       icon:'🧯', class:'DEFUSE',     desc:'Cứu mạng' },
+  EK:          { name:'Mèo Nổ',       icon:'💥', class:'EK',         desc:'Rút trúng = thua' },
+  DEFUSE:      { name:'Gỡ Bom',       icon:'🧯', class:'DEFUSE',     desc:'Cứu mạng khi nổ' },
   NOPE:        { name:'Nope',         icon:'🙅', class:'NOPE',       desc:'Chặn hành động' },
-  ATTACK:      { name:'Tấn Công',     icon:'⚔️', class:'ATTACK',     desc:'+2 lượt' },
-  SKIP:        { name:'Bỏ Lượt',      icon:'⏭️', class:'SKIP',       desc:'Kết thúc không rút' },
-  SEE_FUTURE:  { name:'Nhìn Trước',   icon:'🔮', class:'SEE_FUTURE', desc:'Xem 3 lá đầu' },
-  SHUFFLE:     { name:'Xáo Bài',      icon:'🔀', class:'SHUFFLE',    desc:'Xáo trộn' },
-  FAVOR:       { name:'Xin Bài',      icon:'🫴', class:'FAVOR',      desc:'Xin 1 lá' },
-  CAT_TACO:    { name:'Mèo Taco',     icon:'🌮', class:'CAT' },
-  CAT_RAINBOW: { name:'Mèo Cầu Vồng', icon:'🌈', class:'CAT' },
-  CAT_BEARD:   { name:'Mèo Râu',      icon:'🧔', class:'CAT' },
-  CAT_POTATO:  { name:'Mèo Khoai',    icon:'🥔', class:'CAT' },
-  CAT_HAIRY:   { name:'Mèo Lông',     icon:'🐈', class:'CAT' }
+  ATTACK:      { name:'Tấn Công',     icon:'⚔️', class:'ATTACK',     desc:'Người sau +2 lượt' },
+  SKIP:        { name:'Bỏ Lượt',      icon:'⏭️', class:'SKIP',       desc:'Bỏ lượt, không rút' },
+  SEE_FUTURE:  { name:'Nhìn Trước',   icon:'🔮', class:'SEE_FUTURE', desc:'Xem 3 lá trên' },
+  SHUFFLE:     { name:'Xáo Bài',      icon:'🔀', class:'SHUFFLE',    desc:'Xáo trộn bộ bài' },
+  FAVOR:       { name:'Xin Bài',      icon:'🫴', class:'FAVOR',      desc:'Xin 1 lá đối thủ' },
+  CAT_TACO:    { name:'Mèo Taco',     icon:'🌮', class:'CAT',        desc:'Combo 2+ cùng loại' },
+  CAT_RAINBOW: { name:'Mèo Cầu Vồng', icon:'🌈', class:'CAT',        desc:'Combo 2+ cùng loại' },
+  CAT_BEARD:   { name:'Mèo Râu',      icon:'🧔', class:'CAT',        desc:'Combo 2+ cùng loại' },
+  CAT_POTATO:  { name:'Mèo Khoai',    icon:'🥔', class:'CAT',        desc:'Combo 2+ cùng loại' },
+  CAT_HAIRY:   { name:'Mèo Lông',     icon:'🐈', class:'CAT',        desc:'Combo 2+ cùng loại' }
 };
 const CATS = ['CAT_TACO','CAT_RAINBOW','CAT_BEARD','CAT_POTATO','CAT_HAIRY'];
 const NOPE_WINDOW = 3500;
+
+/* ========== BOT MODES ========== */
+const BOT_MODES = {
+  normal:   { label:'Bình thường', icon:'😴', playProb:0.55, nopeProb:0.05, catProb:0.4,  skipProb:0.45, attackProb:0.55, smartTarget:false },
+  smart:    { label:'Thông minh',  icon:'🧠', playProb:0.88, nopeProb:0.18, catProb:0.85, skipProb:0.6,  attackProb:0.9,  smartTarget:true  },
+  ultimate: { label:'Tối thượng',  icon:'👑', playProb:1.0,  nopeProb:0.35, catProb:1.0,  skipProb:0.9,  attackProb:1.0,  smartTarget:true  }
+};
 
 /* ========== UTILS ========== */
 const U = {
@@ -306,7 +344,7 @@ const Engine = {
   state: null, hostId: null, pendingTimer: null,
   onChange: null,
 
-  createGame(players, hostId){
+  createGame(players, hostId, botMode='smart'){
     this.hostId = hostId;
     this.state = {
       phase:'playing',
@@ -318,15 +356,17 @@ const Engine = {
       deck:[], discard:[],
       turnIdx:0, turnsLeft:1,
       pending:null, peekFor:null, awaitingChoice:null,
-      winner:null, logs:[]
+      winner:null, logs:[], lastDraw:null,
+      botMode: botMode || 'smart'
     };
     this.setupDeck();
     this.state.turnIdx = Math.floor(Math.random() * players.length);
     this.state.players[this.state.turnIdx].stats.turns = 1;
-    this.log(`🎲 ${this.state.players[this.state.turnIdx].name} đi trước!`);
+    this.log(`🎲 ${this.state.players[this.state.turnIdx].name} đi trước! · Bot: ${BOT_MODES[this.state.botMode].label}`);
     this.notify();
   },
 
+  /* 🔥 FIX #5: Bom được trộn hoàn toàn ngẫu nhiên, không cố định vị trí */
   setupDeck(){
     const n = this.state.players.length;
     const deck = this.state.deck;
@@ -339,18 +379,13 @@ const Engine = {
     for(const c of CATS) for(let i=0;i<4;i++) deck.push(c);
     for(let i=0;i<Math.max(0,6-n);i++) deck.push('DEFUSE');
     U.shuffle(deck);
+    // Chia 7 lá mỗi người
     for(let i=0;i<7;i++) for(const p of this.state.players) p.hand.push(deck.pop());
+    // Mỗi người 1 DEFUSE
     for(const p of this.state.players) p.hand.push('DEFUSE');
+    // Thêm n-1 EK, xáo hoàn toàn - vị trí random 100%
     for(let i=0;i<n-1;i++) deck.push('EK');
     U.shuffle(deck);
-    for(let i=0;i<3 && i<deck.length;i++){
-      const idx = deck.length-1-i;
-      if(deck[idx]==='EK'){
-        for(let j=0;j<deck.length-3;j++){
-          if(deck[j]!=='EK'){ [deck[idx],deck[j]]=[deck[j],deck[idx]]; break; }
-        }
-      }
-    }
   },
 
   cur(){ return this.state.players[this.state.turnIdx]; },
@@ -507,7 +542,7 @@ const Engine = {
     if(count===2){
       const idx = Math.floor(Math.random()*t.hand.length);
       const stolen = t.hand.splice(idx,1)[0];
-      p.hand.push(stolen);
+      p.hand.unshift(stolen);
       this.log(`🐱 ${p.name} cướp 1 lá từ ${t.name}.`);
       Sound.play('draw');
     } else if(count===3){
@@ -515,7 +550,7 @@ const Engine = {
       if(!wanted) return;
       const idx = t.hand.indexOf(wanted);
       if(idx>-1){
-        t.hand.splice(idx,1); p.hand.push(wanted);
+        t.hand.splice(idx,1); p.hand.unshift(wanted);
         this.log(`🐱 ${p.name} lấy ${CARDS[wanted].name} từ ${t.name}.`);
         Sound.play('draw');
       } else {
@@ -524,6 +559,7 @@ const Engine = {
     }
   },
 
+  /* 🔥 FIX #4: Rút bài → unshift (bên trái) + track lastDraw để highlight */
   drawCard(playerId){
     if(!this.canAct(playerId,'draw')) return false;
     const p = this.byId(playerId);
@@ -537,7 +573,8 @@ const Engine = {
     this.log(`${p.name} rút 1 lá...`);
     if(card==='EK') this.handleEK(p);
     else {
-      p.hand.push(card);
+      p.hand.unshift(card);
+      this.state.lastDraw = { playerId:p.id, card, id: Math.random() };
       this.state.turnsLeft--;
       if(this.state.turnsLeft<=0) this.endTurn();
       else this.notify({type:'draw'});
@@ -594,7 +631,7 @@ const Engine = {
     if(!target || !from) return false;
     if(cardIdx<0 || cardIdx>=target.hand.length) return false;
     const card = target.hand.splice(cardIdx,1)[0];
-    from.hand.push(card);
+    from.hand.unshift(card);
     this.log(`🫴 ${from.name} nhận ${CARDS[card].name} từ ${target.name}.`);
     this.state.awaitingChoice = null;
     this.notify({type:'favor-done'});
@@ -628,7 +665,7 @@ const Engine = {
 /* ========== NET ========== */
 const Net = {
   ch:null, isHost:false, roomCode:null,
-  onJoin:null, onAction:null, onChat:null, onState:null, onLobby:null, onStart:null, onHostLeft:null,
+  onJoin:null, onAction:null, onChat:null, onState:null, onLobby:null, onStart:null, onHostLeft:null, onError:null,
 
   host(code){
     this.roomCode = code; this.isHost = true;
@@ -659,6 +696,7 @@ const Net = {
         case 'start': this.onStart?.(msg.state); break;
         case 'chat': this.onChat?.(msg.name, msg.text); break;
         case 'host_left': this.onHostLeft?.(); break;
+        case 'error': this.onError?.(msg.message); break;
       }
     }
   }
@@ -669,22 +707,14 @@ const UI = {
   myId: null, roomCode: null, isHost: false,
   lobbyPlayers: [], catFlow: null, botScheduled: false,
   currentModal: null, joinTimeout: null,
+  _animatedDrawId: null,
 
   init(){
-    // 🔑 FIX: sessionStorage = per-tab identity (không share giữa các tab)
-    let myId = null;
-    try {
-      myId = sessionStorage.getItem('ek_myId');
-      if(!myId){
-        myId = 'p_' + U.uid();
-        sessionStorage.setItem('ek_myId', myId);
-      }
-    } catch(e){
-      myId = 'p_' + U.uid(); // fallback
-    }
-    this.myId = myId;
+    /* 🔥 FIX #1: ID sinh mới mỗi lần load (không dùng sessionStorage)
+       → duplicate tab không còn bị trùng ID → join thành công */
+    this.myId = 'p_' + U.uid();
 
-    // Tên: cũng dùng sessionStorage để tránh trùng
+    // Tên: dùng sessionStorage để giữ tên khi refresh
     let savedName = null;
     try { savedName = sessionStorage.getItem('ek_name'); } catch(e){}
     if(!savedName) savedName = 'Player_' + Math.floor(Math.random()*1000);
@@ -692,7 +722,6 @@ const UI = {
 
     Engine.onChange = (meta) => this.onEngineChange(meta);
 
-    // Global error handler để không bị crash im lặng
     window.addEventListener('error', e => {
       console.error('[EK]', e.message, e.filename, e.lineno);
     });
@@ -731,8 +760,8 @@ const UI = {
     document.getElementById('lobbyCode').innerText = this.roomCode;
     document.getElementById('btnAddBot').style.display = 'inline-block';
     document.getElementById('btnStart').style.display = 'inline-block';
+    document.getElementById('lobbyBotControls').style.display = 'flex';
     this.renderLobby();
-    console.log('[EK] Room created:', this.roomCode, 'hostId:', this.myId);
   },
 
   joinRoom(){
@@ -743,23 +772,22 @@ const UI = {
     this.isHost = false;
     this.setupNet(false);
 
-    // Send join
     Net.send({ type:'join', player: { id:this.myId, name:this.getMyName() } });
-    console.log('[EK] Join sent. myId:', this.myId, 'room:', code);
 
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
     document.getElementById('btnAddBot').style.display = 'none';
     document.getElementById('btnStart').style.display = 'none';
+    document.getElementById('lobbyBotControls').style.display = 'none';
+    this.lobbyPlayers = [{ id:this.myId, name:this.getMyName(), isHost:false, isBot:false }];
     this.renderLobby();
 
-    // ⏱️ Timeout check: nếu sau 3s không nhận lobby → báo lỗi
     clearTimeout(this.joinTimeout);
     this.joinTimeout = setTimeout(() => {
-      if(this.lobbyPlayers.length === 0){
-        this.toast('⚠️ Không kết nối được. Kiểm tra mã và đảm bảo host đã mở phòng!');
+      if(this.lobbyPlayers.length <= 1){
+        this.toast('⚠️ Chưa kết nối được host. Kiểm tra mã và đảm bảo host đang mở phòng!');
       }
-    }, 3000);
+    }, 3500);
   },
 
   setupNet(host){
@@ -770,10 +798,12 @@ const UI = {
         if(action==='leave'){
           this.lobbyPlayers = this.lobbyPlayers.filter(p => p.id !== player);
         } else {
-          if(!this.lobbyPlayers.find(p => p.id === player.id)){
-            this.lobbyPlayers.push(player);
-            console.log('[EK] Player joined:', player.name, player.id);
+          // 🔥 FIX: nếu trùng ID → reject + báo lỗi
+          if(this.lobbyPlayers.some(p => p.id === player.id)){
+            Net.send({ type:'error', message:'ID trùng, vui lòng mở tab mới (Ctrl+T) thay vì duplicate tab' });
+            return;
           }
+          this.lobbyPlayers.push(player);
         }
         this.broadcastLobby();
         this.renderLobby();
@@ -786,13 +816,11 @@ const UI = {
     } else {
       Net.join(this.roomCode);
       Net.onLobby = (players) => {
-        console.log('[EK] Lobby received:', players.length, 'players');
         clearTimeout(this.joinTimeout);
         this.lobbyPlayers = players;
         this.renderLobby();
       };
       Net.onStart = (state) => {
-        console.log('[EK] Game starting');
         Engine.state = state;
         this.enterGame(false);
       };
@@ -806,6 +834,7 @@ const UI = {
         this.toast('Host đã rời phòng');
         setTimeout(() => this.leaveRoom(), 500);
       };
+      Net.onError = (msg) => this.toast('⚠️ ' + msg);
     }
   },
 
@@ -841,26 +870,21 @@ const UI = {
 
   startSolo(){
     this.isHost = true;
+    const botMode = document.getElementById('botMode')?.value || 'smart';
     const players = [
       { id:this.myId, name:this.getMyName(), isBot:false },
       { id:'bot1', name:'Mèo Béo', isBot:true },
       { id:'bot2', name:'Mèo Ngáo', isBot:true }
     ];
-    Engine.createGame(players, this.myId);
+    Engine.createGame(players, this.myId, botMode);
     this.enterGame(true);
   },
 
   startMultiplayerGame(){
     if(this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
-
-    // 🛡️ Sanity: đảm bảo ID unique
-    const ids = new Set(this.lobbyPlayers.map(p => p.id));
-    if(ids.size !== this.lobbyPlayers.length){
-      return this.toast('⚠️ Phát hiện trùng ID người chơi. Hãy refresh và thử lại!');
-    }
-
+    const botMode = document.getElementById('lobbyBotMode')?.value || 'smart';
     const players = this.lobbyPlayers.map(p => ({ id:p.id, name:p.name, isBot:p.isBot }));
-    Engine.createGame(players, this.myId);
+    Engine.createGame(players, this.myId, botMode);
     Net.send({ type:'start', state: U.clone(Engine.state) });
     this.enterGame(true);
   },
@@ -912,7 +936,6 @@ const UI = {
     } catch(e){
       console.error('[EK] Engine error:', e);
     }
-    // Nếu fail, force sync để client reset UI (không bị stuck)
     if(!ok && this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
   },
 
@@ -936,7 +959,7 @@ const UI = {
     }
   },
 
-  /* ---------- BOT ---------- */
+  /* ---------- BOT LOGIC (3 CHẾ ĐỘ) ---------- */
   processBots(){
     if(!this.isHost || this.botScheduled) return;
     const s = Engine.state;
@@ -978,15 +1001,16 @@ const UI = {
     const s = Engine.state;
     if(!s || !s.pending) return;
     const pending = s.pending;
+    const mode = BOT_MODES[s.botMode] || BOT_MODES.smart;
     for(const p of s.players){
       if(!p.isBot || !p.alive || !p.hand.includes('NOPE')) continue;
       if(p.id===pending.playerId && pending.nopeCount===0) continue;
-      let prob = 0.05;
+      let prob = mode.nopeProb;
       const isTarget = pending.targetId === p.id;
-      if(pending.primary==='ATTACK') prob = 0.25;
-      if(pending.primary==='FAVOR' && isTarget) prob = 0.7;
-      if(CATS.includes(pending.primary) && isTarget) prob = 0.55;
-      if(pending.nopeCount>0) prob = 0.3;
+      if(pending.primary==='ATTACK') prob *= 1.5;
+      if(pending.primary==='FAVOR' && isTarget) prob = Math.min(0.95, prob * 3);
+      if(CATS.includes(pending.primary) && isTarget) prob = Math.min(0.9, prob * 2.5);
+      if(pending.nopeCount>0) prob *= 0.6;
       if(Math.random()<prob){ Engine.playNope(p.id); return; }
     }
   },
@@ -997,27 +1021,63 @@ const UI = {
     const bot = Engine.cur();
     if(!bot?.isBot) return;
 
+    const mode = BOT_MODES[s.botMode] || BOT_MODES.smart;
     const hand = bot.hand;
     const has = c => hand.includes(c);
     const cnt = c => hand.filter(x => x === c).length;
     const opponents = s.players.filter(p => p.alive && p.id !== bot.id);
-    const target = opponents.length ? U.pick(opponents) : null;
 
-    if(s.turnsLeft >= 2 && has('ATTACK')) return this.botPlay(['ATTACK']);
+    // 🎲 Nếu bot không muốn chơi → rút bài
+    if(Math.random() > mode.playProb) return Engine.drawCard(bot.id);
 
+    // 🎯 Chọn mục tiêu: smart target = người ít bài nhất (dễ hạ)
+    let target = null;
+    if(opponents.length){
+      if(mode.smartTarget){
+        const withCards = opponents.filter(o=>o.hand.length>0);
+        target = withCards.length
+          ? withCards.reduce((a,b)=>a.hand.length < b.hand.length ? a : b)
+          : U.pick(opponents);
+      } else {
+        target = U.pick(opponents);
+      }
+    }
+
+    // ⚔️ Tấn công khi turnsLeft >= 2
+    if(s.turnsLeft >= 2 && has('ATTACK') && Math.random() < mode.attackProb){
+      return this.botPlay(['ATTACK']);
+    }
+
+    // 🐱 Combo 3 lá mèo
     for(const cat of CATS){
-      if(cnt(cat)>=3 && target && target.hand.length>0){
+      if(cnt(cat)>=3 && target && target.hand.length>0 && Math.random() < mode.catProb){
         const named = U.pick(['SKIP','ATTACK','NOPE','FAVOR','SEE_FUTURE','SHUFFLE',...CATS]);
         return this.botPlay([cat,cat,cat], target.id, { namedCard:named });
       }
     }
+    // 🐱 Combo 2 lá mèo
     for(const cat of CATS){
-      if(cnt(cat)>=2 && target && target.hand.length>0){
+      if(cnt(cat)>=2 && target && target.hand.length>0 && Math.random() < mode.catProb){
         return this.botPlay([cat,cat], target.id);
       }
     }
-    if(has('FAVOR') && target && target.hand.length>3) return this.botPlay(['FAVOR'], target.id);
-    if(has('SKIP') && Math.random()<0.6) return this.botPlay(['SKIP']);
+
+    // 🫴 Xin bài
+    if(has('FAVOR') && target && target.hand.length>=2 && Math.random() < mode.catProb){
+      return this.botPlay(['FAVOR'], target.id);
+    }
+
+    // ⏭️ Bỏ lượt
+    if(has('SKIP') && Math.random() < mode.skipProb){
+      return this.botPlay(['SKIP']);
+    }
+
+    // 🔮 (Ultimate) Đôi khi xem tương lai trước khi rút
+    if(mode === BOT_MODES.ultimate && has('SEE_FUTURE') && Math.random()<0.4){
+      return this.botPlay(['SEE_FUTURE']);
+    }
+
+    // 🂠 Rút bài
     Engine.drawCard(bot.id);
   },
 
@@ -1036,7 +1096,8 @@ const UI = {
     document.getElementById('uiHandCount').innerText = me.hand.length;
 
     const cur = s.players[s.turnIdx];
-    document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${cur.name}`;
+    const modeInfo = s.botMode ? ` · Bot ${BOT_MODES[s.botMode].icon}` : '';
+    document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${cur.name}${modeInfo}`;
 
     const turnsEl = document.getElementById('uiTurnsLeft');
     if(s.turnsLeft > 1){ turnsEl.style.display = 'inline-block'; turnsEl.innerText = `×${s.turnsLeft}`; }
@@ -1063,13 +1124,21 @@ const UI = {
     deckEl.classList.toggle('can', canPlay);
     deckEl.classList.toggle('locked', !canPlay);
 
+    /* 🔥 FIX #4: highlight lá mới rút (chỉ 1 lần, chỉ với người rút) */
+    let newDrawIdx = -1;
+    if(s.lastDraw && s.lastDraw.playerId === me.id && s.lastDraw.id !== this._animatedDrawId){
+      this._animatedDrawId = s.lastDraw.id;
+      newDrawIdx = 0;
+    }
+
     const handBox = document.getElementById('handArea');
-    handBox.innerHTML = [...me.hand].map(c => {
+    handBox.innerHTML = [...me.hand].map((c, idx) => {
       const card = CARDS[c];
       const playable = canPlay && c!=='EK' && c!=='DEFUSE' && c!=='NOPE'
         && (CATS.includes(c) ? me.hand.filter(x => x===c).length>=2 : true);
+      const isNew = idx === newDrawIdx;
       return `
-        <div class="card c-${card.class} ${playable?'':'dis'}" onclick="UI.clickCard('${c}')">
+        <div class="card c-${card.class} ${playable?'':'dis'} ${isNew?'new-draw':''}" onclick="UI.clickCard('${c}')">
           <div class="ic">${card.icon}</div>
           <div class="tt">${card.name}</div>
           <div class="ds">${card.desc||''}</div>
@@ -1153,6 +1222,7 @@ const UI = {
           <div class="card c-${CARDS[c].class}" onclick="UI.act('favor',{idx:${i}}); UI.closeModal();">
             <div class="ic">${CARDS[c].icon}</div>
             <div class="tt">${CARDS[c].name}</div>
+            <div class="ds">${CARDS[c].desc||''}</div>
           </div>
         `).join('')}
       </div>
@@ -1168,6 +1238,7 @@ const UI = {
           <div class="card c-${CARDS[c].class}" style="width:76px;height:106px">
             <div class="ic">${CARDS[c].icon}</div>
             <div class="tt">${CARDS[c].name}</div>
+            <div class="ds">${CARDS[c].desc||''}</div>
           </div>
         `).join('')}
       </div>
@@ -1316,7 +1387,7 @@ const UI = {
   addChatMsg(name, text){
     const box = document.getElementById('chatMsgs');
     const div = document.createElement('div');
-    div.innerHTML = `<span class="u">${name}:</span> ${this.escapeHtml(text)}`;
+    div.innerHTML = `<span class="u">${this.escapeHtml(name)}:</span> ${this.escapeHtml(text)}`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   },
