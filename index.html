@@ -69,6 +69,9 @@
   .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:13px;flex-shrink:0;gap:6px;flex-wrap:wrap}
   .badge{background:rgba(255,255,255,.6);padding:5px 12px;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,.05);font-size:12px}
   .badge.hot{background:var(--red);color:#fff;animation:pulseBadge 1.5s infinite}
+  .badge.timer{background:#333;color:#fff;font-family:monospace;display:none}
+  .badge.timer.warn{background:#ff9800;animation:pulseBadge .8s infinite}
+  .badge.timer.danger{background:#f44336;animation:pulseBadge .4s infinite}
   @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
   .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
   .opp{display:flex;flex-direction:column;align-items:center;padding:8px 12px;min-width:76px;transition:.3s;position:relative;--cut:12px}
@@ -110,7 +113,8 @@
   .card{width:86px;height:124px;border-radius:10px;flex-shrink:0;display:flex;flex-direction:column;
     align-items:center;justify-content:space-between;padding:6px 4px;cursor:pointer;position:relative;
     background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.15);border:2px solid #fff;transition:all .2s;overflow:hidden}
-  .card:hover:not(.dis){transform:translateY(-12px) scale(1.05);z-index:10;
+  /* ✅ HOVER: chỉ nâng cao khi chưa được chọn */
+  .card:hover:not(.dis):not(.selected){transform:translateY(-12px) scale(1.05);z-index:10;
     box-shadow:0 15px 25px rgba(0,0,0,.3);border-color:var(--red)}
   .card.dis{opacity:.35;filter:grayscale(.8);cursor:not-allowed}
   .card .ic{font-size:30px;margin-top:2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
@@ -133,8 +137,12 @@
   .card.new-draw{animation:newDrawIn .65s cubic-bezier(.34,1.56,.64,1);
     border-color:gold!important;
     box-shadow:0 0 25px gold,0 0 50px rgba(255,215,0,.55),0 8px 20px rgba(0,0,0,.25)!important;z-index:6}
-  .card.selected{transform:translateY(-18px) scale(1.08)!important;border-color:#00cc66!important;
-    box-shadow:0 0 20px #00ff88,0 0 40px rgba(0,255,136,.5),0 12px 20px rgba(0,0,0,.3)!important;z-index:8!important}
+  /* ✅ SELECTED: chỉ hiện viền, KHÔNG nhấc cao */
+  .card.selected{
+    border-color:#00cc66!important;
+    box-shadow:0 0 0 3px #00cc66,0 0 20px #00ff88,0 0 40px rgba(0,255,136,.5),0 4px 10px rgba(0,0,0,.2)!important;
+    z-index:8!important;
+  }
   .card.selected::before{content:'✓';position:absolute;top:-8px;right:-8px;background:#00cc66;color:#fff;
     width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     font-weight:bold;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.3);z-index:10}
@@ -169,11 +177,15 @@
   .flash{animation:flashRed .6s ease-out}
   @keyframes flashRed{0%{box-shadow:inset 0 0 0 100vw rgba(255,0,0,.8)}100%{box-shadow:inset 0 0 0 100vw rgba(255,0,0,0)}}
   .particle{position:absolute;border-radius:50%;pointer-events:none;z-index:1000}
-  .nope-btn{position:fixed;bottom:40%;left:50%;transform:translate(-50%,50%);z-index:200;
-    padding:14px 36px;font-size:22px;background:linear-gradient(135deg,#ff0000,#ff6b6b);
+  /* ✅ NOPE: container chứa cả nút NOPE và Bỏ qua */
+  .nope-container{position:fixed;bottom:38%;left:50%;transform:translate(-50%,50%);z-index:200;display:flex;gap:10px;align-items:center}
+  .nope-btn{padding:14px 32px;font-size:22px;background:linear-gradient(135deg,#ff0000,#ff6b6b);
     color:#fff;border-radius:50px;box-shadow:0 0 20px rgba(255,0,0,.6);border:3px solid #fff;cursor:pointer;
-    animation:pulseNope .6s infinite alternate}
-  @keyframes pulseNope{from{transform:translate(-50%,50%) scale(1)}to{transform:translate(-50%,50%) scale(1.08)}}
+    animation:pulseNope .6s infinite alternate;font-weight:900}
+  @keyframes pulseNope{from{transform:scale(1)}to{transform:scale(1.08)}}
+  .nope-skip-btn{padding:10px 20px;font-size:14px;background:rgba(255,255,255,.95);color:#666;
+    border:2px solid #ccc;border-radius:50px;box-shadow:0 4px 10px rgba(0,0,0,.15);cursor:pointer;font-weight:bold}
+  .nope-skip-btn:hover{background:#fff;color:#333}
   .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);
     color:#fff;padding:12px 24px;border-radius:30px;font-weight:bold;z-index:10000;
     animation:toastIn .3s ease-out;font-size:14px;max-width:90%;text-align:center}
@@ -190,6 +202,7 @@
     .chat-p.on{transform:translateY(0)}
     .glog{max-width:150px;font-size:10px}
     .room-code{font-size:30px;letter-spacing:6px}
+    .nope-btn{padding:12px 24px;font-size:18px}
   }
 </style>
 </head>
@@ -201,7 +214,7 @@
   <div class="glass home-box">
     <h1 class="home-title">Mèo Nổ</h1>
     <p class="home-sub">Exploding Kittens - Online</p>
-    <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="15">
+    <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="15" oninput="UI.saveName(this.value)">
     
     <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
       <button class="btn-p" id="btnCreateRoom" onclick="UI.createRoom()">Tạo Phòng Online</button>
@@ -267,6 +280,7 @@
   <div class="glass ghead" style="--cut:14px">
     <div class="badge">Sống: <span id="uiAlive">0</span></div>
     <div class="badge hot" id="uiTurn">Lượt: ...</div>
+    <div class="badge timer" id="uiTimer">⏱️ 45s</div>
     <div class="badge">Bài: <span id="uiDeck">0</span></div>
     <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--red);color:#fff;">×1</div>
     <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:transparent;border:1px solid var(--red);color:var(--red)">Thoát</button>
@@ -304,9 +318,7 @@
 <script>
 window.addEventListener('error', function(e) {
     console.error('[Global Error]', e.message);
-    if(typeof UI !== 'undefined' && UI.toast) {
-        UI.toast('Lỗi hệ thống: ' + e.message);
-    }
+    if(typeof UI !== 'undefined' && UI.toast) UI.toast('Lỗi: ' + e.message);
 });
 
 /* ========== CARDS ========== */
@@ -327,6 +339,8 @@ const CARDS = {
 };
 const CATS = ['CAT_TACO','CAT_RAINBOW','CAT_BEARD','CAT_POTATO','CAT_HAIRY'];
 const NOPE_WINDOW = 3500;
+const NOPE_WINDOW_FAVOR = 2000; // ✅ Favor nhanh hơn
+const TURN_TIME_MS = 45000; // ✅ 45s/lượt
 
 const BOT_MODES = {
   normal:{label:'Bình thường',icon:'😴',playProb:0.55,nopeProb:0.05,catProb:0.4,skipProb:0.45,attackProb:0.55,smartTarget:false},
@@ -387,7 +401,7 @@ const VFX = {
 
 /* ========== ENGINE ========== */
 const Engine = {
-  state:null, hostId:null, pendingTimer:null, onChange:null,
+  state:null, hostId:null, pendingTimer:null, turnTimerId:null, onChange:null,
 
   createGame(players, hostId, botMode='smart'){
     this.hostId = hostId;
@@ -405,6 +419,7 @@ const Engine = {
     this.state.turnIdx = Math.floor(Math.random() * players.length);
     this.state.players[this.state.turnIdx].stats.turns = 1;
     this.log(`🎲 ${this.state.players[this.state.turnIdx].name} đi trước!`);
+    this.startTurnTimer();
     this.notify();
   },
 
@@ -437,6 +452,33 @@ const Engine = {
   log(msg){this.state.logs.push(msg);if(this.state.logs.length>30)this.state.logs.shift()},
   notify(meta){if(this.onChange)this.onChange(meta)},
 
+  /* ✅ TURN TIMER */
+  startTurnTimer(){
+    clearTimeout(this.turnTimerId);
+    const s = this.state;
+    if(!s || s.phase !== 'playing') return;
+    const expectedTurnIdx = s.turnIdx;
+    const expectedPlayerId = this.cur()?.id;
+    if(!expectedPlayerId) return;
+    this._scheduleAutoDraw(expectedTurnIdx, expectedPlayerId, TURN_TIME_MS);
+  },
+
+  _scheduleAutoDraw(turnIdx, playerId, delayMs){
+    this.turnTimerId = setTimeout(() => {
+      const st = this.state;
+      if(!st || st.phase !== 'playing') return;
+      if(st.turnIdx !== turnIdx) return;
+      if(this.cur()?.id !== playerId) return;
+      if(st.pending || st.awaitingChoice){
+        this._scheduleAutoDraw(turnIdx, playerId, 3000);
+        return;
+      }
+      const pl = this.byId(playerId);
+      this.log(`⏱️ Hết giờ! ${pl?.name||''} tự động bốc bài.`);
+      try { this.drawCard(playerId); } catch(e){ console.error('[AutoDraw]', e); }
+    }, delayMs);
+  },
+
   endTurn(){
     this.state.pending=null;this.state.peekFor=null;clearTimeout(this.pendingTimer);
     let idx=this.state.turnIdx;
@@ -444,6 +486,7 @@ const Engine = {
     this.state.turnIdx=idx;this.state.turnsLeft=1;
     this.cur().stats.turns++;
     this.log(`→ Lượt của ${this.cur().name}`);
+    this.startTurnTimer();
     this.notify({type:'turn'});
   },
 
@@ -454,6 +497,7 @@ const Engine = {
     this.state.turnIdx=idx;this.state.turnsLeft=turns;
     this.cur().stats.turns++;
     this.log(`→ Lượt của ${this.cur().name} (${turns} lượt)`);
+    this.startTurnTimer();
     this.notify({type:'turn'});
   },
 
@@ -486,7 +530,7 @@ const Engine = {
       if(cardTypes.length!==2 && cardTypes.length!==3) return false;
       if(!cardTypes.every(c=>c===primary)) return false;
       const t = this.byId(targetId);
-      if(!t||!t.alive||t.id===playerId) return false;
+      if(!t||!t.alive||t.id===playerId||t.hand.length===0) return false;
     }
     if(primary==='FAVOR'){
       const t = this.byId(targetId);
@@ -497,7 +541,9 @@ const Engine = {
       this.state.discard.push(c);
     }
     p.stats.cardsPlayed += cardTypes.length;
-    this.state.pending = {playerId, primary, cards:cardTypes, targetId, payload, nopeCount:0, timestamp:Date.now()};
+    // ✅ FAVOR có NOPE window ngắn hơn
+    const winMs = primary==='FAVOR' ? NOPE_WINDOW_FAVOR : NOPE_WINDOW;
+    this.state.pending = {playerId, primary, cards:cardTypes, targetId, payload, nopeCount:0, timestamp:Date.now(), windowMs: winMs};
     this.log(`${p.name} đánh ${CARDS[primary].name}${cardTypes.length>1?' ×'+cardTypes.length:''}`);
     this.scheduleResolve();
     this.notify({type:'play', playerId});
@@ -507,9 +553,10 @@ const Engine = {
   scheduleResolve(){
     clearTimeout(this.pendingTimer);
     const pending = this.state.pending;
+    const winMs = pending.windowMs || NOPE_WINDOW;
     this.pendingTimer = setTimeout(()=>{
       if(this.state.pending===pending) this.resolvePending();
-    }, NOPE_WINDOW);
+    }, winMs);
   },
 
   playNope(playerId){
@@ -604,10 +651,20 @@ const Engine = {
   drawCard(playerId){
     if(!this.canAct(playerId,'draw')) return false;
     const p = this.byId(playerId);
+
+    // ✅ Xáo lại discard khi deck cạn (giữa/cuối game)
     if(this.state.deck.length===0){
-      this.log(`Bộ bài trống, ${p.name} không rút được.`);
-      this.endTurn(); return true;
+      const reshufflable = this.state.discard.filter(c => c !== 'EK');
+      if(reshufflable.length > 0){
+        this.state.deck = U.shuffle(reshufflable);
+        this.state.discard = this.state.discard.filter(c => c === 'EK');
+        this.log(`🔄 Hết bài! Xáo lại ${this.state.deck.length} lá từ đống bài bỏ.`);
+      } else {
+        this.log(`Bộ bài trống, ${p.name} không rút được.`);
+        this.endTurn(); return true;
+      }
     }
+
     const card = this.state.deck.pop();
     Sound.play('draw');
     this.log(`${p.name} rút 1 lá...`);
@@ -693,6 +750,7 @@ const Engine = {
       this.state.awaitingChoice = null;
       this.state.pending = null;
       clearTimeout(this.pendingTimer);
+      clearTimeout(this.turnTimerId); // ✅ Dừng turn timer
       if(alive[0]) this.log(`🏆 ${alive[0].name} CHIẾN THẮNG!`);
       Sound.play('win');
       this.notify({type:'win', winner:this.state.winner});
@@ -702,15 +760,11 @@ const Engine = {
   }
 };
 
-/* ========== NET (PEERJS P2P - FIXED) ========== */
+/* ========== NET ========== */
 const Net = {
-  peer: null,
-  conn: null, 
-  conns: [], 
-  isHost: false,
-  roomCode: null,
-  retryCount: 0,
-  onHostReady:null, onClientDisconnect:null, onJoin:null, onAction:null, onChat:null, onState:null, onLobby:null, onStart:null, onHostLeft:null, onError:null, onConnectSuccess:null, onNewCode:null,
+  peer: null, conn: null, conns: [], isHost: false, roomCode: null, retryCount: 0,
+  onHostReady:null, onClientDisconnect:null, onJoin:null, onAction:null, onChat:null,
+  onState:null, onLobby:null, onStart:null, onHostLeft:null, onError:null, onConnectSuccess:null, onNewCode:null,
 
   host(code){
     this.roomCode = code; 
@@ -724,7 +778,6 @@ const Net = {
       if (this.onError) this.onError('Lỗi: Thư viện mạng chưa tải xong. Vui lòng tải lại trang.');
       return;
     }
-
     try {
       this.peer = new Peer('ek_room_' + code, {
         config: {'iceServers': [
@@ -762,7 +815,6 @@ const Net = {
 
     this.peer.on('error', (err) => {
       clearTimeout(timeout);
-      // ✅ Auto-retry khi mã phòng bị trùng
       if(err.type === 'unavailable-id' && this.retryCount < 3) {
         this.retryCount++;
         try{this.peer.destroy()}catch(e){}
@@ -783,12 +835,10 @@ const Net = {
   join(code){
     this.roomCode = code; 
     this.isHost = false;
-
     if (typeof Peer === 'undefined') {
       if (this.onError) this.onError('Lỗi: Thư viện mạng chưa tải xong. Vui lòng tải lại trang.');
       return;
     }
-
     try {
       this.peer = new Peer({
         config: {'iceServers': [
@@ -812,7 +862,6 @@ const Net = {
     this.peer.on('open', () => {
       clearTimeout(timeout);
       this.conn = this.peer.connect('ek_room_' + code, { reliable: true });
-      
       this.conn.on('open', () => {
         if(this.onConnectSuccess) this.onConnectSuccess();
       });
@@ -820,7 +869,7 @@ const Net = {
       this.conn.on('close', () => {
         if(this.onHostLeft) this.onHostLeft();
       });
-      this.conn.on('error', (err) => {
+      this.conn.on('error', () => {
         if(this.onError) this.onError('Lỗi đường truyền. Vui lòng thử lại.');
       });
     });
@@ -839,7 +888,6 @@ const Net = {
 
   close(){
     if(this.conn) try{this.conn.close()}catch(e){}
-    // ✅ FIX: arrow function phải có block body cho try/catch
     if(this.conns) this.conns.forEach(c => { try{c.close()}catch(e){} });
     if(this.peer) try{this.peer.destroy()}catch(e){}
     this.conn = null; this.conns = []; this.peer = null;
@@ -849,11 +897,8 @@ const Net = {
   send(msg, targetConn = null){
     try {
       if(this.isHost){
-        if(targetConn){
-          if(targetConn.open) targetConn.send(msg);
-        } else {
-          this.conns.forEach(c => { if(c.open) c.send(msg) });
-        }
+        if(targetConn){ if(targetConn.open) targetConn.send(msg); }
+        else { this.conns.forEach(c => { if(c.open) c.send(msg) }); }
       } else {
         if(this.conn && this.conn.open) this.conn.send(msg);
       }
@@ -864,12 +909,8 @@ const Net = {
     if(!msg||!msg.type) return;
     if(this.isHost){
       switch(msg.type){
-        case 'join': 
-          if(this.onJoin) this.onJoin(msg.player, conn); 
-          break;
-        case 'action': 
-          if(this.onAction) this.onAction(msg.playerId, msg.action, msg.payload); 
-          break;
+        case 'join': if(this.onJoin) this.onJoin(msg.player, conn); break;
+        case 'action': if(this.onAction) this.onAction(msg.playerId, msg.action, msg.payload); break;
         case 'chat': 
           if(this.onChat) this.onChat(msg.name, msg.text); 
           this.send({type:'chat', name:msg.name, text:msg.text}); 
@@ -884,7 +925,6 @@ const Net = {
         case 'host_left': if(this.onHostLeft) this.onHostLeft(); break;
         case 'error': 
           if(this.onError) this.onError(msg.message); 
-          // ✅ Đóng connection sau khi nhận lỗi từ host
           setTimeout(() => { try{this.conn.close()}catch(e){} }, 300);
           break;
       }
@@ -899,14 +939,21 @@ const UI = {
   currentModal:null, _animatedDrawId:null,
   selectedCatIndices:[], pendingCatPlay:null, _handSig:'',
   isShuffling:false,
+  nopeSkippedFor:null, // ✅ Timestamp đã skip nope
+  _lastTurnKey:null,
+  _turnCountdownId:null,
 
   init(){
     this.myId = 'p_' + U.uid();
     let savedName = null;
-    try{savedName = sessionStorage.getItem('ek_name')}catch(e){}
+    try{savedName = localStorage.getItem('ek_name')}catch(e){}
     if(!savedName) savedName = 'Player_' + Math.floor(Math.random()*1000);
     document.getElementById('playerName').value = savedName;
     Engine.onChange = (meta) => this.onEngineChange(meta);
+  },
+
+  saveName(v){
+    try{localStorage.setItem('ek_name', v)}catch(e){}
   },
 
   showScreen(id){
@@ -925,12 +972,11 @@ const UI = {
   },
   getMyName(){
     const v = document.getElementById('playerName').value.trim() || 'Player';
-    try{sessionStorage.setItem('ek_name', v)}catch(e){}
+    try{localStorage.setItem('ek_name', v)}catch(e){}
     return v;
   },
   me(){return Engine.state?.players.find(p => p.id === this.myId)},
 
-  // ✅ Bật lại nút khi có lỗi
   _reEnableButtons(){
     const btnC = document.getElementById('btnCreateRoom');
     if(btnC) btnC.disabled = false;
@@ -938,7 +984,6 @@ const UI = {
     if(btnJ) btnJ.disabled = false;
   },
 
-  // ✅ Hiển thị lỗi + nút thoát trong lobby
   _showLobbyError(msg){
     const status = document.getElementById('lobbyStatus');
     if(status){
@@ -948,32 +993,23 @@ const UI = {
     this._reEnableButtons();
   },
 
-  /* ---------- CREATE ROOM ---------- */
   createRoom(){
     try {
       const btn = document.getElementById('btnCreateRoom');
       if(btn) btn.disabled = true;
-
-      // Reset state
       if(Net.peer) Net.close();
-
       this.roomCode = U.code();
       this.isHost = true;
       this.lobbyPlayers = [{ id:this.myId, name:this.getMyName(), isHost:true, isBot:false }];
-      
       this.showScreen('sc-lobby');
       document.getElementById('lobbyCode').innerText = this.roomCode;
       document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang kết nối tới máy chủ mạng...';
       document.getElementById('hostControls').style.display = 'flex';
       document.getElementById('btnStart').style.display = 'block';
       this.renderLobby();
-
       setTimeout(() => {
         try { this.setupNet(true); }
-        catch(e) { 
-          this.toast('Lỗi: ' + e.message); 
-          this._reEnableButtons();
-        }
+        catch(e) { this.toast('Lỗi: ' + e.message); this._reEnableButtons(); }
       }, 100);
     } catch (e) {
       this.toast('Lỗi: ' + e.message);
@@ -981,7 +1017,6 @@ const UI = {
     }
   },
 
-  /* ---------- JOIN ROOM ---------- */
   joinRoom(){
     try {
       const raw = document.getElementById('joinCode').value.trim();
@@ -990,29 +1025,21 @@ const UI = {
         this._reEnableButtons();
         return;
       }
-
       const btn = document.getElementById('btnJoinRoom');
       if(btn) btn.disabled = true;
-
       if(Net.peer) Net.close();
-
       this.roomCode = raw;
       this.isHost = false;
       this.lobbyPlayers = [];
-
       this.showScreen('sc-lobby');
       document.getElementById('lobbyCode').innerText = this.roomCode;
       document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang kết nối tới phòng...';
       document.getElementById('hostControls').style.display = 'none';
       document.getElementById('btnStart').style.display = 'none';
       this.renderLobby();
-
       setTimeout(() => {
         try { this.setupNet(false); }
-        catch(e) {
-          this.toast('Lỗi: ' + e.message);
-          this._showLobbyError(e.message);
-        }
+        catch(e) { this.toast('Lỗi: ' + e.message); this._showLobbyError(e.message); }
       }, 100);
     } catch (e) {
       this.toast('Lỗi: ' + e.message);
@@ -1027,24 +1054,16 @@ const UI = {
       Net.onHostReady = () => {
         document.getElementById('lobbyStatus').innerHTML = '✅ Phòng đã sẵn sàng · Chia sẻ mã cho bạn bè';
       };
-      
-      // ✅ Callback khi mã phòng bị trùng, tự động đổi mã
       Net.onNewCode = (newCode) => {
         this.roomCode = newCode;
         document.getElementById('lobbyCode').innerText = newCode;
         document.getElementById('lobbyStatus').innerHTML = '🔄 Mã phòng bị trùng, đã đổi sang mã mới...';
         this.toast('Mã phòng bị trùng, đã tự đổi mã mới');
       };
-      
-      Net.onError = (msg) => {
-        this.toast(msg);
-        this._showLobbyError(msg);
-      };
-
+      Net.onError = (msg) => { this.toast(msg); this._showLobbyError(msg); };
       Net.onJoin = (player, conn) => {
         if(this.lobbyPlayers.some(p => p.id === player.id)) {
             Net.send({ type:'error', message:'ID trùng lặp!' }, conn);
-            // ✅ Đóng conn sau khi gửi lỗi
             setTimeout(() => { try{conn.close()}catch(e){} }, 300);
             return;
         }
@@ -1058,7 +1077,6 @@ const UI = {
         this.broadcastLobby();
         this.renderLobby();
       };
-
       Net.onClientDisconnect = (conn) => {
          const idx = this.lobbyPlayers.findIndex(p => p.conn === conn);
          if (idx > -1) {
@@ -1067,50 +1085,37 @@ const UI = {
              this.renderLobby();
          }
       };
-
       Net.onAction = (pid, action, payload) => {
         try{ this.hostAction(pid, action, payload); }
         catch(e){ console.error('[EK] hostAction:', e); }
       };
-      
       Net.onChat = (name, text) => this.addChatMsg(name, text);
-
       Net.host(this.roomCode);
-
     } else {
       Net.onConnectSuccess = () => {
         Net.send({ type:'join', player: { id:this.myId, name:this.getMyName() } });
       };
-
-      Net.onError = (msg) => {
-        this.toast(msg);
-        this._showLobbyError(msg);
-      };
-
+      Net.onError = (msg) => { this.toast(msg); this._showLobbyError(msg); };
       Net.onLobby = (players) => {
         this.lobbyPlayers = players;
         this.renderLobby();
         document.getElementById('lobbyStatus').innerHTML = '✅ Đã kết nối · Nhấn mã để copy';
       };
-      
       Net.onStart = (state) => { 
         Engine.state = state; 
         this.enterGame(false); 
       };
-      
+      // ✅ Sync client: đồng bộ + restart countdown
       Net.onState = (state) => { 
         Engine.state = state; 
         this.render(); 
-        this.updateModals(); 
+        this.updateModals();
       };
-      
       Net.onChat = (name, text) => this.addChatMsg(name, text);
-      
       Net.onHostLeft = () => {
         this.toast('Chủ phòng đã rời đi!');
         setTimeout(() => this.leaveRoom(), 1000);
       };
-
       Net.join(this.roomCode);
     }
   },
@@ -1180,7 +1185,6 @@ const UI = {
     if(this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
     const botMode = document.getElementById('lobbyBotMode')?.value || 'smart';
     const players = this.lobbyPlayers.map(p => ({ id:p.id, name:p.name, isBot:p.isBot }));
-    
     Engine.createGame(players, this.myId, botMode);
     Net.send({ type:'start', state: U.clone(Engine.state) });
     this.enterGame(true);
@@ -1200,6 +1204,14 @@ const UI = {
       if(this.isHost) Net.send({type:'host_left'});
       Net.close();
     }
+    // ✅ Cleanup timers
+    clearTimeout(Engine.turnTimerId);
+    clearTimeout(Engine.pendingTimer);
+    Engine.turnTimerId = null;
+    Engine.pendingTimer = null;
+    Engine.hostId = null;
+    clearInterval(this._turnCountdownId);
+
     Engine.state = null;
     this.isHost = false;
     this.roomCode = null;
@@ -1207,13 +1219,15 @@ const UI = {
     this.selectedCatIndices = [];
     this.pendingCatPlay = null;
     this.botScheduled = false;
+    this.nopeSkippedFor = null;
+    this._lastTurnKey = null;
     document.getElementById('chatFab').classList.remove('on');
     this.closeModal();
+    // Remove nope container
+    const nc = document.getElementById('nopeContainer');
+    if(nc) nc.remove();
     this.showScreen('sc-home');
-    
-    // ✅ Bật lại nút khi về home
     this._reEnableButtons();
-    // Reset trạng thái join area
     const joinArea = document.getElementById('joinArea');
     if(joinArea) joinArea.style.display = 'none';
     const joinCodeInput = document.getElementById('joinCode');
@@ -1241,6 +1255,7 @@ const UI = {
         case 'clearPeek': ok = Engine.clearPeek(playerId); break;
       }
     }catch(e){ console.error('[EK] Engine error:', e); }
+    // ✅ Luôn sync state sau action (thành công hoặc thất bại)
     if(!ok && this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
   },
 
@@ -1261,7 +1276,6 @@ const UI = {
   renderVFX(){
     const s = Engine.state; if(!s) return;
     const lastLog = s.logs[s.logs.length-1] || '';
-    
     if(lastLog.includes('MÈO NỔ')){
       const deck = document.getElementById('deckPile');
       if(deck){
@@ -1269,17 +1283,13 @@ const UI = {
         setTimeout(() => VFX.explode(r.left + r.width/2, r.top + r.height/2), 100);
       }
     }
-    
     if(lastLog.includes('xáo bài')){
         if(!this.isShuffling){
             this.isShuffling = true;
             const deck = document.getElementById('deckPile');
             if(deck){
                 deck.classList.add('shuffling');
-                setTimeout(() => {
-                    deck.classList.remove('shuffling');
-                    this.isShuffling = false;
-                }, 800);
+                setTimeout(() => { deck.classList.remove('shuffling'); this.isShuffling = false; }, 800);
             }
         }
     }
@@ -1289,6 +1299,16 @@ const UI = {
     if(!this.isHost || this.botScheduled) return;
     const s = Engine.state;
     if(!s || s.phase !== 'playing') return;
+
+    // ✅ Bot tự clear peek
+    if(s.peekFor && Engine.byId(s.peekFor.playerId)?.isBot && !s.pending && !s.awaitingChoice){
+      this.botScheduled = true;
+      setTimeout(() => {
+        this.botScheduled = false;
+        if(Engine.state?.peekFor) Engine.clearPeek(Engine.state.peekFor.playerId);
+      }, 500);
+      return;
+    }
 
     if(s.awaitingChoice){
       const p = Engine.byId(s.awaitingChoice.playerId || s.awaitingChoice.targetId);
@@ -1304,7 +1324,7 @@ const UI = {
           } else if(ch.type==='favor' && ch.targetId===p.id){
             Engine.resolveFavor(p.id, Math.floor(Math.random()*p.hand.length));
           }
-        }, 1200);
+        }, 500); // ✅ Nhanh hơn
         return;
       }
       return;
@@ -1312,13 +1332,13 @@ const UI = {
 
     if(s.pending){
       this.botScheduled = true;
-      setTimeout(() => { this.botScheduled = false; this.botNopeCheck(); }, 800);
+      setTimeout(() => { this.botScheduled = false; this.botNopeCheck(); }, 500);
       return;
     }
 
     if(Engine.cur()?.isBot){
       this.botScheduled = true;
-      setTimeout(() => { this.botScheduled = false; this.runBotTurn(); }, 1400);
+      setTimeout(() => { this.botScheduled = false; this.runBotTurn(); }, 800);
     }
   },
 
@@ -1377,13 +1397,10 @@ const UI = {
         return this.botPlay([cat,cat], target.id);
       }
     }
-
     if(has('FAVOR') && target && target.hand.length>=2 && Math.random() < mode.catProb)
       return this.botPlay(['FAVOR'], target.id);
-
     if(has('SKIP') && Math.random() < mode.skipProb)
       return this.botPlay(['SKIP']);
-
     if(mode===BOT_MODES.ultimate && has('SEE_FUTURE') && Math.random()<0.4)
       return this.botPlay(['SEE_FUTURE']);
 
@@ -1404,12 +1421,18 @@ const UI = {
     document.getElementById('uiHandCount').innerText = me.hand.length;
 
     const cur = s.players[s.turnIdx];
-    const modeInfo = s.botMode ? ` · ${BOT_MODES[s.botMode].icon}` : '';
+    const modeInfo = s.botMode && BOT_MODES[s.botMode] ? ` · ${BOT_MODES[s.botMode].icon}` : '';
     document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${this.escapeHtml(cur.name)}${modeInfo}`;
 
     const turnsEl = document.getElementById('uiTurnsLeft');
     if(s.turnsLeft > 1){ turnsEl.style.display = 'inline-block'; turnsEl.innerText = `×${s.turnsLeft}`; }
     else turnsEl.style.display = 'none';
+
+    // ✅ Countdown restart khi đổi turn
+    if(s.turnIdx !== this._lastTurnKey){
+      this._lastTurnKey = s.turnIdx;
+      this._restartTurnCountdown();
+    }
 
     document.getElementById('opponentsArea').innerHTML = s.players.filter(p => p.id !== me.id)
       .map(p => `
@@ -1460,6 +1483,32 @@ const UI = {
     this.updateNopeButton();
   },
 
+  _restartTurnCountdown(){
+    clearInterval(this._turnCountdownId);
+    const el = document.getElementById('uiTimer');
+    if(!el) return;
+    const s = Engine.state;
+    if(!s || s.phase !== 'playing'){ el.style.display = 'none'; return; }
+    const cur = s.players[s.turnIdx];
+    if(!cur || cur.isBot){ el.style.display = 'none'; return; }
+    
+    el.style.display = 'inline-block';
+    el.className = 'badge timer';
+    let remaining = Math.floor(TURN_TIME_MS/1000);
+    el.innerText = '⏱️ ' + remaining + 's';
+    this._turnCountdownId = setInterval(() => {
+      remaining--;
+      if(remaining <= 0){
+        clearInterval(this._turnCountdownId);
+        el.innerText = '⏱️ 0s';
+        return;
+      }
+      el.innerText = '⏱️ ' + remaining + 's';
+      if(remaining <= 5) el.className = 'badge timer danger';
+      else if(remaining <= 15) el.className = 'badge timer warn';
+    }, 1000);
+  },
+
   renderHandActionBar(){
     const bar = document.getElementById('handActionBar');
     const n = this.selectedCatIndices.length;
@@ -1477,21 +1526,39 @@ const UI = {
     `;
   },
 
+  // ✅ NOPE với nút Bỏ qua
   updateNopeButton(){
     const s = Engine.state;
     const me = this.me();
-    let btn = document.getElementById('nopeBtn');
-    const show = s && me && me.alive && s.pending && s.pending.playerId !== me.id && me.hand.includes('NOPE');
-    if(show){
-      if(!btn){
-        btn = document.createElement('button');
-        btn.id = 'nopeBtn';
-        btn.className = 'nope-btn';
-        btn.innerText = '🙅 NOPE!';
-        btn.onclick = () => this.act('nope');
-        document.body.appendChild(btn);
-      }
-    } else if(btn) btn.remove();
+    let container = document.getElementById('nopeContainer');
+
+    // Reset skip nếu pending đã thay đổi
+    if(this.nopeSkippedFor && (!s?.pending || s.pending.timestamp !== this.nopeSkippedFor)){
+      this.nopeSkippedFor = null;
+    }
+
+    const show = s && me && me.alive && s.pending && s.pending.playerId !== me.id 
+      && me.hand.includes('NOPE') && this.nopeSkippedFor !== s.pending.timestamp;
+
+    if(show && !container){
+      container = document.createElement('div');
+      container.id = 'nopeContainer';
+      container.className = 'nope-container';
+      container.innerHTML = `
+        <button class="nope-btn" onclick="UI.act('nope')">🙅 NOPE!</button>
+        <button class="nope-skip-btn" onclick="UI.skipNope()">Bỏ qua</button>
+      `;
+      document.body.appendChild(container);
+    } else if(!show && container){
+      container.remove();
+    }
+  },
+
+  skipNope(){
+    const s = Engine.state;
+    if(!s?.pending) return;
+    this.nopeSkippedFor = s.pending.timestamp;
+    this.updateNopeButton();
   },
 
   openModal(type, html){
@@ -1598,7 +1665,12 @@ const UI = {
     if(s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
     if(!me.alive) return;
 
-    if(CATS.includes(card)) return this.toggleCatSelection(card, idx);
+    // ✅ Cat: kiểm tra có ít nhất 2 lá cùng loại
+    if(CATS.includes(card)){
+      const count = me.hand.filter(x => x === card).length;
+      if(count < 2) return this.toast('Cần ít nhất 2 lá cùng loại để combo');
+      return this.toggleCatSelection(card, idx);
+    }
 
     this.selectedCatIndices = [];
 
