@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens V6</title>
+<title>Exploding Kittens V7</title>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
   :root{
-    --bg1:#080b20; --bg2:#141a35;
     --white:#fff; --white-dim:#e8ecf7; --white-mute:#a8b3d0;
     --accent:#7cc7ff; --accent2:#c08cff; --cyan:#4de6ff;
     --w-red:#ff4757; --w-gold:#ffd60a;
@@ -18,115 +17,83 @@
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
     background:
-      radial-gradient(circle at 8% 8%, rgba(124,199,255,0.4) 0%, transparent 45%),
-      radial-gradient(circle at 92% 92%, rgba(192,140,255,0.35) 0%, transparent 48%),
-      radial-gradient(circle at 50% 50%, #141a35 0%, #080b20 65%, #03050f 100%);
+      radial-gradient(circle at 8% 8%, rgba(124,199,255,0.35) 0%, transparent 42%),
+      radial-gradient(circle at 92% 92%, rgba(192,140,255,0.3) 0%, transparent 46%),
+      linear-gradient(135deg, #141a35 0%, #080b20 60%, #03050f 100%);
     color:#fff;-webkit-font-smoothing:antialiased;user-select:none;min-height:100vh;
     position:relative;
   }
   
-  /* ===== LIQUID BACKGROUND BLOBS ===== */
-  .blob{position:fixed;pointer-events:none;z-index:0;opacity:0.65;
-    background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), transparent 60%);
-    filter:blur(70px);border-radius:50%;mix-blend-mode:screen}
-  .blob-1{width:520px;height:520px;top:-180px;left:-180px;
-    background:radial-gradient(circle at 40% 40%, rgba(124,199,255,0.85), rgba(124,199,255,0.15) 60%, transparent 80%);
-    animation:blobFloat1 18s ease-in-out infinite}
-  .blob-2{width:580px;height:580px;bottom:-240px;right:-240px;
-    background:radial-gradient(circle at 60% 60%, rgba(192,140,255,0.75), rgba(192,140,255,0.1) 60%, transparent 80%);
-    animation:blobFloat2 22s ease-in-out infinite reverse}
-  .blob-3{width:380px;height:380px;top:45%;right:15%;
-    background:radial-gradient(circle at 50% 50%, rgba(77,230,255,0.6), transparent 70%);
-    animation:blobFloat3 16s ease-in-out infinite;animation-delay:-6s}
-  .blob-4{width:320px;height:320px;bottom:20%;left:8%;
-    background:radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4), transparent 70%);
-    animation:blobFloat1 20s ease-in-out infinite reverse;animation-delay:-3s}
-  @keyframes blobFloat1{0%,100%{transform:translate(0,0) scale(1) rotate(0)}50%{transform:translate(70px,50px) scale(1.15) rotate(90deg)}}
-  @keyframes blobFloat2{0%,100%{transform:translate(0,0) scale(1) rotate(0)}50%{transform:translate(-60px,-40px) scale(1.12) rotate(-80deg)}}
-  @keyframes blobFloat3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,60px) scale(1.2)}}
+  /* Static blobs (no animation, no blend mode - much lighter) */
+  .blob{position:fixed;pointer-events:none;z-index:0;opacity:0.55;
+    filter:blur(40px);border-radius:50%}
+  .blob-1{width:440px;height:440px;top:-160px;left:-160px;
+    background:radial-gradient(circle at 40% 40%, rgba(124,199,255,0.8), transparent 70%)}
+  .blob-2{width:480px;height:480px;bottom:-200px;right:-200px;
+    background:radial-gradient(circle at 60% 60%, rgba(192,140,255,0.7), transparent 70%)}
+  .blob-3{width:320px;height:320px;top:45%;right:12%;
+    background:radial-gradient(circle at 50% 50%, rgba(77,230,255,0.5), transparent 70%)}
   
-  .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.035;
+  .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.03;
     background-image:linear-gradient(rgba(255,255,255,0.9) 1px,transparent 1px),
       linear-gradient(90deg,rgba(255,255,255,0.9) 1px,transparent 1px);
     background-size:52px 52px}
   
-  /* ===== LIQUID GLASS ===== */
+  /* ===== LIQUID GLASS (optimized) ===== */
   .liquid{
     position:relative;
     background:
-      linear-gradient(135deg, 
-        rgba(255,255,255,0.26) 0%,
-        rgba(255,255,255,0.06) 25%,
-        rgba(255,255,255,0.02) 50%,
-        rgba(255,255,255,0.10) 75%,
-        rgba(255,255,255,0.20) 100%);
-    backdrop-filter:blur(40px) saturate(200%) brightness(1.15) contrast(1.05);
-    -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.15) contrast(1.05);
-    border:1px solid rgba(255,255,255,0.42);
+      linear-gradient(135deg,
+        rgba(255,255,255,0.24) 0%,
+        rgba(255,255,255,0.06) 30%,
+        rgba(255,255,255,0.03) 55%,
+        rgba(255,255,255,0.12) 100%);
+    backdrop-filter:blur(22px) saturate(180%);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(255,255,255,0.4);
     box-shadow:
-      0 12px 48px rgba(0,0,0,0.42),
-      0 4px 16px rgba(0,0,0,0.22),
-      inset 0 1px 0 rgba(255,255,255,0.7),
-      inset 0 -1px 0 rgba(255,255,255,0.12),
-      inset 1px 0 0 rgba(255,255,255,0.28),
-      inset -1px 0 0 rgba(255,255,255,0.28);
+      0 12px 40px rgba(0,0,0,0.4),
+      0 2px 8px rgba(0,0,0,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.65),
+      inset 0 -1px 0 rgba(255,255,255,0.1);
     z-index:1;
   }
   .liquid::before{
-    content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
-    background:linear-gradient(135deg, rgba(255,255,255,0.42) 0%, transparent 35%, transparent 65%, rgba(255,255,255,0.12) 100%);
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.1) 100%);
     z-index:-1;
   }
-  .liquid::after{
-    content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
-    background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
-    animation:liquidShimmer 6s infinite;pointer-events:none;
-  }
-  @keyframes liquidShimmer{0%{left:-100%}50%{left:100%}100%{left:100%}}
   
-  /* ===== 2-CORNER BEVEL (top-left + bottom-right) ===== */
+  /* ===== 2-CORNER BEVEL (TL + BR) ===== */
   .bevel{
     --cut:24px;
     clip-path:polygon(
-      var(--cut) 0,
-      100% 0,
-      100% calc(100% - var(--cut)),
-      calc(100% - var(--cut)) 100%,
-      0 100%,
-      0 var(--cut)
-    );
+      var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
   }
-  .bevel-rev{
-    --cut:24px;
-    clip-path:polygon(
-      0 0,
-      calc(100% - var(--cut)) 0,
-      100% var(--cut),
-      100% 100%,
-      var(--cut) 100%,
-      0 calc(100% - var(--cut))
-    );
+  .bevel-sm{
+    --cut:14px;
+    clip-path:polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
   }
-  .bevel-sm{--cut:14px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
   
   button{font-family:inherit;font-weight:800;font-size:14px;padding:12px 22px;
     border:1px solid rgba(255,255,255,0.3);border-radius:0;cursor:pointer;
-    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
+    transition:transform .2s ease, box-shadow .2s ease;
     background:linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.06));
     color:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.4);
-    backdrop-filter:blur(24px) saturate(180%);position:relative;overflow:hidden}
-  button::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent);pointer-events:none}
-  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.6)}
-  button:active:not(:disabled){transform:translateY(1px) scale(0.98)}
+    position:relative;overflow:hidden;
+    transform:translateZ(0);}
+  button:hover:not(:disabled){transform:translateY(-2px) translateZ(0);box-shadow:0 8px 25px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.6)}
+  button:active:not(:disabled){transform:translateY(1px) scale(0.98) translateZ(0)}
   button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(1)}
   
-  .btn-p{background:linear-gradient(180deg,#ffffff 0%,#e2e8f7 100%);color:#0f1530;border-color:rgba(255,255,255,0.7);box-shadow:0 6px 24px rgba(255,255,255,0.28),inset 0 1px 0 rgba(255,255,255,0.9),inset 0 -1px 0 rgba(0,0,0,0.08)}
+  .btn-p{background:linear-gradient(180deg,#ffffff 0%,#e2e8f7 100%);color:#0f1530;border-color:rgba(255,255,255,0.7);box-shadow:0 6px 24px rgba(255,255,255,0.25),inset 0 1px 0 rgba(255,255,255,0.9),inset 0 -1px 0 rgba(0,0,0,0.08)}
   .btn-p:hover:not(:disabled){box-shadow:0 10px 36px rgba(255,255,255,0.4)}
   .btn-o{background:rgba(255,255,255,0.08)}
   .btn-danger{background:linear-gradient(180deg,#ff6666,#cc2200);color:#fff}
-  .btn-admin{background:linear-gradient(180deg,#ffd60a,#ff9e00);color:#1a1f3a;border-color:#ffd60a;box-shadow:0 6px 24px rgba(255,214,10,0.4),inset 0 1px 0 rgba(255,255,255,0.6)}
   
-  input,select{width:100%;padding:13px 16px;border-radius:14px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.08);backdrop-filter:blur(24px);font-family:inherit;font-size:15px;color:#fff;outline:none;transition:all .25s}
+  input,select{width:100%;padding:13px 16px;border-radius:14px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.08);font-family:inherit;font-size:15px;color:#fff;outline:none;transition:background .2s, border-color .2s}
   input::placeholder{color:var(--white-mute)}
   input:focus,select:focus{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.7);box-shadow:0 0 0 4px rgba(255,255,255,0.15)}
   select option{background:#141a35;color:#fff}
@@ -136,61 +103,52 @@
   
   /* ===== AUTH ===== */
   #sc-auth{justify-content:center;align-items:center;padding:20px;overflow-y:auto}
-  .auth-box{width:100%;max-width:440px;padding:38px 32px;display:flex;flex-direction:column;gap:14px;text-align:center;--cut:28px;animation:slideUp .6s cubic-bezier(0.34,1.56,0.64,1)}
-  @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-  .auth-title{font-size:44px;font-weight:900;letter-spacing:6px;background:linear-gradient(135deg,#fff 0%,#7cc7ff 50%,#c08cff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 14px rgba(255,255,255,0.5))}
+  .auth-box{width:100%;max-width:440px;padding:38px 32px;display:flex;flex-direction:column;gap:14px;text-align:center;--cut:28px}
+  .auth-title{font-size:44px;font-weight:900;letter-spacing:6px;background:linear-gradient(135deg,#fff 0%,#7cc7ff 50%,#c08cff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .auth-sub{font-size:11px;color:var(--white-mute);margin-bottom:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
   .auth-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.4);border-radius:12px;margin-bottom:6px}
-  .auth-tab{flex:1;padding:10px;border-radius:9px;cursor:pointer;font-weight:800;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--white-mute);box-shadow:none;letter-spacing:0.5px;position:relative}
-  .auth-tab::before{display:none}
+  .auth-tab{flex:1;padding:10px;border-radius:9px;cursor:pointer;font-weight:800;font-size:12px;transition:background .2s, color .2s;border:none;background:transparent;color:var(--white-mute);box-shadow:none;letter-spacing:0.5px;position:relative;overflow:visible}
   .auth-tab.active{background:#fff;color:#0f1530;box-shadow:0 4px 14px rgba(255,255,255,0.4)}
   .auth-tab:hover:not(.active){color:#fff;transform:none;box-shadow:none}
-  .auth-msg{font-size:12px;min-height:18px;padding:8px;border-radius:10px;transition:all .3s}
+  .auth-msg{font-size:12px;min-height:18px;padding:8px;border-radius:10px}
   .auth-msg.err{color:#ff8a7a;background:rgba(255,59,48,0.15)}
   .auth-msg.ok{color:#8affa8;background:rgba(80,200,100,0.15)}
   .guest-link{background:transparent;border:none;color:var(--white-mute);font-size:12px;text-decoration:underline;cursor:pointer;padding:8px;box-shadow:none;position:relative}
-  .guest-link::before{display:none}
   .guest-link:hover{color:#fff;transform:none;box-shadow:none}
   
   /* ===== MENU ===== */
   #sc-menu{padding:0;overflow-y:auto}
-  .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;margin:14px 14px 0;--cut:20px;animation:slideDown .5s ease-out}
-  @keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;margin:14px 14px 0;--cut:20px}
   .topbar-info{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
   .topbar-name{font-size:17px;font-weight:900;letter-spacing:.3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:#fff}
   .topbar-stats{font-size:11px;color:var(--white-dim);display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-weight:600}
   .topbar-stats b{color:#fff;font-weight:900}
-  .admin-badge{background:linear-gradient(135deg,#ffd60a,#ff9e00);color:#0f1530;font-weight:900;font-size:9px;padding:3px 8px;border-radius:6px;letter-spacing:.8px;box-shadow:0 2px 10px rgba(255,214,10,0.6);animation:adminGlow 2s ease-in-out infinite}
-  @keyframes adminGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
-  .topbar-avatar{width:66px;height:66px;flex-shrink:0;background:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);border:2px solid rgba(255,255,255,0.8);box-shadow:0 6px 24px rgba(255,255,255,0.4);overflow:hidden}
+  .admin-badge{background:linear-gradient(135deg,#ffd60a,#ff9e00);color:#0f1530;font-weight:900;font-size:9px;padding:3px 8px;border-radius:6px;letter-spacing:.8px;box-shadow:0 2px 10px rgba(255,214,10,0.5)}
+  .topbar-avatar{width:66px;height:66px;flex-shrink:0;background:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:transform .2s;border:2px solid rgba(255,255,255,0.8);box-shadow:0 6px 24px rgba(255,255,255,0.4);overflow:hidden;transform:translateZ(0)}
   .topbar-avatar img{width:100%;height:100%;object-fit:cover}
-  .topbar-avatar:hover{transform:scale(1.08) rotate(4deg);box-shadow:0 10px 32px rgba(255,255,255,0.6)}
+  .topbar-avatar:hover{transform:scale(1.06) translateZ(0)}
   
   .menu-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 20px 40px;gap:28px}
   
   .btn-main{padding:26px 80px;font-size:24px;font-weight:900;letter-spacing:6px;
     background:linear-gradient(135deg,#ffffff 0%,#e8ecf7 100%);color:#0f1530;
     border:2px solid rgba(255,255,255,0.7);cursor:pointer;text-transform:uppercase;--cut:20px;
-    box-shadow:0 18px 50px rgba(255,255,255,0.3),inset 0 2px 0 rgba(255,255,255,0.9),inset 0 -2px 0 rgba(0,0,0,0.08);
-    transition:all .3s cubic-bezier(0.34,1.56,0.64,1);max-width:92vw;position:relative;overflow:hidden}
-  .btn-main::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(124,199,255,0.6),transparent);animation:btnShine 3s infinite;pointer-events:none}
-  @keyframes btnShine{0%{left:-100%}50%{left:100%}100%{left:100%}}
-  .btn-main:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 24px 60px rgba(255,255,255,0.45),inset 0 2px 0 #fff}
-  .btn-main:active{transform:translateY(-1px) scale(1)}
+    box-shadow:0 18px 50px rgba(255,255,255,0.25),inset 0 2px 0 rgba(255,255,255,0.9),inset 0 -2px 0 rgba(0,0,0,0.08);
+    max-width:92vw;position:relative;overflow:hidden;transform:translateZ(0)}
+  .btn-main:hover{transform:translateY(-5px) scale(1.04) translateZ(0);box-shadow:0 24px 60px rgba(255,255,255,0.4),inset 0 2px 0 #fff}
+  .btn-main:active{transform:translateY(-1px) scale(1) translateZ(0)}
   
   .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:660px}
-  .menu-card{aspect-ratio:1.15/1;padding:20px 12px;--cut:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden;text-align:center}
-  .menu-card::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.18),transparent);pointer-events:none;z-index:1}
-  .menu-card:hover{transform:translateY(-8px) scale(1.03);box-shadow:0 18px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255,255,255,0.28), inset 0 1px 0 rgba(255,255,255,0.5)}
-  .menu-card:active{transform:translateY(-3px) scale(0.99)}
-  .menu-card-icon{font-size:34px;line-height:1;margin-bottom:4px;filter:drop-shadow(0 3px 10px rgba(255,255,255,0.4));position:relative;z-index:2}
-  .menu-card-title{font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,0.3);position:relative;z-index:2}
+  .menu-card{aspect-ratio:1.15/1;padding:20px 12px;--cut:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:transform .2s ease, box-shadow .2s ease;position:relative;overflow:hidden;text-align:center;transform:translateZ(0)}
+  .menu-card:hover{transform:translateY(-6px) translateZ(0);box-shadow:0 18px 40px rgba(0,0,0,0.5), 0 0 25px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.5)}
+  .menu-card:active{transform:translateY(-3px) scale(0.99) translateZ(0)}
+  .menu-card-icon{font-size:34px;line-height:1;margin-bottom:4px;position:relative;z-index:2}
+  .menu-card-title{font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:#fff;position:relative;z-index:2}
   .menu-card-sub{font-size:10px;color:var(--white-dim);letter-spacing:0.5px;font-weight:600;position:relative;z-index:2}
   .menu-card.locked{opacity:0.55}
   .menu-card.locked::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:14px;z-index:3}
-  .menu-card.admin-card{border-color:rgba(255,214,10,0.9);background:linear-gradient(135deg,rgba(255,214,10,0.35),rgba(255,158,0,0.15));box-shadow:0 8px 24px rgba(255,214,10,0.4), inset 0 1px 0 rgba(255,255,255,0.5)}
-  .menu-card-badge{position:absolute;top:8px;right:8px;min-width:22px;height:22px;padding:0 6px;background:linear-gradient(135deg,#ff5a5a,#c03030);border-radius:11px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,90,90,0.6);z-index:3;animation:badgePulse 1.5s ease-in-out infinite}
-  @keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+  .menu-card.admin-card{border-color:rgba(255,214,10,0.9);background:linear-gradient(135deg,rgba(255,214,10,0.3),rgba(255,158,0,0.12))}
+  .menu-card-badge{position:absolute;top:8px;right:8px;min-width:22px;height:22px;padding:0 6px;background:linear-gradient(135deg,#ff5a5a,#c03030);border-radius:11px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:3}
   
   @media (max-width:600px){
     .menu-grid{grid-template-columns:repeat(2,1fr);max-width:440px;gap:12px}
@@ -202,15 +160,14 @@
   /* ===== LOBBY ===== */
   #sc-lobby{justify-content:center;align-items:center;overflow-y:auto;padding:20px}
   .lobby-box{width:100%;max-width:520px;padding:30px;--cut:28px;display:flex;flex-direction:column;gap:14px}
-  .lobby-title{text-align:center;font-size:22px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 2px 10px rgba(255,255,255,0.3)}
+  .lobby-title{text-align:center;font-size:22px;font-weight:900;letter-spacing:3px;color:#fff}
   .room-code{font-size:44px;font-weight:900;letter-spacing:14px;text-align:center;cursor:pointer;padding:20px;border-radius:16px;
     background:linear-gradient(135deg,rgba(255,255,255,0.35),rgba(255,255,255,0.12));
     border:2.5px dashed rgba(255,255,255,0.7);
-    font-family:'SF Mono','Consolas',monospace;color:#fff;text-shadow:0 0 25px rgba(255,255,255,0.9);transition:all .25s}
-  .room-code:hover{transform:scale(1.03);box-shadow:0 0 40px rgba(255,255,255,0.6);border-color:#fff}
+    font-family:'SF Mono','Consolas',monospace;color:#fff;transition:transform .2s}
+  .room-code:hover{transform:scale(1.02)}
   .plist{display:flex;flex-direction:column;gap:10px;max-height:280px;overflow-y:auto;min-height:60px}
-  .pitem{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,0.14);border:1.5px solid rgba(255,255,255,0.3);animation:itemIn .3s ease-out}
-  @keyframes itemIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+  .pitem{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,0.14);border:1.5px solid rgba(255,255,255,0.3)}
   .pitem .av{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fff;overflow:hidden;flex-shrink:0}
   .pitem .av img{width:100%;height:100%;object-fit:cover}
   .pitem .nm{flex:1;font-weight:800;color:#fff}
@@ -222,19 +179,18 @@
   /* ===== GAME ===== */
   #sc-game{padding:8px;gap:8px;
     background:
-      radial-gradient(circle at 10% 10%, rgba(255,120,90,0.35) 0%, transparent 42%),
-      radial-gradient(circle at 90% 90%, rgba(255,220,80,0.22) 0%, transparent 46%),
-      radial-gradient(circle at 50% 50%, #2a1510 0%, #140808 60%, #050202 100%)}
+      radial-gradient(circle at 10% 10%, rgba(255,120,90,0.32) 0%, transparent 42%),
+      radial-gradient(circle at 90% 90%, rgba(255,220,80,0.2) 0%, transparent 46%),
+      linear-gradient(135deg, #2a1510 0%, #140808 60%, #050202 100%)}
   .ghead{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-weight:800;font-size:12px;flex-shrink:0;gap:6px;flex-wrap:wrap;--cut:16px}
   .badge{background:rgba(255,255,255,0.15);padding:7px 14px;border:1.5px solid rgba(255,255,255,0.28);font-size:11px;display:inline-flex;align-items:center;gap:4px;font-weight:800;border-radius:20px}
   .badge b{color:#fff}
-  .badge.hot{background:#fff;color:#0f1530;border-color:#fff;animation:pulseBadge 1.5s infinite;font-weight:900}
+  .badge.hot{background:#fff;color:#0f1530;border-color:#fff;font-weight:900}
   .badge.hot b{color:#0f1530}
-  @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
   .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
-  .opp{display:flex;flex-direction:column;align-items:center;padding:10px 16px;min-width:88px;border-radius:16px;transition:.3s;position:relative;
-    background:linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.06));border:1.5px solid rgba(255,255,255,0.28);box-shadow:0 4px 14px rgba(0,0,0,0.3)}
-  .opp.turn{box-shadow:0 0 0 2.5px #fff, 0 0 30px rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.4);transform:scale(1.06);border-color:#fff}
+  .opp{display:flex;flex-direction:column;align-items:center;padding:10px 16px;min-width:88px;border-radius:16px;transition:transform .2s;
+    background:linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.06));border:1.5px solid rgba(255,255,255,0.28);transform:translateZ(0)}
+  .opp.turn{box-shadow:0 0 0 2.5px #fff, 0 0 30px rgba(255,255,255,0.7);transform:scale(1.06) translateZ(0);border-color:#fff}
   .opp.dead{opacity:.35;filter:grayscale(1)}
   .opp.dead::after{content:'OUT';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;font-weight:900;color:#fff;background:rgba(0,0,0,0.75);padding:4px 12px;border-radius:8px;z-index:2;letter-spacing:2px}
   .opp .av{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fff;margin-bottom:4px;overflow:hidden}
@@ -243,47 +199,42 @@
   .opp .cnt{font-size:11px;color:#fff;font-weight:800;opacity:0.85}
   
   .board{flex:1;display:flex;justify-content:center;align-items:center;gap:40px;position:relative;min-height:0}
-  .pile{width:130px;height:180px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;flex-shrink:0;transition:transform .2s;overflow:hidden}
+  .pile{width:130px;height:180px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;flex-shrink:0;transition:transform .2s;overflow:hidden;transform:translateZ(0)}
   .deck{background:linear-gradient(135deg,#ff6b5b,var(--w-red));cursor:pointer;border:3px solid #fff;
     box-shadow:0 14px 34px rgba(255,71,87,0.55),inset 0 2px 0 rgba(255,255,255,0.4);
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:22px}
-  .deck:hover{transform:translateY(-5px) scale(1.03)}
-  .deck.can{animation:deckPulse 1.5s infinite}
-  @keyframes deckPulse{0%,100%{box-shadow:0 0 20px rgba(255,71,87,0.6), inset 0 2px 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 45px rgba(255,71,87,1), inset 0 2px 0 rgba(255,255,255,0.5)}}
+  .deck:hover{transform:translateY(-5px) scale(1.03) translateZ(0)}
+  .deck.can{box-shadow:0 14px 34px rgba(255,71,87,0.7), 0 0 25px rgba(255,71,87,0.8), inset 0 2px 0 rgba(255,255,255,0.4)}
   .deck.locked{opacity:.55;cursor:not-allowed;filter:grayscale(.6)}
-  .deck.shuffling{animation:shuffleAnim .8s ease-in-out}
-  @keyframes shuffleAnim{0%{transform:translateY(0) rotate(0)}25%{transform:translateY(-15px) rotate(-10deg) scale(1.05)}50%{transform:translateY(5px) rotate(10deg) scale(.95)}75%{transform:translateY(-5px) rotate(-5deg)}100%{transform:translateY(0) rotate(0)}}
   .disc{background:rgba(255,255,255,0.1);border:2.5px dashed rgba(255,255,255,0.4);box-shadow:inset 0 2px 8px rgba(0,0,0,0.25);padding:0;overflow:hidden}
   .disc img{width:100%;height:100%;object-fit:cover}
   .badge-p{position:absolute;bottom:-10px;right:-10px;background:#fff;color:var(--w-red);min-width:32px;height:32px;padding:0 8px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;box-shadow:0 2px 12px rgba(0,0,0,0.4);z-index:5;border:2px solid var(--w-red)}
-  .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,0.72);color:#fff;padding:8px 12px;border-radius:12px;pointer-events:none;max-width:240px;backdrop-filter:blur(12px);line-height:1.5;border:1px solid rgba(255,255,255,0.15);font-weight:600}
+  .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,0.72);color:#fff;padding:8px 12px;border-radius:12px;pointer-events:none;max-width:240px;line-height:1.5;border:1px solid rgba(255,255,255,0.15);font-weight:600}
   
-  /* Played showcase */
-  .played-showcase{position:fixed;top:46%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:4200;display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none;opacity:0;transition:all .5s cubic-bezier(0.34,1.56,0.64,1)}
+  /* Played showcase - NO pulse animation */
+  .played-showcase{position:fixed;top:46%;left:50%;transform:translate(-50%,-50%) scale(0.85);z-index:4200;display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none;opacity:0;transition:transform .35s cubic-bezier(0.34,1.56,0.64,1), opacity .35s ease}
   .played-showcase.show{transform:translate(-50%,-50%) scale(1);opacity:1}
   .played-showcase .ps-card{width:220px;height:320px;border-radius:20px;overflow:hidden;border:4px solid #fff;background:#1a0f0d;
-    box-shadow:0 30px 80px rgba(0,0,0,0.9), 0 0 60px rgba(255,255,255,0.5), 0 0 100px rgba(255,214,10,0.5);
-    display:flex;align-items:center;justify-content:center;animation:psPulse 1.2s ease-in-out infinite}
-  @keyframes psPulse{0%,100%{box-shadow:0 30px 80px rgba(0,0,0,0.9), 0 0 60px rgba(255,255,255,0.5), 0 0 100px rgba(255,214,10,0.5)}50%{box-shadow:0 30px 90px rgba(0,0,0,0.95), 0 0 90px rgba(255,255,255,0.8), 0 0 140px rgba(255,214,10,0.8)}}
+    box-shadow:0 30px 80px rgba(0,0,0,0.9), 0 0 60px rgba(255,255,255,0.5);
+    display:flex;align-items:center;justify-content:center}
   .played-showcase .ps-card img{width:100%;height:100%;object-fit:cover}
   .played-showcase .ps-name{background:#fff;color:#0f1530;font-weight:900;font-size:14px;padding:8px 22px;border-radius:10px;letter-spacing:1px;text-transform:uppercase;box-shadow:0 6px 20px rgba(255,255,255,0.5);white-space:nowrap}
-  .played-showcase .ps-action{background:rgba(0,0,0,0.85);color:#fff;font-weight:900;font-size:15px;padding:8px 20px;border-radius:10px;letter-spacing:1.5px;border:2px solid rgba(255,255,255,0.5);backdrop-filter:blur(10px)}
+  .played-showcase .ps-action{background:rgba(0,0,0,0.85);color:#fff;font-weight:900;font-size:15px;padding:8px 20px;border-radius:10px;letter-spacing:1.5px;border:2px solid rgba(255,255,255,0.5)}
   
   /* Action notification */
   .action-notification{position:fixed;bottom:22%;left:50%;transform:translateX(-50%);z-index:5500;pointer-events:none;
     background:linear-gradient(135deg,rgba(30,20,50,0.96),rgba(80,30,110,0.96));
     border:2px solid rgba(255,255,255,0.5);border-radius:16px;padding:16px 34px;min-width:280px;max-width:90vw;
-    box-shadow:0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(255,255,255,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
-    text-align:center;backdrop-filter:blur(24px) saturate(180%);animation:actionNotify 2.8s cubic-bezier(0.34,1.56,0.64,1) forwards}
-  .action-notification::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;border-radius:16px 16px 0 0;background:linear-gradient(180deg,rgba(255,255,255,0.15),transparent);pointer-events:none}
+    box-shadow:0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(255,255,255,0.3);
+    text-align:center;animation:actionNotify 2.8s cubic-bezier(0.34,1.56,0.64,1) forwards}
   .action-notification.attack{background:linear-gradient(135deg,rgba(180,30,30,0.96),rgba(255,60,40,0.94));border-color:rgba(255,220,180,0.8)}
   .action-notification.skip{background:linear-gradient(135deg,rgba(30,60,110,0.96),rgba(74,158,255,0.94));border-color:rgba(200,225,255,0.8)}
   .action-notification.nope{background:linear-gradient(135deg,rgba(90,20,120,0.96),rgba(200,50,255,0.94));border-color:rgba(230,180,255,0.8)}
   .action-notification.defuse{background:linear-gradient(135deg,rgba(20,90,50,0.96),rgba(50,210,110,0.94));border-color:rgba(180,255,200,0.8)}
   .action-notification.boom{background:linear-gradient(135deg,rgba(120,0,0,0.98),rgba(255,50,20,0.97));border-color:rgba(255,200,120,0.9)}
-  .action-notification .an-title{font-size:11px;opacity:0.9;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin-bottom:6px;position:relative}
-  .action-notification .an-body{font-size:18px;font-weight:900;letter-spacing:0.5px;line-height:1.35;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.5);position:relative}
-  .action-notification .an-card{font-size:14px;font-weight:900;color:#ffd60a;margin-top:4px;letter-spacing:1px;position:relative}
+  .action-notification .an-title{font-size:11px;opacity:0.9;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin-bottom:6px}
+  .action-notification .an-body{font-size:18px;font-weight:900;letter-spacing:0.5px;line-height:1.35;color:#fff}
+  .action-notification .an-card{font-size:14px;font-weight:900;color:#ffd60a;margin-top:4px;letter-spacing:1px}
   @keyframes actionNotify{0%{opacity:0;transform:translate(-50%,20px) scale(0.7)}12%{opacity:1;transform:translate(-50%,0) scale(1.05)}22%{transform:translate(-50%,0) scale(1)}80%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-15px) scale(0.92)}}
   
   .hand-area{padding:14px;min-height:180px;--cut:18px;display:flex;flex-direction:column;flex-shrink:0}
@@ -292,15 +243,13 @@
   .hand-action-bar button{padding:6px 14px;font-size:12px}
   .hand-scroll{display:flex;gap:10px;overflow-x:auto;padding:10px 0 14px;align-items:center;scrollbar-width:thin}
   
-  /* CARDS - NO BEVEL, rounded only */
-  .card{width:94px;height:136px;border-radius:10px;flex-shrink:0;cursor:pointer;position:relative;background:#1a0f0d;box-shadow:0 4px 14px rgba(0,0,0,0.4);border:2.5px solid rgba(255,255,255,0.9);transition:all .25s;overflow:hidden;display:flex;align-items:center;justify-content:center}
-  .card:hover:not(.dis):not(.selected):not(.nope-active){transform:translateY(-14px) scale(1.06);z-index:10;box-shadow:0 15px 30px rgba(0,0,0,0.6);border-color:var(--w-gold)}
+  /* CARDS */
+  .card{width:94px;height:136px;border-radius:10px;flex-shrink:0;cursor:pointer;position:relative;background:#1a0f0d;box-shadow:0 4px 14px rgba(0,0,0,0.4);border:2.5px solid rgba(255,255,255,0.9);transition:transform .2s ease, box-shadow .2s ease;overflow:hidden;display:flex;align-items:center;justify-content:center;transform:translateZ(0)}
+  .card:hover:not(.dis):not(.selected):not(.nope-active){transform:translateY(-14px) scale(1.06) translateZ(0);z-index:10;box-shadow:0 15px 30px rgba(0,0,0,0.6);border-color:var(--w-gold)}
   .card.dis{opacity:.4;filter:grayscale(.8);cursor:not-allowed}
-  .card.nope-active{border-color:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,0.5), 0 0 25px rgba(255,255,255,0.9), 0 0 50px rgba(255,214,10,0.7)!important;animation:nopeCardPulse 1.2s ease-in-out infinite;cursor:pointer!important;z-index:9}
-  .card.nope-active:hover{transform:translateY(-14px) scale(1.06)}
-  @keyframes nopeCardPulse{0%,100%{box-shadow:0 0 0 3px rgba(255,255,255,0.5), 0 0 25px rgba(255,255,255,0.9), 0 0 50px rgba(255,214,10,0.7)}50%{box-shadow:0 0 0 4px rgba(255,255,255,0.7), 0 0 40px rgba(255,255,255,1), 0 0 70px rgba(255,214,10,1)}}
-  .card.nope-active::before{content:'NOPE!';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;color:#ff4757;font-size:10px;font-weight:900;padding:2px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);z-index:10;animation:nopeLabelPulse 0.8s ease-in-out infinite}
-  @keyframes nopeLabelPulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.1)}}
+  .card.nope-active{border-color:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,0.5), 0 0 25px rgba(255,255,255,0.9), 0 0 50px rgba(255,214,10,0.7)!important;cursor:pointer!important;z-index:9}
+  .card.nope-active:hover{transform:translateY(-14px) scale(1.06) translateZ(0)}
+  .card.nope-active::before{content:'NOPE!';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;color:#ff4757;font-size:10px;font-weight:900;padding:2px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);z-index:10}
   .card-img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
   .card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:11px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff6b5b,#d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:0.5px}
   .card.no-img .card-img{display:none}
@@ -308,23 +257,22 @@
   .card.selected{border-color:#00ff88!important;box-shadow:0 0 0 3px #00cc66, 0 0 25px #00ff88, 0 0 50px rgba(0,255,136,0.5)!important;z-index:8!important}
   .card.selected::after{content:'✓';position:absolute;top:-8px;right:-8px;background:#00cc66;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.4);z-index:10}
   
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.98);color:#0f1530;padding:14px 26px;border-radius:12px;font-weight:800;z-index:10000;animation:toastIn .3s ease-out;font-size:14px;max-width:90%;text-align:center;border:2px solid rgba(255,255,255,0.8);backdrop-filter:blur(20px);box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.98);color:#0f1530;padding:14px 26px;border-radius:12px;font-weight:800;z-index:10000;animation:toastIn .25s ease-out;font-size:14px;max-width:90%;text-align:center;border:2px solid rgba(255,255,255,0.8);box-shadow:0 12px 40px rgba(0,0,0,0.5)}
   @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
   
-  /* Flying card */
-  .anim-card{position:fixed;display:flex;align-items:center;justify-content:center;background:#1a0f0d;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.85), 0 0 30px rgba(255,255,255,0.4);border:3px solid rgba(255,255,255,0.9);overflow:hidden;z-index:5000}
+  .anim-card{position:fixed;display:flex;align-items:center;justify-content:center;background:#1a0f0d;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.85), 0 0 30px rgba(255,255,255,0.4);border:3px solid rgba(255,255,255,0.9);overflow:hidden;z-index:5000;transform:translateZ(0)}
   .anim-card-img{width:100%;height:100%;object-fit:cover;display:block}
   .anim-card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:12px;font-size:14px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff6b5b,#d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:1px}
   .anim-card.no-img .anim-card-img{display:none}
   .anim-card.no-img .anim-card-fallback{display:flex}
-  .anim-card-back{width:100%;height:100%;background:linear-gradient(135deg,#ff6b5b 0%,#d93828 100%);position:relative;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:rgba(255,255,255,0.4);text-shadow:0 4px 10px rgba(0,0,0,0.3)}
+  .anim-card-back{width:100%;height:100%;background:linear-gradient(135deg,#ff6b5b 0%,#d93828 100%);position:relative;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:rgba(255,255,255,0.4)}
   .anim-card-back::before{content:'';position:absolute;inset:8px;border:2px dashed rgba(255,255,255,0.4);border-radius:8px}
   
   /* Chat */
-  .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;backdrop-filter:blur(4px)}
+  .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none}
   .chat-ov.on{display:block}
   .chat-p{position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);width:320px;height:400px;border-radius:16px;display:flex;flex-direction:column;z-index:201;transition:transform .3s;
-    background:linear-gradient(135deg,rgba(40,40,80,0.97),rgba(20,20,45,0.97));border:1px solid rgba(255,255,255,0.28);backdrop-filter:blur(30px);overflow:hidden}
+    background:linear-gradient(135deg,rgba(40,40,80,0.97),rgba(20,20,45,0.97));border:1px solid rgba(255,255,255,0.28);overflow:hidden}
   .chat-p.on{transform:translateY(-50%) translateX(0)}
   .chat-h{padding:14px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;justify-content:space-between;align-items:center;font-weight:800;color:#fff}
   .chat-x{cursor:pointer;font-size:20px;color:#ff6b5b;padding:0 5px}
@@ -333,85 +281,76 @@
   .chat-i{display:flex;padding:12px;gap:8px;border-top:1px solid rgba(255,255,255,0.15)}
   .chat-i input{padding:8px;font-size:14px;border-radius:8px}
   .chat-i button{padding:8px 14px;font-size:14px;border-radius:8px}
-  .chat-f{position:fixed;right:20px;bottom:200px;z-index:100;padding:12px 16px;border-radius:12px;cursor:pointer;background:#fff;backdrop-filter:blur(20px);border:2px solid rgba(255,255,255,0.9);font-weight:900;font-size:14px;display:none;color:#0f1530;box-shadow:0 8px 24px rgba(255,255,255,0.4)}
+  .chat-f{position:fixed;right:20px;bottom:200px;z-index:100;padding:12px 16px;border-radius:12px;cursor:pointer;background:#fff;border:2px solid rgba(255,255,255,0.9);font-weight:900;font-size:14px;display:none;color:#0f1530;box-shadow:0 8px 24px rgba(255,255,255,0.4)}
   .chat-f.on{display:block}
   
   /* Modal */
-  .ov{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(14px);display:flex;justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,0.78);display:flex;justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .25s ease;padding:20px}
   .ov.on{opacity:1;pointer-events:auto}
-  .modal{width:100%;max-width:600px;padding:30px;border-radius:0;--cut:28px;display:flex;flex-direction:column;gap:14px;text-align:center;transform:scale(.9);transition:.3s;max-height:90vh;overflow-y:auto;position:relative}
+  .modal{width:100%;max-width:600px;padding:30px;--cut:28px;display:flex;flex-direction:column;gap:14px;text-align:center;transform:scale(.94);transition:transform .25s ease;max-height:90vh;overflow-y:auto;position:relative}
   .ov.on .modal{transform:scale(1)}
-  .modal h2{font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;text-shadow:0 2px 10px rgba(255,255,255,0.3)}
+  .modal h2{font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
   .modal p{font-size:13px;color:var(--white-dim)}
-  .modal-close{position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,0.9);color:#0f1530;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;z-index:10;box-shadow:0 4px 16px rgba(255,255,255,0.3);padding:0}
-  .modal-close::before{display:none}
-  .modal-close:hover{background:#ff4757;color:#fff;transform:rotate(90deg) scale(1.1);box-shadow:0 0 25px rgba(255,71,87,0.7)}
+  .modal-close{position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,0.9);color:#0f1530;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s, color .2s, transform .2s;z-index:10;box-shadow:0 4px 16px rgba(255,255,255,0.3);padding:0;transform:translateZ(0)}
+  .modal-close:hover{background:#ff4757;color:#fff;transform:rotate(90deg) scale(1.1) translateZ(0)}
   
   .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:13px;gap:10px;align-items:center;color:#fff}
   .stat-row:last-child{border:none}
   .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:#0f1530;border:2px solid #fff;border-radius:8px;cursor:pointer;font-weight:900}
-  .retry-btn::before{display:none}
   
   /* Profile */
   .profile-hero-new{position:relative;padding:38px 20px 26px;margin:-30px -30px 20px;
     background:linear-gradient(135deg,rgba(255,255,255,0.28),rgba(200,140,255,0.18),rgba(124,199,255,0.15));
     border-bottom:1.5px solid rgba(255,255,255,0.4);overflow:hidden}
-  .profile-hero-new::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-    background:radial-gradient(circle at 30% 40%,rgba(255,255,255,0.3),transparent 50%),
-      radial-gradient(circle at 70% 60%,rgba(200,140,255,0.3),transparent 50%);
-    animation:heroFloat 10s ease-in-out infinite}
-  @keyframes heroFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-10px) scale(1.1)}}
   .profile-hero-new > *{position:relative;z-index:1}
   .profile-avatar-big{width:110px;height:110px;border-radius:24px;margin:0 auto 14px;background:#fff;
     display:flex;align-items:center;justify-content:center;font-size:54px;border:3px solid rgba(255,255,255,0.9);
-    box-shadow:0 14px 44px rgba(255,255,255,0.4),0 0 60px rgba(200,140,255,0.4);
-    overflow:hidden;cursor:pointer;transition:transform .3s}
-  .profile-avatar-big:hover{transform:scale(1.06) rotate(-4deg)}
+    box-shadow:0 14px 44px rgba(255,255,255,0.4);
+    overflow:hidden;cursor:pointer;transition:transform .2s}
+  .profile-avatar-big:hover{transform:scale(1.04)}
   .profile-avatar-big img{width:100%;height:100%;object-fit:cover}
-  .profile-name-new{font-size:26px;font-weight:900;letter-spacing:1px;color:#fff;text-shadow:0 2px 12px rgba(255,255,255,0.4)}
+  .profile-name-new{font-size:26px;font-weight:900;letter-spacing:1px;color:#fff}
   .profile-tags{display:flex;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap}
   .profile-tag{font-size:10px;font-weight:900;padding:4px 12px;border-radius:8px;letter-spacing:1px;text-transform:uppercase}
-  .profile-tag.admin{background:#ffd60a;color:#0f1530;box-shadow:0 2px 10px rgba(255,214,10,0.5)}
+  .profile-tag.admin{background:#ffd60a;color:#0f1530}
   .profile-tag.guest{background:linear-gradient(135deg,#888,#556);color:#fff}
   .profile-tag.level{background:linear-gradient(135deg,#ffd60a,#ff9e00);color:#000}
   
   .profile-stats-new{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 16px}
   .stat-card-new{padding:18px 8px;border-radius:14px;text-align:center;
     background:linear-gradient(135deg,rgba(255,255,255,0.24),rgba(255,255,255,0.06));
-    border:1.5px solid rgba(255,255,255,0.35);position:relative;overflow:hidden;transition:transform .25s}
-  .stat-card-new:hover{transform:translateY(-3px);border-color:#fff}
+    border:1.5px solid rgba(255,255,255,0.35);position:relative;overflow:hidden;transition:transform .2s}
+  .stat-card-new:hover{transform:translateY(-2px);border-color:#fff}
   .stat-card-new::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#fff}
-  .stat-card-value-new{font-size:24px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(255,255,255,0.4)}
+  .stat-card-value-new{font-size:24px;font-weight:900;color:#fff}
   .stat-card-label-new{font-size:10px;color:var(--white-dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:800}
   
   .avatar-picker-new{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
   @media(min-width:520px){.avatar-picker-new{grid-template-columns:repeat(6,1fr)}}
   .avatar-opt{aspect-ratio:1;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;
     background:rgba(255,255,255,0.1);cursor:pointer;border:2.5px solid transparent;
-    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;position:relative}
+    transition:transform .2s, background .2s, border-color .2s;overflow:hidden;position:relative;transform:translateZ(0)}
   .avatar-opt img{width:100%;height:100%;object-fit:cover}
-  .avatar-opt:hover{background:rgba(255,255,255,0.25);transform:scale(1.08);border-color:rgba(255,255,255,0.6)}
-  .avatar-opt.selected{border-color:#fff;background:rgba(255,255,255,0.3);box-shadow:0 0 20px rgba(255,255,255,0.7)}
+  .avatar-opt:hover{background:rgba(255,255,255,0.25);transform:scale(1.05) translateZ(0);border-color:rgba(255,255,255,0.6)}
+  .avatar-opt.selected{border-color:#fff;background:rgba(255,255,255,0.3)}
   .avatar-opt.selected::after{content:'✓';position:absolute;top:2px;right:2px;width:20px;height:20px;background:#fff;color:#0f1530;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
   
   /* Keypad */
   .keypad-modal{display:flex;flex-direction:column;gap:20px;align-items:center;max-width:400px;margin:0 auto}
   .keypad-display{display:flex;gap:8px;justify-content:center;margin:10px 0 16px}
-  .code-slot{width:52px;height:66px;border-radius:12px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;transition:all .2s}
-  .code-slot.filled{background:#fff;color:#0f1530;border-color:#fff;box-shadow:0 4px 14px rgba(255,255,255,0.4)}
-  .code-slot.active{border-color:#fff;animation:slotPulse 1s ease-in-out infinite}
-  @keyframes slotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.5)}50%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
+  .code-slot{width:52px;height:66px;border-radius:12px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;transition:background .2s, border-color .2s}
+  .code-slot.filled{background:#fff;color:#0f1530;border-color:#fff}
+  .code-slot.active{border-color:#fff}
   .keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:320px}
-  .keypad-key{aspect-ratio:1.15;font-size:22px;font-weight:900;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.08));border:1.5px solid rgba(255,255,255,0.3);color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.3);font-family:inherit}
-  .keypad-key:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(255,255,255,0.32),rgba(255,255,255,0.12))}
-  .keypad-key:active{transform:scale(0.94)}
+  .keypad-key{aspect-ratio:1.15;font-size:22px;font-weight:900;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.08));border:1.5px solid rgba(255,255,255,0.3);color:#fff;cursor:pointer;transition:transform .15s;font-family:inherit;transform:translateZ(0)}
+  .keypad-key:hover{transform:translateY(-2px) translateZ(0)}
+  .keypad-key:active{transform:scale(0.94) translateZ(0)}
   .keypad-key.del{background:linear-gradient(180deg,rgba(255,71,87,0.5),rgba(180,30,20,0.4));font-size:20px}
-  .keypad-key.confirm{background:#fff;color:#0f1530;font-size:20px;box-shadow:0 6px 20px rgba(255,255,255,0.4)}
+  .keypad-key.confirm{background:#fff;color:#0f1530;font-size:20px}
   
   /* Friends */
   .friend-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.4);border-radius:12px;margin-bottom:10px}
-  .friend-tab{flex:1;padding:9px;border-radius:8px;cursor:pointer;font-weight:800;font-size:11px;transition:all .2s;border:none;background:transparent;color:var(--white-mute);box-shadow:none;position:relative}
-  .friend-tab::before{display:none}
+  .friend-tab{flex:1;padding:9px;border-radius:8px;cursor:pointer;font-weight:800;font-size:11px;transition:background .2s, color .2s;border:none;background:transparent;color:var(--white-mute);box-shadow:none;position:relative;overflow:visible}
   .friend-tab.active{background:#fff;color:#0f1530}
   .friend-tab:hover:not(.active){color:#fff;transform:none;box-shadow:none}
   .friend-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.28)}
@@ -429,8 +368,7 @@
   
   /* Info tabs */
   .info-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.4);border-radius:12px;margin-bottom:10px}
-  .info-tab{flex:1;padding:9px;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--white-mute);box-shadow:none;position:relative}
-  .info-tab::before{display:none}
+  .info-tab{flex:1;padding:9px;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;transition:background .2s, color .2s;border:none;background:transparent;color:var(--white-mute);box-shadow:none;position:relative;overflow:visible}
   .info-tab.active{background:#fff;color:#0f1530}
   .info-tab:hover:not(.active){color:#fff;transform:none;box-shadow:none}
   
@@ -450,45 +388,16 @@
   .card-list-name{font-size:12px;font-weight:900;color:#fff;margin-bottom:3px}
   .card-list-desc{font-size:10.5px;color:var(--white-dim);line-height:1.4}
   
-  /* Alter future */
   .alter-slot{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25)}
   .alter-slot-label{font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:1px;width:60px;text-align:center}
   .alter-slot .card{width:64px;height:92px;flex-shrink:0}
   .alter-arrows{display:flex;flex-direction:column;gap:4px}
   .alter-arrows button{padding:4px 10px;font-size:14px}
   
-  /* ===== ADMIN FLOATING BUTTON + PANEL (in-game) ===== */
-  .admin-fab{position:fixed;bottom:200px;left:20px;z-index:150;width:56px;height:56px;border-radius:50%;
-    background:linear-gradient(135deg,#ffd60a,#ff9e00);border:3px solid #fff;color:#0f1530;
-    display:none;align-items:center;justify-content:center;font-size:24px;cursor:pointer;
-    box-shadow:0 8px 24px rgba(255,214,10,0.6), 0 0 30px rgba(255,214,10,0.4);
-    animation:adminFabPulse 2s ease-in-out infinite;font-weight:900}
-  .admin-fab.on{display:flex}
-  .admin-fab::before{display:none}
-  @keyframes adminFabPulse{0%,100%{box-shadow:0 8px 24px rgba(255,214,10,0.6), 0 0 30px rgba(255,214,10,0.4)}50%{box-shadow:0 8px 32px rgba(255,214,10,0.9), 0 0 50px rgba(255,214,10,0.7)}}
-  .admin-fab:hover{transform:scale(1.1) rotate(15deg)}
-  
-  .admin-panel-game{position:fixed;bottom:80px;left:20px;z-index:151;width:300px;
-    border-radius:16px;background:linear-gradient(135deg,rgba(30,25,10,0.98),rgba(60,40,10,0.98));
-    border:2px solid rgba(255,214,10,0.6);backdrop-filter:blur(30px);overflow:hidden;
-    box-shadow:0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(255,214,10,0.4);
-    transform:translateY(20px) scale(0.95);opacity:0;pointer-events:none;transition:all .3s cubic-bezier(0.34,1.56,0.64,1)}
-  .admin-panel-game.on{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
-  .admin-panel-game h3{padding:12px 16px;font-size:13px;font-weight:900;color:#ffd60a;letter-spacing:1.5px;text-transform:uppercase;background:rgba(255,214,10,0.15);border-bottom:1px solid rgba(255,214,10,0.3)}
-  .admin-panel-game .admin-actions{padding:10px;display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto}
-  .admin-action{padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,214,10,0.3);
-    color:#fff;font-size:12px;font-weight:700;cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:8px;position:relative}
-  .admin-action::before{display:none}
-  .admin-action:hover{background:rgba(255,214,10,0.2);border-color:#ffd60a;transform:translateX(4px)}
-  .admin-action.danger{background:rgba(255,71,87,0.2);border-color:rgba(255,71,87,0.5)}
-  .admin-action.danger:hover{background:rgba(255,71,87,0.4);border-color:#ff4757}
-  .admin-action .icon{font-size:16px;flex-shrink:0}
-  
-  /* Reveal hands modal */
-  .hand-reveal-item{padding:12px;border-radius:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);margin-bottom:8px;text-align:left}
-  .hand-reveal-name{font-size:12px;font-weight:900;color:#ffd60a;margin-bottom:6px}
-  .hand-reveal-cards{display:flex;flex-wrap:wrap;gap:4px}
-  .hand-reveal-card{padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.15);font-size:10px;font-weight:800;color:#fff}
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:0.001ms !important;animation-iteration-count:1 !important;transition-duration:0.001ms !important}
+  }
   
   @media (max-width:600px){
     .card{width:78px;height:112px}
@@ -505,8 +414,8 @@
     .played-showcase .ps-card{width:160px;height:230px}
     .action-notification{padding:12px 20px;min-width:240px}
     .action-notification .an-body{font-size:15px}
-    .admin-fab{width:48px;height:48px;font-size:20px;bottom:170px}
-    .admin-panel-game{width:calc(100vw - 40px);left:20px;right:20px}
+    .blob{filter:blur(30px)}
+    .liquid{backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%)}
   }
 </style>
 </head>
@@ -515,7 +424,6 @@
 <div class="blob blob-1"></div>
 <div class="blob blob-2"></div>
 <div class="blob blob-3"></div>
-<div class="blob blob-4"></div>
 <div class="bg-grid"></div>
 
 <!-- AUTH -->
@@ -632,7 +540,7 @@
     <div class="badge hot" id="uiTurn">Lượt: ...</div>
     <div class="badge">Bài: <b id="uiDeck">0</b></div>
     <div class="badge" id="uiTurnsLeft" style="display:none;background:#fff;color:#0f1530">×1</div>
-    <span id="uiAdminBadgeGame" style="display:none" class="admin-badge">👑 ADMIN</span>
+    <span id="uiAdminBadgeGame" class="admin-badge" style="display:none">👑 ADMIN</span>
     <button onclick="UI.leaveRoom()" style="padding:6px 14px;font-size:11px;background:rgba(255,71,87,0.5);border:1.5px solid #ff4757;color:#fff">Thoát</button>
   </div>
   <div class="opps" id="opponentsArea"></div>
@@ -648,23 +556,7 @@
   </div>
 </div>
 
-<!-- Admin FAB + Panel (in-game) -->
-<div class="admin-fab" id="adminFab" onclick="UI.toggleAdminGamePanel()">👑</div>
-<div class="admin-panel-game" id="adminGamePanel">
-  <h3>👑 Admin Actions</h3>
-  <div class="admin-actions">
-    <div class="admin-action" onclick="UI.adminResolvePending()"><span class="icon">⚡</span>Force Resolve Pending</div>
-    <div class="admin-action" onclick="UI.adminSkipTurn()"><span class="icon">⏭️</span>Skip Current Turn</div>
-    <div class="admin-action" onclick="UI.adminRevealHands()"><span class="icon">👁️</span>Reveal All Hands</div>
-    <div class="admin-action" onclick="UI.adminAddTurn()"><span class="icon">➕</span>Add Turn (self +1)</div>
-    <div class="admin-action" onclick="UI.adminSpawnCard()"><span class="icon">🎴</span>Spawn Card to Deck</div>
-    <div class="admin-action" onclick="UI.adminKillPlayer()"><span class="icon">💀</span>Eliminate Player</div>
-    <div class="admin-action" onclick="UI.adminEndGame()"><span class="icon">🏁</span>End Game</div>
-    <div class="admin-action danger" onclick="UI.adminForceLeave()"><span class="icon">🚪</span>Force Leave Room</div>
-  </div>
-</div>
-
-<!-- Played card showcase -->
+<!-- Played showcase -->
 <div class="played-showcase" id="playedShowcase">
   <div class="ps-card" id="psCard"></div>
   <div class="ps-name" id="psName"></div>
@@ -689,9 +581,7 @@
 </div>
 
 <script>
-window.addEventListener('error', e => {
-  console.error('[Global Error]', e.message);
-});
+window.addEventListener('error', e => console.error('[Global Error]', e.message));
 
 /* ===== CONSTANTS ===== */
 const IMAGE_BASE = 'https://azerst-image-vn.vercel.app/images/';
@@ -699,19 +589,18 @@ const PHOTO_AVATAR = 'https://azerst-image-vn.vercel.app/images/3CORZB1YF.png';
 const MAHIIRU_AVATAR = 'https://azerst-image-vn.vercel.app/images/Mahiiru.png';
 
 const CARD_TYPES = {
-  EK:{name:'Mèo Nổ',short:'BOM',images:['BOM_1','BOM_2','BOM_3'],desc:'Rút trúng = thua',how:'Khi bốc phải lá này, bạn PHẢI có Gỡ Bom để tự cứu.'},
-  DEFUSE:{name:'Gỡ Bom',short:'GỠ BOM',images:['GO_BOM_1','GO_BOM_2','GO_BOM_3','GO_BOM_4'],desc:'Cứu mạng khi nổ',how:'Dùng khi bốc phải Mèo Nổ. Đặt lại Mèo Nổ vào vị trí bất kỳ.'},
-  NOPE:{name:'Nope',short:'NOPE',images:['NOPE_1','NOPE_2','NOPE_3'],desc:'Chặn hành động',how:'Khi ai dùng lá bài (trừ Mèo Nổ/Gỡ Bom), bạn có thể NOPE để hủy.'},
-  ATTACK:{name:'Tấn Công',short:'TẤN CÔNG',images:['TAN_CONG_1','TAN_CONG_2','TAN_CONG_3'],desc:'Ép người sau +2 lượt',how:'Người kế tiếp phải bốc 2 lần.'},
-  SKIP:{name:'Bỏ Lượt',short:'BỎ LƯỢT',images:['BO_LUOT_1','BO_LUOT_2','BO_LUOT_3'],desc:'Bỏ lượt không rút bài',how:'Kết thúc lượt hiện tại mà không bốc.'},
-  SEE_FUTURE:{name:'Nhìn Trước',short:'NHÌN TRƯỚC',images:['NHIN_TRUOC_TUONG_LAI_1','NHIN_TRUOC_TUONG_LAI_2','NHIN_TRUOC_TUONG_LAI_3'],desc:'Xem 3 lá trên cùng',how:'Xem 3 lá trên cùng bộ bài.'},
-  ALTER_FUTURE:{name:'Biến Đổi Tương Lai',short:'BIẾN ĐỔI',images:['BIEN_DOI_TUONG_LAI_1','BIEN_DOI_TUONG_LAI_2','BIEN_DOI_TUONG_LAI_3'],desc:'Sắp xếp lại 3 lá trên',how:'Xem VÀ sắp xếp lại 3 lá trên cùng.'},
-  SHUFFLE:{name:'Xào Bài',short:'XÀO BÀI',images:['XAO_BAI_1','XAO_BAI_2','XAO_BAI_3'],desc:'Xáo trộn bộ bài',how:'Xáo lại toàn bộ bộ bài chưa rút.'},
-  FAVOR:{name:'Xin Xỏ',short:'XIN BÀI',images:['XIN_XO_1','XIN_XO_2','XIN_XO_3'],desc:'Xin 1 lá từ đối thủ',how:'Chọn 1 đối thủ, họ phải đưa 1 lá ngẫu nhiên.'},
-  RUT_TU_DAY:{name:'Rút Từ Đáy',short:'RÚT ĐÁY',images:['RUT_TU_DAY_1','RUT_TU_DAY_2','RUT_TU_DAY_3'],desc:'Rút từ dưới đáy bộ bài',how:'Rút lá dưới cùng thay vì trên cùng.'},
-  CAT:{name:'Mèo Thường',short:'MÈO',images:['MEO_THUONG_1','MEO_THUONG_2','MEO_THUONG_3','MEO_THUONG_4','MEO_THUONG_5'],desc:'Combo 2+ CÙNG LOẠI cướp bài',how:'Đánh 2 lá CÙNG LOẠI: cướp 1 lá. Đánh 3 lá CÙNG LOẠI: gọi tên lá cụ thể.'}
+  EK:{name:'Mèo Nổ',short:'BOM',images:['BOM_1','BOM_2','BOM_3'],desc:'Rút trúng = thua',how:''},
+  DEFUSE:{name:'Gỡ Bom',short:'GỠ BOM',images:['GO_BOM_1','GO_BOM_2','GO_BOM_3','GO_BOM_4'],desc:'Cứu mạng khi nổ',how:''},
+  NOPE:{name:'Nope',short:'NOPE',images:['NOPE_1','NOPE_2','NOPE_3'],desc:'Chặn hành động',how:''},
+  ATTACK:{name:'Tấn Công',short:'TẤN CÔNG',images:['TAN_CONG_1','TAN_CONG_2','TAN_CONG_3'],desc:'Ép người sau +2 lượt',how:''},
+  SKIP:{name:'Bỏ Lượt',short:'BỎ LƯỢT',images:['BO_LUOT_1','BO_LUOT_2','BO_LUOT_3'],desc:'Bỏ lượt không rút bài',how:''},
+  SEE_FUTURE:{name:'Nhìn Trước',short:'NHÌN TRƯỚC',images:['NHIN_TRUOC_TUONG_LAI_1','NHIN_TRUOC_TUONG_LAI_2','NHIN_TRUOC_TUONG_LAI_3'],desc:'Xem 3 lá trên cùng',how:''},
+  ALTER_FUTURE:{name:'Biến Đổi Tương Lai',short:'BIẾN ĐỔI',images:['BIEN_DOI_TUONG_LAI_1','BIEN_DOI_TUONG_LAI_2','BIEN_DOI_TUONG_LAI_3'],desc:'Sắp xếp lại 3 lá trên',how:''},
+  SHUFFLE:{name:'Xào Bài',short:'XÀO BÀI',images:['XAO_BAI_1','XAO_BAI_2','XAO_BAI_3'],desc:'Xáo trộn bộ bài',how:''},
+  FAVOR:{name:'Xin Xỏ',short:'XIN BÀI',images:['XIN_XO_1','XIN_XO_2','XIN_XO_3'],desc:'Xin 1 lá từ đối thủ',how:''},
+  RUT_TU_DAY:{name:'Rút Từ Đáy',short:'RÚT ĐÁY',images:['RUT_TU_DAY_1','RUT_TU_DAY_2','RUT_TU_DAY_3'],desc:'Rút từ dưới đáy bộ bài',how:''},
+  CAT:{name:'Mèo Thường',short:'MÈO',images:['MEO_THUONG_1','MEO_THUONG_2','MEO_THUONG_3','MEO_THUONG_4','MEO_THUONG_5'],desc:'Combo 2+ CÙNG LOẠI cướp bài',how:''}
 };
-
 function makeCard(type){
   const t = CARD_TYPES[type];
   if(!t) return type + '#0';
@@ -790,7 +679,7 @@ const VFX = {
 
 /* ===== AUTH ===== */
 const Auth = {
-  KEY:'ek_accounts_v6', USER_KEY:'ek_current_user_v6', GUEST_KEY:'ek_guest_v6',
+  KEY:'ek_accounts_v7', USER_KEY:'ek_current_user_v7', GUEST_KEY:'ek_guest_v7',
   ADMIN:{username:'vanbacazerst.vn2908', password:'aBc@2908vanbac0809'},
   init(){
     const accounts = this.all();
@@ -864,7 +753,6 @@ const Auth = {
     accounts[u].avatar = avatar;
     this._save(accounts);
   },
-  // ADMIN tools
   adminDelete(username){
     const accs = this.all();
     if(!accs[username]) return false;
@@ -907,7 +795,7 @@ const Auth = {
 
 /* ===== SOCIAL ===== */
 const Social = {
-  KEY_REQ:'ek_requests_v6', KEY_FRIENDS:'ek_friends_v6', KEY_INVITES:'ek_team_invites_v6',
+  KEY_REQ:'ek_requests_v7', KEY_FRIENDS:'ek_friends_v7', KEY_INVITES:'ek_team_invites_v7',
   allRequests(){try{return JSON.parse(localStorage.getItem(this.KEY_REQ)||'[]')}catch{return []}},
   _saveReqs(r){localStorage.setItem(this.KEY_REQ, JSON.stringify(r))},
   allFriends(){try{return JSON.parse(localStorage.getItem(this.KEY_FRIENDS)||'{}')}catch{return {}}},
@@ -986,7 +874,6 @@ const Social = {
 /* ===== ENGINE ===== */
 const Engine = {
   state:null, hostId:null, pendingTimer:null, choiceTimer:null, onChange:null,
-
   createGame(players, hostId, botMode='smart'){
     this.hostId = hostId;
     this.state = {
@@ -1003,7 +890,6 @@ const Engine = {
     this.log(`${this.state.players[this.state.turnIdx].name} đi trước!`);
     this.notify();
   },
-
   setupDeck(){
     const n = this.state.players.length;
     const deck = this.state.deck;
@@ -1023,13 +909,11 @@ const Engine = {
     for(let i=0;i<n-1;i++) deck.push(makeCard('EK'));
     U.shuffle(deck);
   },
-
   cur(){return this.state.players[this.state.turnIdx]},
   byId(id){return this.state.players.find(p=>p.id===id)},
   alive(){return this.state.players.filter(p=>p.alive)},
   log(msg){this.state.logs.push(msg);if(this.state.logs.length>30)this.state.logs.shift()},
   notify(meta){if(this.onChange)this.onChange(meta)},
-
   endTurn(){
     this.state.pending=null;this.state.peekFor=null;this.state.alterFor=null;this.state.awaitingChoice=null;
     clearTimeout(this.pendingTimer);clearTimeout(this.choiceTimer);
@@ -1040,7 +924,6 @@ const Engine = {
     this.log(`Lượt của ${this.cur().name}`);
     this.notify({type:'turn'});
   },
-
   advanceTo(turns){
     this.state.pending=null;this.state.peekFor=null;this.state.alterFor=null;this.state.awaitingChoice=null;
     clearTimeout(this.pendingTimer);clearTimeout(this.choiceTimer);
@@ -1051,7 +934,6 @@ const Engine = {
     this.log(`Lượt của ${this.cur().name} (${turns} lượt)`);
     this.notify({type:'turn'});
   },
-
   canAct(playerId, action){
     if(this.state.phase!=='playing') return false;
     const p=this.byId(playerId);
@@ -1067,14 +949,12 @@ const Engine = {
     if(this.cur().id!==playerId) return false;
     return true;
   },
-
   playCards(playerId, cardTypes, targetId, payload={}){
     if(!this.canAct(playerId,'play')) return false;
     const p = this.byId(playerId);
     const primary = cardTypes[0];
     const primaryType = cardType(primary);
     if(['EK','DEFUSE','NOPE'].includes(primaryType)) return false;
-
     const tempHand = [...p.hand];
     for(const c of cardTypes){
       const idx = tempHand.indexOf(c);
@@ -1104,7 +984,6 @@ const Engine = {
     this.notify({type:'play', playerId, primaryType});
     return true;
   },
-
   scheduleResolve(){
     clearTimeout(this.pendingTimer);
     const pending = this.state.pending;
@@ -1113,7 +992,6 @@ const Engine = {
       if(this.state.pending===pending) this.resolvePending();
     }, winMs);
   },
-
   playNope(playerId){
     if(!this.state.pending) return false;
     const p = this.byId(playerId);
@@ -1130,7 +1008,6 @@ const Engine = {
     this.notify({type:'nope'});
     return true;
   },
-
   resolvePending(){
     clearTimeout(this.pendingTimer);
     const pending = this.state.pending;
@@ -1143,7 +1020,6 @@ const Engine = {
     }
     const p = this.byId(pending.playerId);
     if(!p||!p.alive){this.notify({type:'resolve',cancelled:true});return;}
-
     switch(pending.primaryType){
       case 'ATTACK':{
         const nextTurns = this.state.turnsLeft + 1;
@@ -1157,11 +1033,7 @@ const Engine = {
         else this.notify({type:'resolve'});
         return;
       }
-      case 'SHUFFLE':{
-        U.shuffle(this.state.deck);
-        this.log(`${p.name} xáo bài.`);
-        break;
-      }
+      case 'SHUFFLE':{ U.shuffle(this.state.deck); this.log(`${p.name} xáo bài.`); break; }
       case 'SEE_FUTURE':{
         const top=[];
         for(let i=0;i<3&&i<this.state.deck.length;i++) top.push(this.state.deck[this.state.deck.length-1-i]);
@@ -1212,7 +1084,6 @@ const Engine = {
     }
     this.notify({type:'resolve'});
   },
-
   _armChoiceTimeout(){
     clearTimeout(this.choiceTimer);
     this.choiceTimer = setTimeout(() => {
@@ -1220,15 +1091,12 @@ const Engine = {
       if(!choice) return;
       if(choice.type === 'favor'){
         const t = this.byId(choice.targetId);
-        if(t && t.hand.length > 0){
-          this.resolveFavor(t.id, Math.floor(Math.random() * t.hand.length));
-        }
+        if(t && t.hand.length > 0) this.resolveFavor(t.id, Math.floor(Math.random() * t.hand.length));
       } else if(choice.type === 'defuse'){
         this.placeDefuse(choice.playerId, 'random');
       }
     }, CHOICE_TIMEOUT);
   },
-
   applyAlterFuture(playerId, order){
     if(!this.state.alterFor) return false;
     if(this.state.alterFor.playerId !== playerId) return false;
@@ -1238,7 +1106,6 @@ const Engine = {
     this.notify();
     return true;
   },
-
   doCatCombo(p, targetId, count, payload){
     const t = this.byId(targetId);
     if(!t||!t.alive||t.hand.length===0) return;
@@ -1262,11 +1129,8 @@ const Engine = {
         this.log(`${t.name} không có ${CARD_TYPES[wantedType].name}.`);
       }
     }
-    if(stolen){
-      this.state.lastSteal = {thiefId:p.id, victimId:t.id, card:stolen, id:Math.random()};
-    }
+    if(stolen) this.state.lastSteal = {thiefId:p.id, victimId:t.id, card:stolen, id:Math.random()};
   },
-
   drawCard(playerId){
     if(!this.canAct(playerId,'draw')) return false;
     const p = this.byId(playerId);
@@ -1294,7 +1158,6 @@ const Engine = {
     }
     return true;
   },
-
   handleEK(p, ekCard){
     const card = ekCard || makeCard('EK');
     this.state.discard.push(card);
@@ -1320,7 +1183,6 @@ const Engine = {
       this.notify({type:'defuse-prompt', playerId:p.id});
     }
   },
-
   placeDefuse(playerId, pos){
     if(!this.state.awaitingChoice||this.state.awaitingChoice.type!=='defuse') return false;
     if(this.state.awaitingChoice.playerId!==playerId) return false;
@@ -1339,7 +1201,6 @@ const Engine = {
     else this.notify({type:'defuse-done'});
     return true;
   },
-
   resolveFavor(targetId, cardIdx){
     if(!this.state.awaitingChoice||this.state.awaitingChoice.type!=='favor') return false;
     const {fromId, targetId:exp} = this.state.awaitingChoice;
@@ -1358,14 +1219,12 @@ const Engine = {
     this.notify({type:'favor-done'});
     return true;
   },
-
   clearPeek(playerId){
     if(this.state.peekFor?.playerId!==playerId) return false;
     this.state.peekFor = null;
     this.notify({type:'peek-cleared'});
     return true;
   },
-
   handlePlayerDisconnect(playerId){
     const p = this.byId(playerId);
     if(!p||!p.alive) return;
@@ -1373,7 +1232,6 @@ const Engine = {
     this.state.discard.push(...p.hand);
     p.hand = [];
     this.log(`${p.name} đã thoát!`);
-    
     if(this.state.peekFor?.playerId === playerId) this.state.peekFor = null;
     if(this.state.alterFor?.playerId === playerId) this.state.alterFor = null;
     if(this.state.awaitingChoice?.playerId === playerId || this.state.awaitingChoice?.targetId === playerId) {
@@ -1384,12 +1242,10 @@ const Engine = {
       this.state.pending = null;
       clearTimeout(this.pendingTimer);
     }
-    
     if(this.checkWin()) return;
     if(this.state.players[this.state.turnIdx]?.id === playerId) this.endTurn();
     else this.notify();
   },
-
   checkWin(){
     const alive = this.alive();
     if(alive.length<=1){
@@ -1415,7 +1271,6 @@ const Net = {
   playerByConn:new Map(),
   onHostReady:null,onClientDisconnect:null,onJoin:null,onAction:null,onChat:null,
   onState:null,onLobby:null,onStart:null,onHostLeft:null,onError:null,onConnectSuccess:null,onNewCode:null,
-
   host(code){
     this.roomCode = code; this.isHost = true; this.retryCount = 0;
     this.playerByConn.clear();
@@ -1424,7 +1279,7 @@ const Net = {
   _createHostPeer(code){
     if(typeof Peer === 'undefined'){if(this.onError) this.onError('Thư viện mạng chưa tải.');return;}
     try{
-      this.peer = new Peer('ek_room_v6_'+code, {config:{iceServers:[{url:'stun:stun.l.google.com:19302'},{url:'stun:stun1.l.google.com:19302'},{url:'stun:stun2.l.google.com:19302'}]}});
+      this.peer = new Peer('ek_room_v7_'+code, {config:{iceServers:[{url:'stun:stun.l.google.com:19302'},{url:'stun:stun1.l.google.com:19302'},{url:'stun:stun2.l.google.com:19302'}]}});
     }catch(e){if(this.onError) this.onError('Lỗi khởi tạo: '+e.message);return;}
     const timeout = setTimeout(() => {
       if(this.peer && !this.peer.destroyed && !this.peer.open){
@@ -1475,7 +1330,7 @@ const Net = {
     }, 10000);
     this.peer.on('open', () => {
       clearTimeout(timeout);
-      this.conn = this.peer.connect('ek_room_v6_'+code, {reliable:true});
+      this.conn = this.peer.connect('ek_room_v7_'+code, {reliable:true});
       this.conn.on('open', () => {if(this.onConnectSuccess) this.onConnectSuccess();});
       this.conn.on('data', (data) => this.route(data));
       this.conn.on('close', () => {if(this.onHostLeft) this.onHostLeft();});
@@ -1541,12 +1396,14 @@ const UI = {
   lobbyPlayers:[], botScheduled:false,
   currentModal:null,
   _animatedDrawId:null, _animatedStealId:null, _lastShownPlayId:null, _lastEKEKId:null,
-  selectedCatIndices:[], _handSig:'',
+  selectedCatIndices:[], _handSig:'', _handRenderSig:'',
   isShuffling:false, _lastPendingTs:null, _dealing:false, _statsRecorded:false,
   _codeInput:'', _pollTimer:null, _shownInvites:new Set(),
   _friendsTab:'list', _alterCards:null, _alterOriginal:null,
   _showcaseTimeout:null, _nopeHighlightTimer:null,
   _hostWatchdogTimer:null,
+  _lastAlive:null, _lastDeck:null, _lastTurn:null, _lastTurnsLeft:null,
+  _oppsSig:'', _discSig:'', _lastCanDraw:null, _lastLogSig:'',
 
   init(){
     Auth.init();
@@ -1602,7 +1459,7 @@ const UI = {
   showTeamInvite(inv){
     const el = document.createElement('div');
     el.className = 'liquid bevel';
-    el.style.cssText = `position:fixed;top:20px;right:20px;max-width:320px;padding:16px;z-index:9999;animation:slideDown .3s ease-out`;
+    el.style.cssText = `position:fixed;top:20px;right:20px;max-width:320px;padding:16px;z-index:9999`;
     el.innerHTML = `
       <div style="font-weight:900;margin-bottom:6px">Lời mời vào đội</div>
       <div style="font-size:12px;color:#fff;margin-bottom:10px">
@@ -1621,10 +1478,7 @@ const UI = {
     this.toast('Đã chấp nhận lời mời');
     setTimeout(() => this.doJoinRoom(roomCode), 300);
   },
-  rejectTeamInvite(ts){
-    Social.rejectInvite(ts);
-    this.toast('Đã từ chối');
-  },
+  rejectTeamInvite(ts){ Social.rejectInvite(ts); this.toast('Đã từ chối'); },
 
   showScreen(id){
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
@@ -1642,13 +1496,11 @@ const UI = {
     document.getElementById('authMsg').textContent = '';
     document.getElementById('authMsg').className = 'auth-msg';
   },
-
   authMsg(text, isErr){
     const el = document.getElementById('authMsg');
     el.textContent = text;
     el.className = 'auth-msg ' + (isErr ? 'err' : 'ok');
   },
-
   doLogin(){
     const u = document.getElementById('loginUser').value;
     const p = document.getElementById('loginPass').value;
@@ -1657,7 +1509,6 @@ const UI = {
     this.authMsg('Đăng nhập thành công!', false);
     setTimeout(() => this.enterMenu(Auth.current()), 300);
   },
-
   doRegister(){
     const u = document.getElementById('regUser').value;
     const p = document.getElementById('regPass').value;
@@ -1668,7 +1519,6 @@ const UI = {
     this.authMsg('Tạo tài khoản thành công!', false);
     setTimeout(() => this.enterMenu(Auth.current()), 300);
   },
-
   playAsGuest(){ this.enterMenu(Auth.guest()); },
 
   enterMenu(user){
@@ -1721,11 +1571,8 @@ const UI = {
         </div>
       </div>
       ${user.isGuest ? 
-        `<div style="text-align:center;padding:14px;background:rgba(255,255,255,0.15);border-radius:12px;font-size:12px;color:#fff;margin-bottom:12px;border:1.5px solid rgba(255,255,255,0.3)">
-          💡 Đăng ký tài khoản để lưu trận, kết bạn và chơi đội!
-        </div>
-        <button class="btn-p bevel-sm" onclick="UI.closeModal(); UI.showScreen('sc-auth')">Đăng Ký Ngay</button>
-        ` :
+        `<div style="text-align:center;padding:14px;background:rgba(255,255,255,0.15);border-radius:12px;font-size:12px;color:#fff;margin-bottom:12px;border:1.5px solid rgba(255,255,255,0.3)">💡 Đăng ký tài khoản để lưu trận, kết bạn và chơi đội!</div>
+        <button class="btn-p bevel-sm" onclick="UI.closeModal(); UI.showScreen('sc-auth')">Đăng Ký Ngay</button>` :
         `<div class="profile-stats-new">
           <div class="stat-card-new"><div class="stat-card-value-new">${user.games||0}</div><div class="stat-card-label-new">Trận</div></div>
           <div class="stat-card-new"><div class="stat-card-value-new">${user.wins||0}</div><div class="stat-card-label-new">Thắng</div></div>
@@ -1736,7 +1583,6 @@ const UI = {
       ${user.isGuest ? '' : '<button class="btn-danger bevel-sm" onclick="UI.doLogout()">Đăng Xuất</button>'}
     `);
   },
-
   openAvatarPicker(){
     const user = this.currentUser();
     if(!user) return;
@@ -1752,7 +1598,6 @@ const UI = {
       <button class="btn-o bevel-sm" onclick="UI.openProfile()">Quay Lại</button>
     `);
   },
-
   pickAvatar(avatar){
     const user = this.currentUser();
     if(!user) return;
@@ -1766,7 +1611,6 @@ const UI = {
     this.toast('Đã đổi avatar');
     setTimeout(() => this.openProfile(), 200);
   },
-
   doLogout(){
     Auth.logout(); this.closeModal();
     this.myId = 'p_'+U.uid();
@@ -1783,7 +1627,6 @@ const UI = {
     const incoming = Social.incoming(user.username);
     const outgoing = Social.outgoing(user.username);
     let content = '';
-    
     if(this._friendsTab === 'list'){
       if(friends.length === 0){
         content = `<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">Chưa có bạn bè. Hãy tìm và kết bạn!</div></div>`;
@@ -1794,9 +1637,7 @@ const UI = {
           return `<div class="friend-item">
             <div class="av">${renderAvatarHTML(av, 38)}</div>
             <div class="nm">${this.escapeHtml(f)}</div>
-            <div class="actions">
-              <button class="btn-danger bevel-sm" onclick="UI.friendRemove('${this.escapeHtml(f)}')">Xóa</button>
-            </div>
+            <div class="actions"><button class="btn-danger bevel-sm" onclick="UI.friendRemove('${this.escapeHtml(f)}')">Xóa</button></div>
           </div>`;
         }).join('');
       }
@@ -1807,9 +1648,7 @@ const UI = {
           <button class="btn-p bevel-sm" onclick="UI.friendSearch()">Kết Bạn</button>
         </div>
         <div id="friendSearchResult" style="min-height:20px;font-size:12px;padding:8px;color:#fff"></div>
-        <div style="font-size:11px;color:var(--white-dim);margin-top:8px;text-align:left">
-          💡 Nhập đúng tên user (không phân biệt hoa thường). Hỏi bạn bè tên đăng nhập của họ.
-        </div>
+        <div style="font-size:11px;color:var(--white-dim);margin-top:8px;text-align:left">💡 Nhập đúng tên user (không phân biệt hoa thường).</div>
       `;
     } else if(this._friendsTab === 'incoming'){
       if(incoming.length === 0) content = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Không có lời mời</div></div>`;
@@ -1826,15 +1665,8 @@ const UI = {
       }).join('');
     } else if(this._friendsTab === 'outgoing'){
       if(outgoing.length === 0) content = `<div class="empty-state"><div class="empty-state-icon">📮</div><div class="empty-state-text">Không có lời mời đã gửi</div></div>`;
-      else content = outgoing.map(r => `
-        <div class="friend-item">
-          <div class="av">⏳</div>
-          <div class="nm">${this.escapeHtml(r.to)}</div>
-          <div class="actions"><span style="font-size:11px;color:var(--white-dim)">Đang chờ</span></div>
-        </div>
-      `).join('');
+      else content = outgoing.map(r => `<div class="friend-item"><div class="av">⏳</div><div class="nm">${this.escapeHtml(r.to)}</div><div class="actions"><span style="font-size:11px;color:var(--white-dim)">Đang chờ</span></div></div>`).join('');
     }
-    
     this.openModal('friends', `
       <h2>Bạn Bè</h2>
       <div class="friend-tabs">
@@ -1846,9 +1678,7 @@ const UI = {
       <div style="max-height:50vh;overflow-y:auto;text-align:left">${content}</div>
     `);
   },
-
   friendsSwitch(tab){ this._friendsTab = tab; this.openFriends(); },
-
   friendSearch(){
     const input = document.getElementById('friendSearchInput');
     const result = document.getElementById('friendSearchResult');
@@ -1873,7 +1703,6 @@ const UI = {
       result.style.color = '#ffc766';
     }
   },
-
   friendAccept(ts){ Social.accept(ts); this.toast('Đã chấp nhận'); this.openFriends(); },
   friendReject(ts){ Social.reject(ts); this.toast('Đã từ chối'); this.openFriends(); },
   friendRemove(name){
@@ -1887,38 +1716,23 @@ const UI = {
 
   /* ===== HOW TO PLAY ===== */
   openHowToPlay(){
-    const tabs = `
-      <div class="info-tabs">
-        <button class="info-tab active" onclick="UI.htpSwitch('rules')">Luật</button>
-        <button class="info-tab" onclick="UI.htpSwitch('cards')">Lá Bài</button>
-      </div>
-    `;
     const rules = `
       <div class="rules-section">
         <h3>🎯 Mục tiêu</h3>
         <p>Sống sót đến cuối cùng. Người cuối cùng không bị nổ là người thắng!</p>
         <h3>🎮 Cách chơi</h3>
         <ul>
-          <li>Mỗi lượt bạn có thể đánh <b>nhiều lá bài</b> hoặc <b>rút 1 lá</b> để kết thúc lượt.</li>
-          <li>Nếu rút trúng <b>Mèo Nổ</b>, bạn phải có <b>Gỡ Bom</b> để sống. Không có → bị loại!</li>
-          <li>Khi đánh bài có thể bị đối thủ <b>NOPE</b> để hủy (trong 4 giây).</li>
-          <li>Bom được giấu lại bộ bài ở vị trí bạn chọn sau khi gỡ.</li>
+          <li>Mỗi lượt đánh <b>nhiều lá</b> hoặc <b>rút 1 lá</b> để kết thúc lượt.</li>
+          <li>Rút trúng <b>Mèo Nổ</b> phải có <b>Gỡ Bom</b> để sống. Không có → bị loại!</li>
+          <li>Khi đánh bài có thể bị <b>NOPE</b> để hủy (trong 4 giây).</li>
         </ul>
         <h3>🐱 Mèo Thường (Combo)</h3>
-        <p><b>Quan trọng:</b> Chỉ ghép được các lá Mèo <b>CÙNG LOẠI</b>:</p>
+        <p><b>Quan trọng:</b> Chỉ ghép các lá Mèo <b>CÙNG LOẠI</b>:</p>
         <ul>
-          <li>Mèo Thường 1 chỉ ghép với Mèo Thường 1</li>
-          <li>Mèo Thường 2 chỉ ghép với Mèo Thường 2</li>
-          <li>...tương tự cho 3, 4, 5</li>
+          <li>Mèo 1 với Mèo 1</li>
+          <li>Mèo 2 với Mèo 2... tương tự</li>
         </ul>
-        <p>Đánh <b>2 lá cùng loại</b>: cướp 1 lá ngẫu nhiên từ đối thủ.</p>
-        <p>Đánh <b>3 lá cùng loại</b>: gọi tên 1 lá, nếu đối thủ có thì lấy.</p>
-        <h3>💡 Mẹo</h3>
-        <ul>
-          <li>Giữ NOPE cho tình huống nguy hiểm</li>
-          <li>Dùng Nhìn Trước trước khi rút</li>
-          <li>Dùng Biến Đổi để đẩy Bom cho người sau</li>
-        </ul>
+        <p>Đánh <b>2 lá</b>: cướp 1 lá ngẫu nhiên. Đánh <b>3 lá</b>: gọi tên lá.</p>
       </div>
     `;
     const cards = `
@@ -1937,7 +1751,10 @@ const UI = {
     `;
     this.openModal('htp', `
       <h2>Hướng Dẫn Chơi</h2>
-      ${tabs}
+      <div class="info-tabs">
+        <button class="info-tab active" onclick="UI.htpSwitch('rules')">Luật</button>
+        <button class="info-tab" onclick="UI.htpSwitch('cards')">Lá Bài</button>
+      </div>
       <div id="htpContent">${rules}</div>
       <button class="btn-p bevel-sm" onclick="UI.closeModal()">Đã Hiểu</button>
     `);
@@ -1949,7 +1766,7 @@ const UI = {
     if(c && this._htpData) c.innerHTML = this._htpData[tab];
   },
 
-  /* ===== ADMIN PANEL (menu) ===== */
+  /* ===== ADMIN PANEL (menu only) ===== */
   openAdminPanel(){
     const user = this.currentUser();
     if(!user || !user.isAdmin) return;
@@ -1977,7 +1794,6 @@ const UI = {
       <button class="btn-p bevel-sm" onclick="UI.closeModal()">Đóng</button>
     `);
   },
-
   adminEditUser(username){
     const accs = Auth.all();
     const a = accs[username];
@@ -2001,17 +1817,7 @@ const UI = {
       <button class="btn-o bevel-sm" onclick="UI.openAdminPanel()">← Quay Lại</button>
     `);
   },
-
-  adminSetUserAvatar(username, avatar){
-    Auth.adminSetAvatar(username, avatar);
-    this.toast('Đã đổi avatar');
-    this.adminEditUser(username);
-  },
-
-  adminEditUserStats(username){
-    // not used
-  },
-
+  adminSetUserAvatar(username, avatar){ Auth.adminSetAvatar(username, avatar); this.toast('Đã đổi avatar'); this.adminEditUser(username); },
   adminToggleAdmin(username){
     if(!confirm(`Toggle admin cho "${username}"?`)) return;
     Auth.adminToggleAdmin(username);
@@ -2031,127 +1837,13 @@ const UI = {
     this.toast('Đã xóa user');
     this.openAdminPanel();
   },
-  adminResetUserStats(username){
-    Auth.adminResetUser(username);
-    this.toast('Đã reset stats');
-    this.adminEditUser(username);
-  },
+  adminResetUserStats(username){ Auth.adminResetUser(username); this.toast('Đã reset stats'); this.adminEditUser(username); },
   adminResetAllStats(){
     if(!confirm('Reset stats của TẤT CẢ tài khoản?')) return;
     Auth.adminResetAll();
     this.toast('Đã reset tất cả stats');
     this.enterMenu(Auth.current());
     this.openAdminPanel();
-  },
-
-  /* ===== ADMIN GAME FAB ===== */
-  toggleAdminGamePanel(){
-    document.getElementById('adminGamePanel').classList.toggle('on');
-  },
-
-  adminResolvePending(){
-    if(!Engine.state) return;
-    if(this.isHost){ if(Engine.state.pending) Engine.resolvePending(); this.toast('Đã force resolve'); }
-    else { this.act('forceResolve', {}); this.toast('Đã gửi lệnh force resolve'); }
-    document.getElementById('adminGamePanel').classList.remove('on');
-  },
-
-  adminSkipTurn(){
-    if(!Engine.state) return;
-    if(this.isHost){ Engine.endTurn(); this.toast('Đã skip turn'); }
-    else { this.toast('Chỉ host mới skip được'); }
-    document.getElementById('adminGamePanel').classList.remove('on');
-  },
-
-  adminRevealHands(){
-    const s = Engine.state;
-    if(!s) return;
-    const html = s.players.map(p => {
-      const cards = p.hand.map(c => `<span class="hand-reveal-card">${CARD_TYPES[cardType(c)].name}</span>`).join('');
-      return `<div class="hand-reveal-item">
-        <div class="hand-reveal-name">${this.escapeHtml(p.name)} ${p.alive?'':'💀'} · 🃏 ${p.hand.length}</div>
-        <div class="hand-reveal-cards">${cards || '<span style="color:#888;font-style:italic">Trống</span>'}</div>
-      </div>`;
-    }).join('');
-    this.openModal('reveal', `<h2>👁️ Xem Tất Cả Bài</h2>${html}<button class="btn-p bevel-sm" onclick="UI.closeModal()">Đóng</button>`);
-    document.getElementById('adminGamePanel').classList.remove('on');
-  },
-
-  adminAddTurn(){
-    if(!Engine.state) return;
-    if(!this.isHost){ this.toast('Chỉ host'); return; }
-    const me = Engine.state.players.find(p => p.id === this.myId);
-    if(me && Engine.cur()?.id === me.id){
-      Engine.state.turnsLeft++;
-      Engine.notify();
-      this.toast('+1 lượt');
-    } else {
-      this.toast('Chưa phải lượt của bạn');
-    }
-    document.getElementById('adminGamePanel').classList.remove('on');
-  },
-
-  adminSpawnCard(){
-    if(!Engine.state) return;
-    if(!this.isHost){ this.toast('Chỉ host'); return; }
-    const types = Object.keys(CARD_TYPES);
-    const html = `
-      <h2>🎴 Spawn Card</h2>
-      <p>Chọn lá bài đưa lên đầu deck</p>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:50vh;overflow-y:auto">
-        ${types.map(t => `<button class="btn-o bevel-sm" onclick="UI.adminDoSpawn('${t}')">${CARD_TYPES[t].name}</button>`).join('')}
-      </div>
-      <button class="btn-o bevel-sm" onclick="UI.closeModal()">Hủy</button>
-    `;
-    this.openModal('spawn', html);
-    document.getElementById('adminGamePanel').classList.remove('on');
-  },
-
-  adminDoSpawn(type){
-    if(!Engine.state || !this.isHost) return;
-    Engine.state.deck.push(makeCard(type));
-    this.closeModal();
-    Engine.notify();
-    this.toast('Đã thêm ' + CARD_TYPES[type].name);
-  },
-
-  adminKillPlayer(){
-    if(!Engine.state || !this.isHost){ this.toast('Chỉ host'); return; }
-    const s = Engine.state;
-    const others = s.players.filter(p => p.alive && p.id !== this.myId);
-    if(others.length === 0){ this.toast('Không có ai để kill'); return; }
-    const html = `
-      <h2>💀 Eliminate Player</h2>
-      <p>Chọn người chơi để loại</p>
-      ${others.map(p => `<button class="btn-danger bevel-sm" style="width:100%;margin:4px 0" onclick="UI.adminDoKill('${p.id}')">${this.escapeHtml(p.name)}</button>`).join('')}
-      <button class="btn-o bevel-sm" onclick="UI.closeModal()">Hủy</button>
-    `;
-    this.openModal('kill', html);
-    document.getElementById('adminGamePanel').classList.remove('on');
-  },
-
-  adminDoKill(playerId){
-    if(!Engine.state || !this.isHost) return;
-    Engine.handlePlayerDisconnect(playerId);
-    this.closeModal();
-    this.toast('Đã loại người chơi');
-  },
-
-  adminEndGame(){
-    if(!Engine.state || !this.isHost){ this.toast('Chỉ host'); return; }
-    if(!confirm('Kết thúc game ngay lập tức?')) return;
-    Engine.state.phase = 'ended';
-    Engine.state.winner = Engine.alive()[0] || null;
-    clearTimeout(Engine.pendingTimer);
-    clearTimeout(Engine.choiceTimer);
-    Engine.notify({type:'win', winner:Engine.state.winner});
-    document.getElementById('adminGamePanel').classList.remove('on');
-  },
-
-  adminForceLeave(){
-    if(!confirm('Thoát phòng admin?')) return;
-    document.getElementById('adminGamePanel').classList.remove('on');
-    this.leaveRoom();
   },
 
   /* ===== SOLO ===== */
@@ -2177,14 +1869,12 @@ const UI = {
       <button class="btn-o bevel-sm" onclick="UI.closeModal()">Hủy</button>
     `);
   },
-
   startSoloFromModal(){
     const n = parseInt(document.getElementById('soloCount').value) || 3;
     const mode = document.getElementById('soloBotMode').value || 'smart';
     this.closeModal();
     this.startSoloGame(n, mode);
   },
-
   startSoloGame(total, botMode){
     const user = this.currentUser();
     if(!user) return;
@@ -2223,7 +1913,6 @@ const UI = {
     `);
     this._updateKeypadDisplay();
   },
-
   _updateKeypadDisplay(){
     const display = document.getElementById('keypadDisplay');
     if(!display) return;
@@ -2233,7 +1922,6 @@ const UI = {
       slot.classList.toggle('active', i === this._codeInput.length);
     });
   },
-
   keypadPress(digit){
     if(this._codeInput.length >= 6) return;
     this._codeInput += digit;
@@ -2267,7 +1955,6 @@ const UI = {
     this.renderLobby();
     setTimeout(() => this.setupNet(true), 100);
   },
-
   doJoinRoom(code){
     if(Net.peer) Net.close();
     this.roomCode = code;
@@ -2281,7 +1968,6 @@ const UI = {
     this.renderLobby();
     setTimeout(() => this.setupNet(false), 100);
   },
-
   setupNet(host){
     if(Net.peer) Net.close();
     if(host){
@@ -2367,14 +2053,12 @@ const UI = {
       Net.join(this.roomCode);
     }
   },
-
   broadcastLobby(){
     if(this.isHost){
       const safe = this.lobbyPlayers.map(p => ({id:p.id, name:p.name, isBot:p.isBot, isHost:p.isHost}));
       Net.send({type:'lobby', players:safe});
     }
   },
-
   renderLobby(){
     const box = document.getElementById('lobbyPlayers');
     if(this.lobbyPlayers.length === 0){ box.innerHTML = '<div class="plist-empty">Đang chờ...</div>'; return; }
@@ -2388,7 +2072,6 @@ const UI = {
       </div>`;
     }).join('');
   },
-
   addBot(){
     if(this.lobbyPlayers.length >= 6) return this.toast('Tối đa 6');
     this.lobbyPlayers.push({id:'bot_'+U.uid(), name:U.pick(BOT_NAMES)+' '+(this.lobbyPlayers.length), isBot:true, isHost:false});
@@ -2399,7 +2082,6 @@ const UI = {
     if(i > -1){ this.lobbyPlayers.splice(i, 1); this.broadcastLobby(); this.renderLobby(); }
     else this.toast('Không có bot');
   },
-
   openInviteFriends(){
     const user = this.currentUser();
     if(!user || user.isGuest) return this.toast('Cần đăng nhập');
@@ -2429,14 +2111,12 @@ const UI = {
       <button class="btn-o bevel-sm" onclick="UI.closeModal()">Đóng</button>
     `);
   },
-
   sendTeamInvite(toUsername){
     const user = this.currentUser();
     if(!user || !this.roomCode) return;
     Social.sendInvite(user.username, toUsername, this.roomCode);
     this.toast(`Đã gửi lời mời tới ${toUsername}`);
   },
-
   startMultiplayerGame(){
     if(this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
     const botMode = document.getElementById('lobbyBotMode')?.value || 'smart';
@@ -2445,7 +2125,6 @@ const UI = {
     Net.send({type:'start', state:U.clone(Engine.state)});
     this.enterGame(true);
   },
-
   copyCode(){
     if(!this.roomCode) return;
     navigator.clipboard?.writeText(this.roomCode).then(() => this.toast('Đã copy mã: ' + this.roomCode)).catch(()=>{});
@@ -2459,12 +2138,14 @@ const UI = {
     this._lastEKEKId = null;
     this._animatedDrawId = null;
     this._animatedStealId = null;
+    this._lastAlive = null; this._lastDeck = null; this._lastTurn = null;
+    this._lastTurnsLeft = null; this._oppsSig = ''; this._discSig = '';
+    this._lastCanDraw = null; this._lastLogSig = ''; this._handRenderSig = '';
     this.showScreen('sc-game');
     document.getElementById('chatFab').classList.add('on');
-    // Admin fab
+    // Badge only (no admin powers)
     const user = this.currentUser();
     const isAdmin = user && user.isAdmin;
-    document.getElementById('adminFab').classList.toggle('on', !!isAdmin);
     document.getElementById('uiAdminBadgeGame').style.display = isAdmin ? 'inline-block' : 'none';
     this._dealing = true;
     this.render();
@@ -2472,11 +2153,9 @@ const UI = {
     this._processStateVFX();
     setTimeout(() => {
       this._dealing = false;
-      document.querySelectorAll('.card.deal-in').forEach(c => c.classList.remove('deal-in'));
     }, 1500);
     if(asHost) this.processBots();
   },
-
   leaveRoom(){
     const user = this.currentUser();
     if(Engine.state && Engine.state.phase === 'playing' && user && !user.isGuest){
@@ -2508,20 +2187,16 @@ const UI = {
     this._alterCards = null;
     this._alterOriginal = null;
     document.getElementById('chatFab').classList.remove('on');
-    document.getElementById('adminFab').classList.remove('on');
-    document.getElementById('adminGamePanel').classList.remove('on');
     this.closeModal();
     const showcase = document.getElementById('playedShowcase');
     if(showcase) showcase.classList.remove('show');
     this.enterMenu(this.currentUser());
   },
-
   act(action, payload={}){
     if(!Engine.state) return;
     if(this.isHost) this.hostAction(this.myId, action, payload);
     else Net.send({type:'action', playerId:this.myId, action, payload});
   },
-
   hostAction(playerId, action, payload){
     let ok = false;
     try{
@@ -2533,14 +2208,11 @@ const UI = {
         case 'favor': ok = Engine.resolveFavor(playerId, payload.idx); break;
         case 'clearPeek': ok = Engine.clearPeek(playerId); break;
         case 'alterFuture': ok = Engine.applyAlterFuture(playerId, payload.order); break;
-        case 'forceResolve': if(Engine.state.pending) Engine.resolvePending(); ok = true; break;
       }
     }catch(e){ console.error('[EK] Engine error:', e); }
     if(!ok && this.isHost) Net.send({type:'state', state:U.clone(Engine.state)});
   },
-
   me(){ return Engine.state?.players.find(p => p.id === this.myId); },
-
   onEngineChange(meta){
     const me = this.me();
     const sig = me ? me.hand.join('|') : '';
@@ -2555,7 +2227,6 @@ const UI = {
     if(this.isHost) this.processBots();
     if(this.isHost) this._armHostWatchdog();
   },
-
   _armHostWatchdog(){
     if(!this.isHost) return;
     clearTimeout(this._hostWatchdogTimer);
@@ -2568,7 +2239,6 @@ const UI = {
       timeout = CHOICE_TIMEOUT + 3000;
     } else if(s.peekFor && !s.peekFor.playerId.startsWith('bot_')) timeout = 60000;
     else if(s.alterFor && !s.alterFor.playerId.startsWith('bot_')) timeout = 60000;
-    
     if(timeout > 0){
       this._hostWatchdogTimer = setTimeout(() => {
         if(!this.isHost) return;
@@ -2586,7 +2256,6 @@ const UI = {
       }, timeout);
     }
   },
-
   _processStateVFX(){
     const s = Engine.state;
     if(!s) return;
@@ -2640,7 +2309,6 @@ const UI = {
       if(deck){ deck.classList.add('shuffling'); setTimeout(() => { deck.classList.remove('shuffling'); this.isShuffling = false; }, 800); }
     }
   },
-
   showBottomNotification({type='info', title='', body='', card=''}){
     const el = document.createElement('div');
     el.className = 'action-notification ' + type;
@@ -2652,7 +2320,6 @@ const UI = {
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 2900);
   },
-
   showPlayedCard(card, playerName, actionText){
     const showcase = document.getElementById('playedShowcase');
     const cardEl = document.getElementById('psCard');
@@ -2664,13 +2331,13 @@ const UI = {
     cardEl.innerHTML = `<img src="${img}" onerror="this.parentElement.innerHTML='<div style=&quot;padding:20px;font-size:24px;font-weight:900;color:#fff;text-align:center;line-height:1.4&quot;>${info.short}</div>'" alt="">`;
     nameEl.textContent = playerName;
     actEl.textContent = actionText;
-    showcase.classList.remove('show');
-    void showcase.offsetWidth;
-    showcase.classList.add('show');
+    // Add show class - no forced reflow needed, only when not already shown
+    if(!showcase.classList.contains('show')){
+      showcase.classList.add('show');
+    }
     clearTimeout(this._showcaseTimeout);
     this._showcaseTimeout = setTimeout(() => { showcase.classList.remove('show'); }, 2400);
   },
-
   animateDraw(playerId, card, isMe, fromBottom = false){
     const deckEl = document.getElementById('deckPile');
     if(!deckEl) return;
@@ -2710,39 +2377,89 @@ const UI = {
     ], { duration: 1200, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }).onfinish = () => { flyer.remove(); };
   },
 
+  /* ===== RENDER (with guards to prevent flicker) ===== */
   render(){
     const s = Engine.state;
     if(!s) return;
-    document.getElementById('uiAlive').textContent = s.players.filter(p => p.alive).length;
-    document.getElementById('uiDeck').textContent = s.deck.length;
-    document.getElementById('deckBadge').textContent = s.deck.length;
+    
+    // Alive count
+    const alive = s.players.filter(p => p.alive).length;
+    if(this._lastAlive !== alive){
+      document.getElementById('uiAlive').textContent = alive;
+      this._lastAlive = alive;
+    }
+    
+    // Deck count
+    if(this._lastDeck !== s.deck.length){
+      document.getElementById('uiDeck').textContent = s.deck.length;
+      document.getElementById('deckBadge').textContent = s.deck.length;
+      this._lastDeck = s.deck.length;
+    }
+    
+    // Turn name
     const cur = Engine.cur();
-    document.getElementById('uiTurn').textContent = 'Lượt: ' + (cur?.name || '?');
-    const tEl = document.getElementById('uiTurnsLeft');
-    if(s.turnsLeft > 1){ tEl.style.display='inline-block'; tEl.textContent = '×' + s.turnsLeft; }
-    else tEl.style.display = 'none';
+    const turnName = cur?.name || '?';
+    if(this._lastTurn !== turnName){
+      document.getElementById('uiTurn').textContent = 'Lượt: ' + turnName;
+      this._lastTurn = turnName;
+    }
+    
+    // Turns left
+    const turnsLeftStr = s.turnsLeft > 1 ? '×' + s.turnsLeft : '';
+    if(this._lastTurnsLeft !== turnsLeftStr){
+      const tEl = document.getElementById('uiTurnsLeft');
+      if(s.turnsLeft > 1){ tEl.style.display='inline-block'; tEl.textContent = '×' + s.turnsLeft; }
+      else tEl.style.display = 'none';
+      this._lastTurnsLeft = turnsLeftStr;
+    }
+    
+    // Opponents
     const opps = s.players.filter(p => p.id !== this.myId);
-    const oppsArea = document.getElementById('opponentsArea');
-    oppsArea.innerHTML = opps.map(p => {
-      const isTurn = p.id === cur?.id;
-      const acc = Auth.all()[p.name];
-      const av = acc?.avatar || (p.isBot?'🤖':'👤');
-      return `<div class="opp ${isTurn?'turn':''} ${p.alive?'':'dead'}">
-        <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 38)}</div>
-        <div class="nm">${this.escapeHtml(p.name)}</div>
-        <div class="cnt">🃏 ${p.hand.length}</div>
-      </div>`;
-    }).join('');
-    const discPile = document.getElementById('discardPile');
-    if(s.discard.length > 0){
-      const last = s.discard[s.discard.length-1];
-      discPile.innerHTML = `<img src="${cardImage(last)}" onerror="this.parentElement.textContent='?'" alt="">`;
-    } else { discPile.textContent = '-'; }
-    const deckEl = document.getElementById('deckPile');
+    const oppsSig = opps.map(p => p.id + ':' + p.alive + ':' + p.hand.length).join('|') + '§' + (cur?.id || '');
+    if(oppsSig !== this._oppsSig){
+      this._oppsSig = oppsSig;
+      const oppsArea = document.getElementById('opponentsArea');
+      const accs = Auth.all();
+      oppsArea.innerHTML = opps.map(p => {
+        const isTurn = p.id === cur?.id;
+        const acc = accs[p.name];
+        const av = acc?.avatar || (p.isBot?'🤖':'👤');
+        return `<div class="opp ${isTurn?'turn':''} ${p.alive?'':'dead'}">
+          <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 38)}</div>
+          <div class="nm">${this.escapeHtml(p.name)}</div>
+          <div class="cnt">🃏 ${p.hand.length}</div>
+        </div>`;
+      }).join('');
+    }
+    
+    // Discard pile
+    const discSig = s.discard.length > 0 ? s.discard[s.discard.length-1] : 'empty';
+    if(this._discSig !== discSig){
+      this._discSig = discSig;
+      const discPile = document.getElementById('discardPile');
+      if(s.discard.length > 0){
+        const last = s.discard[s.discard.length-1];
+        discPile.innerHTML = `<img src="${cardImage(last)}" onerror="this.parentElement.textContent='?'" alt="">`;
+      } else { discPile.textContent = '-'; }
+    }
+    
+    // Can draw
     const canDraw = cur?.id === this.myId && !s.pending && !s.awaitingChoice && !s.alterFor && s.phase === 'playing';
-    deckEl.classList.toggle('can', canDraw);
-    deckEl.classList.toggle('locked', !canDraw);
-    document.getElementById('gameLog').innerHTML = s.logs.slice(-3).join('<br>');
+    const canDrawStr = canDraw ? 'y' : 'n';
+    if(this._lastCanDraw !== canDrawStr){
+      this._lastCanDraw = canDrawStr;
+      const deckEl = document.getElementById('deckPile');
+      deckEl.classList.toggle('can', canDraw);
+      deckEl.classList.toggle('locked', !canDraw);
+    }
+    
+    // Game log
+    const logSig = s.logs.slice(-3).join('|');
+    if(this._lastLogSig !== logSig){
+      this._lastLogSig = logSig;
+      document.getElementById('gameLog').innerHTML = s.logs.slice(-3).join('<br>');
+    }
+    
     this.renderHand();
     this.renderHandActionBar();
   },
@@ -2751,13 +2468,20 @@ const UI = {
     const s = Engine.state;
     const me = this.me();
     if(!me) return;
-    document.getElementById('uiHandCount').textContent = me.hand.length;
-    const handArea = document.getElementById('handArea');
+    
+    const hasPending = !!s.pending && s.pending.playerId !== this.myId;
+    const canNopeNow = hasPending && this._nopeHighlightTimer;
     const cur = Engine.cur();
     const isMyTurn = cur?.id === this.myId;
     const canPlay = isMyTurn && !s.pending && !s.awaitingChoice && !s.alterFor && s.phase === 'playing';
-    const hasPending = !!s.pending && s.pending.playerId !== this.myId;
-    const canNopeNow = hasPending && this._nopeHighlightTimer;
+    
+    // Signature to prevent unnecessary re-renders (fixes flicker)
+    const sig = me.hand.join('|') + '§' + this.selectedCatIndices.join(',') + '§' + (canNopeNow ? '1' : '0') + '§' + (canPlay ? '1' : '0') + '§' + me.hand.length;
+    if(sig === this._handRenderSig) return;
+    this._handRenderSig = sig;
+    
+    document.getElementById('uiHandCount').textContent = me.hand.length;
+    const handArea = document.getElementById('handArea');
     handArea.innerHTML = me.hand.map((card, idx) => {
       const info = cardInfo(card);
       const img = cardImage(card);
@@ -2784,7 +2508,7 @@ const UI = {
     const isCat = types.every(t => t === 'CAT');
     const sameVariant = isCat && cards.every(c => c === cards[0]);
     if(isCat && !sameVariant){
-      bar.innerHTML = `<span style="color:#ff8a7a">⚠️ Phải chọn các lá Mèo CÙNG LOẠI (VD: Mèo 1 với Mèo 1)!</span>`;
+      bar.innerHTML = `<span style="color:#ff8a7a">⚠️ Phải chọn các lá Mèo CÙNG LOẠI!</span>`;
       bar.classList.add('on');
       return;
     }
@@ -2844,13 +2568,12 @@ const UI = {
     this.renderHand();
     this.renderHandActionBar();
   },
-  
   clearSelection(){
     this.selectedCatIndices = [];
+    this._handRenderSig = ''; // Force re-render
     this.renderHand();
     this.renderHandActionBar();
   },
-  
   playSingle(targetId){
     const me = this.me();
     if(this.selectedCatIndices.length !== 1) return;
@@ -2860,7 +2583,6 @@ const UI = {
     if(t === 'FAVOR'){ this.act('play', {cards:[card], targetId}); }
     else { this.act('play', {cards:[card]}); }
   },
-  
   playCat(targetId){
     const me = this.me();
     const cards = this.selectedCatIndices.map(i => me.hand[i]);
@@ -2872,7 +2594,6 @@ const UI = {
       this.showNamedCatPicker(cards, targetId);
     }
   },
-  
   showNamedCatPicker(cards, targetId){
     this.openModal('named', `
       <h2>Gọi Tên Lá</h2>
@@ -2890,7 +2611,6 @@ const UI = {
     this._pendingCatCards = cards;
     this._pendingCatTarget = targetId;
   },
-  
   confirmNamedCat(namedType){
     this.closeModal();
     if(!this._pendingCatCards) return;
@@ -2899,7 +2619,6 @@ const UI = {
     this._pendingCatCards = null;
     this._pendingCatTarget = null;
   },
-
   onDrawClick(){
     if(!Engine.state) return;
     if(!Engine.canAct(this.myId, 'draw')) return;
@@ -2910,6 +2629,7 @@ const UI = {
     const s = Engine.state;
     if(!s) return;
     
+    // NOPE highlight (only set once when pending appears)
     if(s.pending && s.pending.playerId !== this.myId){
       const me = this.me();
       const hasNope = me && me.hand.some(c => cardType(c) === 'NOPE');
@@ -2918,32 +2638,37 @@ const UI = {
       if(canNope && !this._nopeHighlightTimer){
         this._nopeHighlightTimer = setTimeout(() => {
           this._nopeHighlightTimer = null;
+          this._handRenderSig = ''; // Force re-render to remove highlight
           this.renderHand();
         }, NOPE_WINDOW);
+        this._handRenderSig = ''; // Force re-render to show highlight
         this.renderHand();
       }
     } else {
       if(this._nopeHighlightTimer){
         clearTimeout(this._nopeHighlightTimer);
         this._nopeHighlightTimer = null;
+        this._handRenderSig = '';
         this.renderHand();
       }
     }
     
+    // Defuse choice
     if(s.awaitingChoice?.type === 'defuse' && s.awaitingChoice.playerId === this.myId){
       if(this.currentModal !== 'defuse'){
         this.openModal('defuse', `
           <h2>💥 Gỡ Bom!</h2>
           <p>Chọn vị trí giấu bom trong bộ bài:</p>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <button class="btn-p bevel-sm" onclick="UI.doDefuse('top')">🔝 Trên cùng (người sau dễ trúng)</button>
-            <button class="btn-o bevel-sm" onclick="UI.doDefuse('middle')">↕️ Giữa (khó đoán)</button>
-            <button class="btn-o bevel-sm" onclick="UI.doDefuse('bottom')">🔽 Dưới cùng (an toàn)</button>
+            <button class="btn-p bevel-sm" onclick="UI.doDefuse('top')">🔝 Trên cùng</button>
+            <button class="btn-o bevel-sm" onclick="UI.doDefuse('middle')">↕️ Giữa</button>
+            <button class="btn-o bevel-sm" onclick="UI.doDefuse('bottom')">🔽 Dưới cùng</button>
           </div>
         `);
       }
     } else if(this.currentModal === 'defuse'){ this.closeModal(); }
     
+    // Peek
     if(s.peekFor?.playerId === this.myId && this.currentModal !== 'peek'){
       const cards = s.peekFor.cards;
       this.openModal('peek', `
@@ -2956,6 +2681,7 @@ const UI = {
       `);
     } else if(this.currentModal === 'peek' && !s.peekFor){ this.closeModal(); }
     
+    // Alter future
     if(s.alterFor?.playerId === this.myId && this.currentModal !== 'alter'){
       if(!this._alterCards){
         this._alterCards = [...s.alterFor.cards];
@@ -2980,12 +2706,13 @@ const UI = {
         <div id="alterList" style="display:flex;flex-direction:column;gap:8px;margin:12px 0">${renderAlter()}</div>
         <button class="btn-p bevel-sm" onclick="UI.doAlterFuture()">Xác Nhận</button>
       `);
-    } else if(this.currentModal === 'alter' && !s.alterFor){ 
-      this.closeModal(); 
-      this._alterCards = null; 
+    } else if(this.currentModal === 'alter' && !s.alterFor){
+      this.closeModal();
+      this._alterCards = null;
       this._alterOriginal = null;
     }
     
+    // Favor
     if(s.awaitingChoice?.type === 'favor' && s.awaitingChoice.targetId === this.myId && this.currentModal !== 'favor'){
       const me = this.me();
       this.openModal('favor', `
@@ -2997,6 +2724,7 @@ const UI = {
       `);
     } else if(this.currentModal === 'favor' && !s.awaitingChoice){ this.closeModal(); }
     
+    // Win
     if(s.phase === 'ended' && !this._statsRecorded){
       this._statsRecorded = true;
       const user = this.currentUser();
@@ -3015,14 +2743,8 @@ const UI = {
     }
     this.act('nope');
   },
-
-  doDefuse(pos){
-    this.closeModal();
-    this.act('defuse', {pos: pos === 'middle' ? 'random' : pos});
-  },
-
+  doDefuse(pos){ this.closeModal(); this.act('defuse', {pos: pos === 'middle' ? 'random' : pos}); },
   doClearPeek(){ this.act('clearPeek'); },
-
   moveAlter(idx, dir){
     if(!this._alterCards) return;
     const newIdx = idx + dir;
@@ -3045,7 +2767,6 @@ const UI = {
       `).join('');
     }
   },
-
   doAlterFuture(){
     if(!this._alterCards) return;
     this.act('alterFuture', {order: this._alterCards});
@@ -3053,12 +2774,10 @@ const UI = {
     this._alterOriginal = null;
     this.closeModal();
   },
-
   doFavor(idx){
     this.closeModal();
     this.act('favor', {idx});
   },
-
   showWinModal(customMsg){
     const s = Engine.state;
     const winner = s?.winner;
@@ -3071,6 +2790,7 @@ const UI = {
     `);
   },
 
+  /* ===== BOTS ===== */
   processBots(){
     if(!this.isHost) return;
     if(!Engine.state || Engine.state.phase !== 'playing') return;
@@ -3078,7 +2798,6 @@ const UI = {
     this.botScheduled = true;
     setTimeout(() => { this.botScheduled = false; this._runBotTurn(); }, 800 + Math.random() * 600);
   },
-
   _runBotTurn(){
     const s = Engine.state;
     if(!s || s.phase !== 'playing' || !this.isHost) return;
@@ -3140,6 +2859,7 @@ const UI = {
     Engine.drawCard(p.id);
   },
 
+  /* ===== CHAT & TOAST ===== */
   toggleChat(){
     document.getElementById('chatPanel').classList.toggle('on');
     document.getElementById('chatOverlay').classList.toggle('on');
@@ -3161,7 +2881,6 @@ const UI = {
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   },
-
   toast(msg){
     const el = document.createElement('div');
     el.className = 'toast';
