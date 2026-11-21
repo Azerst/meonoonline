@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens - Online Multiplayer</title>
+<title>Exploding Kittens - Liquid Glass</title>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script>
   if (typeof Peer === 'undefined') {
@@ -11,188 +11,525 @@
   }
 </script>
 <style>
-  :root{--red:#d93828;--red-dark:#b52a1c;--bg-main:#eef2f6;--grid:rgba(0,0,0,0.07);
-    --glass:rgba(255,255,255,0.45);--text:#2c1b18;--text-l:#5a4a48;--cut:20px}
+  :root{
+    --red:#ff3b30;--red-2:#d93828;--red-dark:#b52a1c;
+    --gold:#ffcc00;
+    --bg-1:#4a1a12;--bg-2:#1a0f0d;--bg-3:#0a0505;
+    --glass:rgba(255,255,255,0.08);
+    --glass-2:rgba(255,255,255,0.14);
+    --stroke:rgba(255,255,255,0.18);
+    --text:#fff;--text-2:#e6d5d0;--text-3:#a89690;
+    --cut:18px;
+  }
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background-color:var(--bg-main);
-    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-    background-size:32px 32px;color:var(--text);height:100vh;overflow:hidden;
-    -webkit-font-smoothing:antialiased;user-select:none}
-  .glow{position:fixed;inset:0;z-index:-1;pointer-events:none;
-    background:radial-gradient(ellipse at 20% 20%,rgba(255,122,92,0.4) 0%,transparent 50%),
-      radial-gradient(ellipse at 80% 80%,rgba(217,56,40,0.4) 0%,transparent 50%);
-    filter:blur(50px);animation:pulseGlow 6s ease-in-out infinite alternate}
-  @keyframes pulseGlow{0%{transform:scale(.95);opacity:.6}100%{transform:scale(1.05);opacity:1}}
-  .glass{position:relative;background:var(--glass);backdrop-filter:blur(30px) saturate(180%);
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro","Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,90,60,0.25) 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(255,200,50,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, #4a1a12 0%, #1a0f0d 55%, #0a0505 100%);
+    color:var(--text);-webkit-font-smoothing:antialiased;user-select:none;
+  }
+  /* Floating orbs */
+  body::before, body::after {
+    content:'';position:fixed;border-radius:50%;pointer-events:none;z-index:-1;
+    filter:blur(60px);animation:orbFloat 12s ease-in-out infinite;
+  }
+  body::before{width:380px;height:380px;top:-100px;left:-100px;background:rgba(255,90,60,0.35)}
+  body::after{width:420px;height:420px;bottom:-150px;right:-150px;background:rgba(255,200,50,0.25);animation-delay:-6s}
+  @keyframes orbFloat{
+    0%,100%{transform:translate(0,0) scale(1)}
+    50%{transform:translate(40px,30px) scale(1.1)}
+  }
+  
+  /* Liquid Glass */
+  .glass{
+    position:relative;
+    background:linear-gradient(135deg, rgba(255,255,255,0.13), rgba(255,255,255,0.04));
+    backdrop-filter:blur(30px) saturate(180%);
     -webkit-backdrop-filter:blur(30px) saturate(180%);
-    clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut));
-    box-shadow:0 1.5px 0 rgba(255,255,255,.9) inset,0 10px 30px rgba(0,0,0,.1);
-    border:1px solid rgba(255,255,255,.4);transition:transform .3s}
-  button{font-family:inherit;font-weight:700;font-size:15px;padding:12px 20px;border:none;border-radius:8px;
-    cursor:pointer;transition:all .2s;background:linear-gradient(180deg,#fff,#f0f0f0);color:var(--red-dark);
-    box-shadow:0 4px 10px rgba(0,0,0,.1),0 1px 0 rgba(255,255,255,1) inset}
-  button:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(0,0,0,.15)}
-  button:active{transform:translateY(1px)}
-  button:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:grayscale(1)}
-  .btn-p{background:linear-gradient(180deg,#ff6b6b,var(--red));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
-  .btn-d{background:linear-gradient(180deg,#ff9800,#e65100);color:#fff}
-  .btn-o{background:transparent;border:1.5px solid rgba(0,0,0,.2);color:var(--text-l)}
-  input{width:100%;padding:13px 15px;border-radius:8px;border:2px solid rgba(255,255,255,.6);
-    background:rgba(255,255,255,.5);font-family:inherit;font-size:15px;color:var(--text);outline:none;transition:all .2s}
-  input:focus{background:#fff;border-color:var(--red);box-shadow:0 0 0 4px rgba(217,56,40,.2)}
-  select.mode-select{width:100%;padding:12px 15px;border-radius:8px;border:2px solid rgba(255,255,255,.6);
-    background:rgba(255,255,255,.5);font-family:inherit;font-size:14px;color:var(--text);outline:none;
-    cursor:pointer;font-weight:600;transition:all .2s}
-  select.mode-select:focus{background:#fff;border-color:var(--red);box-shadow:0 0 0 4px rgba(217,56,40,.2)}
-  .screen{display:none;width:100%;height:100%;position:absolute;top:0;left:0;flex-direction:column}
+    border:1px solid var(--stroke);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      inset 0 -1px 0 rgba(0,0,0,0.1);
+  }
+  .bevel{
+    clip-path:polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  }
+  .bevel-sm{
+    clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  
+  /* Buttons */
+  button{
+    font-family:inherit;font-weight:700;font-size:15px;padding:12px 20px;
+    border:1px solid var(--stroke);border-radius:10px;cursor:pointer;
+    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
+    background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    color:var(--text);
+    box-shadow:0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);
+    backdrop-filter:blur(20px);
+  }
+  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4)}
+  button:active:not(:disabled){transform:translateY(1px) scale(0.98)}
+  button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(1)}
+  .btn-p{
+    background:linear-gradient(180deg, #ff6b5b, var(--red));
+    border-color:rgba(255,255,255,0.4);color:#fff;
+    box-shadow:0 6px 20px rgba(255,59,48,0.5), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .btn-p:hover:not(:disabled){box-shadow:0 10px 30px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.6)}
+  .btn-o{background:rgba(255,255,255,0.06)}
+  .btn-danger{background:linear-gradient(180deg, #ff6666, #cc2200);color:#fff}
+  
+  input, select{
+    width:100%;padding:13px 16px;border-radius:10px;
+    border:1px solid var(--stroke);
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(20px);
+    font-family:inherit;font-size:15px;color:var(--text);outline:none;
+    transition:all .2s;
+  }
+  input::placeholder{color:var(--text-3)}
+  input:focus, select:focus{
+    background:rgba(255,255,255,0.14);
+    border-color:rgba(255,255,255,0.5);
+    box-shadow:0 0 0 4px rgba(255,90,60,0.25);
+  }
+  select option{background:#2a1815;color:#fff}
+  
+  /* Screens */
+  .screen{
+    display:none;position:fixed;inset:0;flex-direction:column;
+    padding:12px;overflow:hidden;
+  }
   .screen.on{display:flex}
-  #sc-home{justify-content:center;align-items:center;padding:20px;overflow-y:auto}
-  .home-box{width:100%;max-width:400px;padding:28px 24px;display:flex;flex-direction:column;gap:12px;text-align:center;margin:auto}
-  .home-title{font-size:34px;font-weight:900;color:var(--red-dark);letter-spacing:1px;text-transform:uppercase}
-  .home-sub{font-size:12px;color:var(--text-l)}
-  #sc-lobby{justify-content:center;align-items:center;padding:20px}
-  .lobby-box{width:100%;max-width:500px;padding:30px;display:flex;flex-direction:column;gap:14px}
-  .room-code{font-size:38px;font-weight:900;letter-spacing:8px;color:var(--red);text-align:center;
-    cursor:pointer;padding:14px;border-radius:8px;background:rgba(255,255,255,.5);font-family:monospace;border:2px dashed rgba(217,56,40,.3)}
-  .plist{display:flex;flex-direction:column;gap:8px;max-height:250px;overflow-y:auto;min-height:60px}
-  .pitem{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.5);
-    border-radius:8px;border:1px solid rgba(255,255,255,.8)}
+  
+  /* === AUTH === */
+  #sc-auth{justify-content:center;align-items:center;padding:20px;overflow-y:auto}
+  .auth-box{
+    width:100%;max-width:400px;padding:32px 26px;
+    display:flex;flex-direction:column;gap:14px;text-align:center;
+    --cut:24px;
+    animation:slideUp .6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  .auth-logo{
+    font-size:52px;margin-bottom:4px;
+    filter:drop-shadow(0 4px 15px rgba(255,59,48,0.6));
+    animation:pulseLogo 2.5s ease-in-out infinite;
+  }
+  @keyframes pulseLogo{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .auth-title{
+    font-size:32px;font-weight:900;letter-spacing:2px;
+    background:linear-gradient(135deg, #ff6b5b, #ffcc00);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .auth-sub{font-size:12px;color:var(--text-3);margin-bottom:8px}
+  .auth-tabs{display:flex;gap:6px;padding:4px;background:rgba(0,0,0,0.25);border-radius:10px;margin-bottom:6px}
+  .auth-tab{flex:1;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none}
+  .auth-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff;box-shadow:0 4px 12px rgba(255,59,48,0.4)}
+  .auth-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
+  .auth-msg{font-size:12px;min-height:18px;padding:4px;border-radius:6px}
+  .auth-msg.err{color:#ff8a7a;background:rgba(255,59,48,0.15)}
+  .auth-msg.ok{color:#8affa8;background:rgba(80,200,100,0.15)}
+  
+  /* === MENU === */
+  #sc-menu{padding:0}
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 20px;margin:12px;
+    --cut:14px;
+    animation:slideDown .5s ease-out;
+  }
+  @keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  .topbar-info{display:flex;flex-direction:column;gap:4px}
+  .topbar-name{font-size:16px;font-weight:800;letter-spacing:.3px}
+  .topbar-stats{font-size:11px;color:var(--text-3);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .topbar-stats b{color:var(--text-2);font-weight:700}
+  .admin-badge{
+    background:linear-gradient(135deg,#ffcc00,#ff8a00);
+    color:#1a0f0d;font-weight:900;font-size:10px;
+    padding:2px 8px;border-radius:6px;letter-spacing:.5px;
+    box-shadow:0 2px 8px rgba(255,204,0,0.5);
+    animation:shine 2s ease-in-out infinite;
+  }
+  @keyframes shine{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+  .topbar-avatar{
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#ff6b5b,#ffcc00);
+    display:flex;align-items:center;justify-content:center;font-size:28px;
+    cursor:pointer;transition:all .25s;
+    border:2px solid rgba(255,255,255,0.5);
+    box-shadow:0 4px 16px rgba(255,59,48,0.4), inset 0 2px 0 rgba(255,255,255,0.4);
+  }
+  .topbar-avatar:hover{transform:scale(1.08) rotate(5deg);box-shadow:0 8px 24px rgba(255,59,48,0.7)}
+  
+  .menu-body{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:20px;gap:22px;overflow-y:auto;
+  }
+  .btn-mega{
+    padding:22px 60px;font-size:24px;font-weight:900;letter-spacing:2px;
+    background:linear-gradient(135deg, #ff6b5b 0%, #ff3b30 50%, #b52a1c 100%);
+    border:2px solid rgba(255,255,255,0.4);
+    border-radius:16px;color:#fff;cursor:pointer;
+    text-transform:uppercase;
+    box-shadow:0 12px 40px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.5);
+    animation:megaPulse 2s ease-in-out infinite;
+    transition:all .25s;
+    --cut:16px;
+    clip-path:polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+    max-width:90vw;
+  }
+  .btn-mega:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 16px 50px rgba(255,59,48,0.8), inset 0 2px 0 rgba(255,255,255,0.6)}
+  @keyframes megaPulse{
+    0%,100%{box-shadow:0 12px 40px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.5)}
+    50%{box-shadow:0 12px 60px rgba(255,59,48,0.85), inset 0 2px 0 rgba(255,255,255,0.6)}
+  }
+  
+  .menu-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+    width:100%;max-width:680px;
+  }
+  .menu-card{
+    aspect-ratio:1/1;
+    padding:16px 10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;cursor:pointer;
+    background:linear-gradient(135deg, rgba(255,255,255,0.13), rgba(255,255,255,0.04));
+    backdrop-filter:blur(30px) saturate(180%);
+    border:1px solid var(--stroke);border-radius:14px;
+    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow:0 6px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    position:relative;overflow:hidden;
+  }
+  .menu-card::before{
+    content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+    background:radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 40%);
+    opacity:0;transition:opacity .4s;pointer-events:none;
+  }
+  .menu-card:hover{transform:translateY(-6px) scale(1.03);border-color:rgba(255,255,255,0.4);box-shadow:0 14px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4)}
+  .menu-card:hover::before{opacity:1}
+  .menu-card:active{transform:translateY(-2px) scale(0.99)}
+  .menu-card-icon{font-size:34px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.4))}
+  .menu-card-title{font-size:13px;font-weight:800;text-align:center;letter-spacing:.3px}
+  .menu-card-sub{font-size:9px;color:var(--text-3);text-align:center}
+  .menu-card.admin-card{border-color:rgba(255,204,0,0.5);background:linear-gradient(135deg, rgba(255,204,0,0.2), rgba(255,140,0,0.08))}
+  
+  @media (max-width:600px){
+    .menu-grid{grid-template-columns:repeat(2,1fr);max-width:420px}
+    .btn-mega{padding:18px 40px;font-size:20px}
+    .topbar-avatar{width:48px;height:48px;font-size:24px}
+  }
+  
+  /* === LOBBY === */
+  #sc-lobby{justify-content:center;align-items:center;overflow-y:auto}
+  .lobby-box{width:100%;max-width:500px;padding:28px;display:flex;flex-direction:column;gap:14px;--cut:22px}
+  .room-code{
+    font-size:40px;font-weight:900;letter-spacing:10px;
+    text-align:center;cursor:pointer;padding:16px;
+    background:linear-gradient(135deg, rgba(255,59,48,0.25), rgba(255,204,0,0.15));
+    border:2px dashed rgba(255,255,255,0.4);
+    border-radius:12px;font-family:'SF Mono',monospace;color:#fff;
+    text-shadow:0 0 20px rgba(255,59,48,0.6);
+    transition:all .2s;
+  }
+  .room-code:hover{transform:scale(1.02);box-shadow:0 0 30px rgba(255,59,48,0.4)}
+  .plist{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;min-height:60px}
+  .pitem{
+    display:flex;align-items:center;gap:12px;padding:10px 14px;
+    background:rgba(255,255,255,0.06);border-radius:10px;
+    border:1px solid rgba(255,255,255,0.1);
+  }
   .pitem .av{font-size:22px}.pitem .nm{flex:1;font-weight:bold}
-  .pitem .st{font-size:11px;font-weight:bold;color:var(--red);text-transform:uppercase}
-  .plist-empty{text-align:center;padding:24px;color:var(--text-l);font-size:13px;font-style:italic}
-  .connecting{display:inline-block;width:14px;height:14px;border:2px solid var(--red);
-    border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+  .pitem .st{font-size:10px;font-weight:bold;color:var(--red);text-transform:uppercase;padding:3px 8px;background:rgba(255,59,48,0.2);border-radius:6px}
+  .plist-empty{text-align:center;padding:24px;color:var(--text-3);font-size:13px;font-style:italic}
+  .connecting{display:inline-block;width:14px;height:14px;border:2px solid var(--red);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
-  #sc-game{display:none;flex-direction:column;height:100%;padding:8px;overflow:hidden;gap:8px}
-  #sc-game.on{display:flex}
-  .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:13px;flex-shrink:0;gap:6px;flex-wrap:wrap}
-  .badge{background:rgba(255,255,255,.6);padding:5px 12px;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,.05);font-size:12px}
-  .badge.hot{background:var(--red);color:#fff;animation:pulseBadge 1.5s infinite}
+  
+  /* === GAME === */
+  #sc-game{padding:8px;gap:8px}
+  .ghead{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 14px;font-weight:bold;font-size:12px;flex-shrink:0;gap:6px;flex-wrap:wrap;
+    --cut:12px;
+  }
+  .badge{
+    background:rgba(255,255,255,0.1);padding:5px 12px;border-radius:20px;
+    border:1px solid rgba(255,255,255,0.15);
+    font-size:11px;display:inline-flex;align-items:center;gap:4px;
+  }
+  .badge.hot{background:linear-gradient(135deg, #ff6b5b, var(--red));color:#fff;border-color:rgba(255,255,255,0.4);animation:pulseBadge 1.5s infinite}
   .badge.timer{background:#333;color:#fff;font-family:monospace;display:none}
   .badge.timer.warn{background:#ff9800;animation:pulseBadge .8s infinite}
   .badge.timer.danger{background:#f44336;animation:pulseBadge .4s infinite}
-  @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
   .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
-  .opp{display:flex;flex-direction:column;align-items:center;padding:8px 12px;min-width:76px;transition:.3s;position:relative;--cut:12px}
-  .opp.turn{box-shadow:0 0 20px var(--red);border:2px solid var(--red);transform:scale(1.05)}
-  .opp.dead{opacity:.4;filter:grayscale(1)}
-  .opp.dead::after{content:'💀';position:absolute;font-size:36px;top:50%;left:50%;transform:translate(-50%,-50%)}
+  .opp{
+    display:flex;flex-direction:column;align-items:center;padding:10px 14px;
+    min-width:80px;transition:.3s;position:relative;
+    background:linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+    border:1px solid rgba(255,255,255,0.15);border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.2);
+  }
+  .opp.turn{
+    box-shadow:0 0 0 2px var(--red), 0 0 25px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+    transform:scale(1.06);
+  }
+  .opp.dead{opacity:.35;filter:grayscale(1)}
+  .opp.dead::after{content:'💀';position:absolute;font-size:36px;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2}
   .opp .av{font-size:28px;margin-bottom:2px}
-  .opp .nm{font-size:11px;font-weight:bold;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
-  .opp .cnt{font-size:11px;color:var(--red-dark);font-weight:bold}
+  .opp .nm{font-size:11px;font-weight:bold;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+  .opp .cnt{font-size:11px;color:var(--text-2);font-weight:bold}
+  
   .board{flex:1;display:flex;justify-content:center;align-items:center;gap:30px;position:relative;min-height:0}
-  .pile{width:96px;height:134px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-    font-size:38px;position:relative;flex-shrink:0;transition:transform .2s}
-  .deck{background:linear-gradient(135deg,var(--red),var(--red-dark));cursor:pointer;
-    box-shadow:0 10px 20px rgba(217,56,40,.4);border:3px solid #fff}
-  .deck:hover{transform:translateY(-5px) scale(1.02)}
+  .pile{
+    width:96px;height:134px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:38px;position:relative;flex-shrink:0;transition:transform .2s;
+  }
+  .deck{
+    background:linear-gradient(135deg, #ff6b5b, var(--red-2));
+    cursor:pointer;border:3px solid rgba(255,255,255,0.6);
+    box-shadow:0 12px 30px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.3);
+  }
+  .deck:hover{transform:translateY(-5px) scale(1.03)}
   .deck.can{animation:deckPulse 1.5s infinite}
-  @keyframes deckPulse{0%,100%{box-shadow:0 0 15px rgba(217,56,40,.6)}50%{box-shadow:0 0 35px rgba(217,56,40,1)}}
-  .deck.locked{opacity:.6;cursor:not-allowed;filter:grayscale(.5)}
+  @keyframes deckPulse{
+    0%,100%{box-shadow:0 0 20px rgba(255,59,48,0.6), inset 0 2px 0 rgba(255,255,255,0.3)}
+    50%{box-shadow:0 0 40px rgba(255,59,48,1), inset 0 2px 0 rgba(255,255,255,0.4)}
+  }
+  .deck.locked{opacity:.55;cursor:not-allowed;filter:grayscale(.6)}
   .deck.shuffling{animation:shuffleAnim .8s ease-in-out}
   @keyframes shuffleAnim{
-    0%{transform:translateY(0) rotate(0) scale(1)}
+    0%{transform:translateY(0) rotate(0)}
     25%{transform:translateY(-15px) rotate(-10deg) scale(1.05)}
     50%{transform:translateY(5px) rotate(10deg) scale(.95)}
-    75%{transform:translateY(-5px) rotate(-5deg) scale(1.02)}
-    100%{transform:translateY(0) rotate(0) scale(1)}
+    75%{transform:translateY(-5px) rotate(-5deg)}
+    100%{transform:translateY(0) rotate(0)}
   }
-  .disc{background:rgba(255,255,255,.3);border:2px dashed rgba(255,255,255,.8)}
-  .badge-p{position:absolute;bottom:-8px;right:-8px;background:#fff;color:var(--red);min-width:28px;height:28px;
-    padding:0 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;
-    font-weight:bold;font-size:13px;box-shadow:0 2px 5px rgba(0,0,0,.2)}
-  .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;
-    padding:8px 10px;border-radius:8px;pointer-events:none;max-width:220px;backdrop-filter:blur(5px);line-height:1.4}
-  .hand-area{padding:12px;min-height:160px;display:flex;flex-direction:column;flex-shrink:0;--cut:14px}
-  .hand-action-bar{display:none;margin-bottom:6px;padding:8px 12px;background:rgba(0,204,102,.15);
-    border:2px solid #00cc66;border-radius:8px;font-size:12px;font-weight:bold;align-items:center;gap:8px;flex-wrap:wrap}
+  .disc{
+    background:rgba(255,255,255,0.08);
+    border:2px dashed rgba(255,255,255,0.3);
+    box-shadow:inset 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .badge-p{
+    position:absolute;bottom:-8px;right:-8px;background:#fff;color:var(--red);
+    min-width:28px;height:28px;padding:0 6px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:bold;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  }
+  .glog{
+    position:absolute;top:5px;left:5px;font-size:11px;
+    background:rgba(0,0,0,0.6);color:#fff;padding:8px 10px;border-radius:10px;
+    pointer-events:none;max-width:220px;backdrop-filter:blur(10px);line-height:1.4;
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  
+  .hand-area{
+    padding:12px;min-height:160px;display:flex;flex-direction:column;flex-shrink:0;
+    --cut:14px;
+  }
+  .hand-action-bar{
+    display:none;margin-bottom:6px;padding:8px 12px;
+    background:rgba(0,204,102,0.2);border:2px solid #00cc66;border-radius:10px;
+    font-size:12px;font-weight:bold;align-items:center;gap:8px;flex-wrap:wrap;
+  }
   .hand-action-bar.on{display:flex}
   .hand-action-bar button{padding:6px 14px;font-size:12px}
   .hand-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 0 12px;align-items:center;scrollbar-width:thin}
-  .card{width:86px;height:124px;border-radius:10px;flex-shrink:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:space-between;padding:6px 4px;cursor:pointer;position:relative;
-    background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.15);border:2px solid #fff;transition:all .2s;overflow:hidden}
-  /* ✅ HOVER: chỉ nâng cao khi chưa được chọn */
-  .card:hover:not(.dis):not(.selected){transform:translateY(-12px) scale(1.05);z-index:10;
-    box-shadow:0 15px 25px rgba(0,0,0,.3);border-color:var(--red)}
-  .card.dis{opacity:.35;filter:grayscale(.8);cursor:not-allowed}
-  .card .ic{font-size:30px;margin-top:2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
-  .card .tt{font-size:9px;font-weight:900;text-transform:uppercase;text-align:center;line-height:1.1;color:#333;margin-top:2px}
-  .card .ds{font-size:7.5px;text-align:center;color:#555;line-height:1.15;font-weight:600;
-    background:rgba(0,0,0,.06);padding:2px 3px;border-radius:4px;width:100%;margin-top:2px}
-  .c-EK{background:linear-gradient(135deg,#ffcccc,#ff9999);border-color:#ff4d4d}
-  .c-DEFUSE{background:linear-gradient(135deg,#ccffcc,#99ff99);border-color:#4dff4d}
-  .c-NOPE{background:linear-gradient(135deg,#ffe6cc,#ffcc99);border-color:#ff9933}
-  .c-ATTACK{background:linear-gradient(135deg,#ffcccc,#ff6666);border-color:#cc0000}
-  .c-ATTACK .tt,.c-ATTACK .ds{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);background:rgba(0,0,0,.25)}
-  .c-SKIP{background:linear-gradient(135deg,#cce6ff,#99ccff);border-color:#3399ff}
-  .c-SEE_FUTURE{background:linear-gradient(135deg,#e6ccff,#cc99ff);border-color:#9933ff}
-  .c-SHUFFLE{background:linear-gradient(135deg,#ccffff,#99ffff);border-color:#33ffff}
-  .c-FAVOR{background:linear-gradient(135deg,#ffccff,#ff99ff);border-color:#ff33ff}
-  .c-CAT{background:linear-gradient(135deg,#fff2cc,#ffe699);border-color:#ffcc00}
-  @keyframes newDrawIn{0%{transform:translateX(-90px) scale(.6) rotate(-10deg);opacity:0}
-    60%{transform:translateX(8px) scale(1.1) rotate(3deg);opacity:1}
-    100%{transform:translateX(0) scale(1) rotate(0);opacity:1}}
-  .card.new-draw{animation:newDrawIn .65s cubic-bezier(.34,1.56,.64,1);
-    border-color:gold!important;
-    box-shadow:0 0 25px gold,0 0 50px rgba(255,215,0,.55),0 8px 20px rgba(0,0,0,.25)!important;z-index:6}
-  /* ✅ SELECTED: chỉ hiện viền, KHÔNG nhấc cao */
-  .card.selected{
-    border-color:#00cc66!important;
-    box-shadow:0 0 0 3px #00cc66,0 0 20px #00ff88,0 0 40px rgba(0,255,136,.5),0 4px 10px rgba(0,0,0,.2)!important;
-    z-index:8!important;
+  
+  .card{
+    width:86px;height:124px;border-radius:12px;flex-shrink:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+    padding:6px 4px;cursor:pointer;position:relative;
+    background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.25);
+    border:2px solid rgba(255,255,255,0.9);transition:all .2s;overflow:hidden;
   }
-  .card.selected::before{content:'✓';position:absolute;top:-8px;right:-8px;background:#00cc66;color:#fff;
+  .card:hover:not(.dis):not(.selected){
+    transform:translateY(-12px) scale(1.06);z-index:10;
+    box-shadow:0 15px 30px rgba(0,0,0,0.5);border-color:var(--red);
+  }
+  .card.dis{opacity:.35;filter:grayscale(.8);cursor:not-allowed}
+  .card .ic{font-size:30px;margin-top:2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2))}
+  .card .tt{font-size:9px;font-weight:900;text-transform:uppercase;text-align:center;line-height:1.1;color:#222;margin-top:2px}
+  .card .ds{font-size:7.5px;text-align:center;color:#444;line-height:1.15;font-weight:600;background:rgba(0,0,0,0.06);padding:2px 3px;border-radius:4px;width:100%;margin-top:2px}
+  .c-EK{background:linear-gradient(135deg,#ffcccc,#ff6666);border-color:#ff2222}
+  .c-DEFUSE{background:linear-gradient(135deg,#ccffcc,#66ff99);border-color:#22cc55}
+  .c-NOPE{background:linear-gradient(135deg,#ffe6cc,#ffaa66);border-color:#ff8800}
+  .c-ATTACK{background:linear-gradient(135deg,#ffcccc,#ff4444);border-color:#cc0000}
+  .c-ATTACK .tt,.c-ATTACK .ds{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);background:rgba(0,0,0,0.25)}
+  .c-SKIP{background:linear-gradient(135deg,#cce6ff,#66aaff);border-color:#2266cc}
+  .c-SEE_FUTURE{background:linear-gradient(135deg,#e6ccff,#aa66ff);border-color:#7722cc}
+  .c-SHUFFLE{background:linear-gradient(135deg,#ccffff,#66eeff);border-color:#22cccc}
+  .c-FAVOR{background:linear-gradient(135deg,#ffccff,#ff66ee);border-color:#cc22aa}
+  .c-CAT{background:linear-gradient(135deg,#fff2cc,#ffdd66);border-color:#ffbb00}
+  
+  .card.selected{
+    border-color:#00ff88!important;
+    box-shadow:0 0 0 3px #00cc66, 0 0 25px #00ff88, 0 0 50px rgba(0,255,136,0.5), 0 4px 12px rgba(0,0,0,0.2)!important;
+    z-index:8!important;
+    /* NO transform - only ring, not lifted */
+  }
+  .card.selected::before{
+    content:'✓';position:absolute;top:-8px;right:-8px;background:#00cc66;color:#fff;
     width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:bold;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.3);z-index:10}
-  .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;backdrop-filter:blur(2px)}
+    font-weight:bold;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.4);z-index:10;
+  }
+  .card.new-draw{
+    animation:newDrawIn .6s cubic-bezier(0.34,1.56,0.64,1);
+    border-color:gold!important;
+    box-shadow:0 0 25px gold, 0 0 50px rgba(255,215,0,0.6), 0 8px 20px rgba(0,0,0,0.3)!important;
+    z-index:6;
+  }
+  @keyframes newDrawIn{
+    0%{transform:translateX(-120px) scale(0.5) rotate(-15deg);opacity:0}
+    60%{transform:translateX(10px) scale(1.15) rotate(3deg);opacity:1}
+    100%{transform:translateX(0) scale(1) rotate(0);opacity:1}
+  }
+  
+  /* Deal-in animation */
+  .card.deal-in{
+    animation:dealIn .55s cubic-bezier(0.34,1.56,0.64,1) backwards;
+  }
+  @keyframes dealIn{
+    from{transform:translate(-200px, -300px) rotate(-60deg) scale(0.3);opacity:0}
+    to{transform:translate(0,0) rotate(0) scale(1);opacity:1}
+  }
+  
+  /* NOPE buttons */
+  .nope-container{
+    position:fixed;bottom:38%;left:50%;transform:translate(-50%,50%);z-index:200;
+    display:flex;gap:10px;align-items:center;
+    animation:nopeIn .3s ease-out;
+  }
+  @keyframes nopeIn{from{opacity:0;transform:translate(-50%,calc(50% + 20px))}to{opacity:1;transform:translate(-50%,50%)}}
+  .nope-btn{
+    padding:14px 32px;font-size:22px;font-weight:900;
+    background:linear-gradient(135deg,#ff0000,#ff6b5b);color:#fff;
+    border-radius:50px;border:3px solid rgba(255,255,255,0.7);
+    box-shadow:0 0 25px rgba(255,0,0,0.8);cursor:pointer;
+    animation:pulseNope .6s infinite alternate;
+  }
+  @keyframes pulseNope{from{transform:scale(1)}to{transform:scale(1.08)}}
+  .nope-skip-btn{
+    padding:10px 20px;font-size:14px;font-weight:bold;
+    background:rgba(255,255,255,0.95);color:#666;
+    border:2px solid #ccc;border-radius:50px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.2);cursor:pointer;
+  }
+  .nope-skip-btn:hover{background:#fff;color:#222;transform:scale(1.05)}
+  
+  /* Toast */
+  .toast{
+    position:fixed;top:20px;left:50%;transform:translateX(-50%);
+    background:rgba(20,10,8,0.95);color:#fff;padding:12px 24px;border-radius:30px;
+    font-weight:bold;z-index:10000;animation:toastIn .3s ease-out;
+    font-size:14px;max-width:90%;text-align:center;
+    border:1px solid rgba(255,255,255,0.2);
+    backdrop-filter:blur(20px);
+  }
+  @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  
+  /* Opponent action floating toast */
+  .opp-action-toast{
+    position:fixed;top:12%;left:50%;transform:translateX(-50%);
+    background:linear-gradient(135deg, rgba(255,59,48,0.95), rgba(180,30,20,0.95));
+    color:#fff;padding:16px 28px;border-radius:16px;z-index:9998;
+    text-align:center;pointer-events:none;
+    border:2px solid rgba(255,255,255,0.4);
+    box-shadow:0 20px 60px rgba(255,59,48,0.7), inset 0 2px 0 rgba(255,255,255,0.3);
+    backdrop-filter:blur(20px);
+    animation:oppActionIn 3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes oppActionIn{
+    0%{transform:translate(-50%,-100px) scale(0.5);opacity:0}
+    15%{transform:translate(-50%,0) scale(1.08);opacity:1}
+    25%{transform:translate(-50%,0) scale(1)}
+    75%{transform:translate(-50%,0) scale(1);opacity:1}
+    100%{transform:translate(-50%,-30px) scale(0.9);opacity:0}
+  }
+  .opp-action-name{font-size:11px;opacity:.85;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase}
+  .opp-action-card{font-size:20px;font-weight:900}
+  
+  /* Floating card anim */
+  .anim-card{
+    position:fixed;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#fff;border-radius:12px;box-shadow:0 15px 40px rgba(0,0,0,0.6);
+    border:2px solid rgba(255,255,255,0.9);padding:8px 4px;
+    font-weight:900;
+  }
+  .anim-card .anim-card-ic{font-size:38px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3))}
+  .anim-card .anim-card-tt{font-size:10px;text-transform:uppercase;color:#333;margin-top:4px;text-align:center}
+  
+  /* Chat */
+  .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;backdrop-filter:blur(4px)}
   .chat-ov.on{display:block}
-  .chat-p{position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);width:320px;height:400px;
-    display:flex;flex-direction:column;z-index:201;transition:transform .3s;background:rgba(255,255,255,.9)}
+  .chat-p{
+    position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);
+    width:320px;height:400px;display:flex;flex-direction:column;z-index:201;
+    transition:transform .3s;
+    background:linear-gradient(135deg, rgba(40,20,15,0.95), rgba(20,10,8,0.95));
+    border:1px solid rgba(255,255,255,0.2);border-radius:16px;
+    backdrop-filter:blur(30px);overflow:hidden;
+  }
   .chat-p.on{transform:translateY(-50%) translateX(0)}
-  .chat-h{padding:14px;border-bottom:1px solid rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:center;font-weight:bold}
+  .chat-h{padding:14px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;font-weight:bold}
   .chat-x{cursor:pointer;font-size:20px;color:var(--red);padding:0 5px}
   .chat-m{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px}
-  .chat-m .u{color:var(--red);font-weight:bold}
-  .chat-i{display:flex;padding:12px;gap:8px;border-top:1px solid rgba(0,0,0,.1)}
-  .chat-i input{padding:8px;font-size:14px}.chat-i button{padding:8px 14px;font-size:14px}
-  .chat-f{position:fixed;right:20px;bottom:190px;z-index:100;padding:10px 14px;border-radius:20px;
-    background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border:1px solid #fff;
-    box-shadow:0 4px 10px rgba(0,0,0,.1);cursor:pointer;font-weight:bold;font-size:14px;display:none}
+  .chat-m .u{color:#ff8a7a;font-weight:bold}
+  .chat-i{display:flex;padding:12px;gap:8px;border-top:1px solid rgba(255,255,255,0.1)}
+  .chat-i input{padding:8px;font-size:14px}
+  .chat-i button{padding:8px 14px;font-size:14px}
+  .chat-f{
+    position:fixed;right:20px;bottom:190px;z-index:100;
+    padding:10px 14px;border-radius:20px;cursor:pointer;
+    background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.3);font-weight:bold;font-size:14px;
+    display:none;color:#fff;
+  }
   .chat-f.on{display:block}
-  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(10px);display:flex;
-    justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px}
+  
+  /* Modal */
+  .ov{
+    position:fixed;inset:0;background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(12px);display:flex;justify-content:center;align-items:center;
+    z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px;
+  }
   .ov.on{opacity:1;pointer-events:auto}
-  .modal{width:100%;max-width:500px;padding:26px;display:flex;flex-direction:column;gap:14px;
-    text-align:center;transform:scale(.9);transition:.3s;max-height:90vh;overflow-y:auto}
+  .modal{
+    width:100%;max-width:500px;padding:26px;
+    display:flex;flex-direction:column;gap:14px;text-align:center;
+    transform:scale(.9);transition:.3s;
+    max-height:90vh;overflow-y:auto;
+    --cut:24px;
+  }
   .ov.on .modal{transform:scale(1)}
-  .modal h2{font-size:22px;color:var(--red-dark)}
-  .modal p{font-size:14px;color:var(--text-l)}
+  .modal h2{font-size:22px;color:#fff}
+  .modal p{font-size:14px;color:var(--text-2)}
   .mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
   .mcol{display:flex;flex-direction:column;gap:8px}
-  .shake{animation:shake .5s cubic-bezier(.36,.07,.19,.97) both}
-  @keyframes shake{10%,90%{transform:translate3d(-4px,0,0)}20%,80%{transform:translate3d(6px,0,0)}
-    30%,50%,70%{transform:translate3d(-8px,0,0)}40%,60%{transform:translate3d(8px,0,0)}}
-  .flash{animation:flashRed .6s ease-out}
-  @keyframes flashRed{0%{box-shadow:inset 0 0 0 100vw rgba(255,0,0,.8)}100%{box-shadow:inset 0 0 0 100vw rgba(255,0,0,0)}}
-  .particle{position:absolute;border-radius:50%;pointer-events:none;z-index:1000}
-  /* ✅ NOPE: container chứa cả nút NOPE và Bỏ qua */
-  .nope-container{position:fixed;bottom:38%;left:50%;transform:translate(-50%,50%);z-index:200;display:flex;gap:10px;align-items:center}
-  .nope-btn{padding:14px 32px;font-size:22px;background:linear-gradient(135deg,#ff0000,#ff6b6b);
-    color:#fff;border-radius:50px;box-shadow:0 0 20px rgba(255,0,0,.6);border:3px solid #fff;cursor:pointer;
-    animation:pulseNope .6s infinite alternate;font-weight:900}
-  @keyframes pulseNope{from{transform:scale(1)}to{transform:scale(1.08)}}
-  .nope-skip-btn{padding:10px 20px;font-size:14px;background:rgba(255,255,255,.95);color:#666;
-    border:2px solid #ccc;border-radius:50px;box-shadow:0 4px 10px rgba(0,0,0,.15);cursor:pointer;font-weight:bold}
-  .nope-skip-btn:hover{background:#fff;color:#333}
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);
-    color:#fff;padding:12px 24px;border-radius:30px;font-weight:bold;z-index:10000;
-    animation:toastIn .3s ease-out;font-size:14px;max-width:90%;text-align:center}
-  @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
-  .stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.1);font-size:13px;gap:10px}
+  
+  .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;gap:10px}
   .stat-row:last-child{border:none}
-  .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:var(--red);border:1.5px solid var(--red);border-radius:6px;cursor:pointer;font-weight:bold}
+  .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:var(--red);border:1.5px solid var(--red);border-radius:8px;cursor:pointer;font-weight:bold}
+  
+  .avatar-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0}
+  .avatar-opt{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-size:28px;background:rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;
+    border:2px solid transparent;transition:all .2s;
+  }
+  .avatar-opt:hover{background:rgba(255,255,255,0.2);transform:scale(1.1)}
+  .avatar-opt.selected{border-color:#00ff88;background:rgba(0,255,136,0.2);box-shadow:0 0 15px rgba(0,255,136,0.5)}
+  
+  /* Particle */
+  .particle{position:absolute;border-radius:50%;pointer-events:none;z-index:1000}
+  
   @media (max-width:600px){
     .card{width:70px;height:104px;padding:5px 3px}
     .card .ic{font-size:24px}.card .tt{font-size:8px}
@@ -200,90 +537,132 @@
     .pile{width:78px;height:110px;font-size:28px}
     .chat-p{width:100%;right:0;height:50vh;top:auto;bottom:0;transform:translateY(100%);border-radius:20px 20px 0 0}
     .chat-p.on{transform:translateY(0)}
-    .glog{max-width:150px;font-size:10px}
-    .room-code{font-size:30px;letter-spacing:6px}
+    .glog{max-width:140px;font-size:10px}
+    .room-code{font-size:28px;letter-spacing:6px}
     .nope-btn{padding:12px 24px;font-size:18px}
+    .btn-mega{padding:16px 32px;font-size:18px}
+    .avatar-picker{grid-template-columns:repeat(4,1fr)}
   }
 </style>
 </head>
 <body>
-<div class="glow"></div>
 
-<!-- HOME -->
-<div id="sc-home" class="screen on">
-  <div class="glass home-box">
-    <h1 class="home-title">Mèo Nổ</h1>
-    <p class="home-sub">Exploding Kittens - Online</p>
-    <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="15" oninput="UI.saveName(this.value)">
+<!-- AUTH -->
+<div id="sc-auth" class="screen on">
+  <div class="glass bevel auth-box">
+    <div class="auth-logo">💥</div>
+    <h1 class="auth-title">MÈO NỔ</h1>
+    <p class="auth-sub">Exploding Kittens · Online</p>
     
-    <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-      <button class="btn-p" id="btnCreateRoom" onclick="UI.createRoom()">Tạo Phòng Online</button>
-      <button class="btn-o" onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia Phòng</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login" onclick="UI.switchAuthTab('login')">Đăng Nhập</button>
+      <button class="auth-tab" data-tab="register" onclick="UI.switchAuthTab('register')">Đăng Ký</button>
     </div>
-
-    <div id="joinArea" style="display:none; flex-direction:column; gap:8px; margin-top:8px;">
-      <input type="tel" id="joinCode" placeholder="Mã phòng (6 số)" maxlength="6" inputmode="numeric" pattern="[0-9]*"
-        style="font-family:monospace;letter-spacing:6px;text-align:center;font-size:18px;font-weight:bold">
-      <button id="btnJoinRoom" onclick="UI.joinRoom()">Vào Phòng</button>
-    </div>
-
-    <hr style="border:0;border-top:1px solid rgba(0,0,0,.1); margin: 15px 0;">
     
-    <label style="font-size:12px;font-weight:bold;color:var(--text-l);text-align:left;">Chơi Offline với Bot:</label>
-    <select id="soloPlayerCount" class="mode-select">
-      <option value="2">2 người</option>
-      <option value="3" selected>3 người</option>
-      <option value="4">4 người</option>
-      <option value="5">5 người</option>
-      <option value="6">6 người</option>
-    </select>
-    <select id="botMode" class="mode-select">
-      <option value="normal">😴 Bot Bình thường</option>
-      <option value="smart" selected>🧠 Bot Thông minh</option>
-      <option value="ultimate">👑 Bot Tối thượng</option>
-    </select>
-    <button onclick="UI.startSolo()" style="margin-top:5px;">🎮 Chơi với Bot</button>
+    <div id="authLoginForm" style="display:flex;flex-direction:column;gap:10px">
+      <input type="text" id="loginUser" placeholder="Tên đăng nhập" maxlength="20" autocomplete="username">
+      <input type="password" id="loginPass" placeholder="Mật khẩu" autocomplete="current-password"
+        onkeypress="if(event.key==='Enter')UI.doLogin()">
+      <button class="btn-p" onclick="UI.doLogin()" style="margin-top:6px">Đăng Nhập</button>
+    </div>
+    
+    <div id="authRegisterForm" style="display:none;flex-direction:column;gap:10px">
+      <input type="text" id="regUser" placeholder="Tên đăng nhập (≥3 ký tự)" maxlength="20" autocomplete="username">
+      <input type="password" id="regPass" placeholder="Mật khẩu (≥4 ký tự)" autocomplete="new-password">
+      <input type="password" id="regPass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password"
+        onkeypress="if(event.key==='Enter')UI.doRegister()">
+      <button class="btn-p" onclick="UI.doRegister()" style="margin-top:6px">Tạo Tài Khoản</button>
+    </div>
+    
+    <div id="authMsg" class="auth-msg"></div>
+  </div>
+</div>
+
+<!-- MENU -->
+<div id="sc-menu" class="screen">
+  <div class="glass bevel topbar">
+    <div class="topbar-info">
+      <div class="topbar-name" id="topbarName">-</div>
+      <div class="topbar-stats">
+        <span>🎮 <b id="topbarGames">0</b> trận</span>
+        <span>🏆 <b id="topbarWins">0</b> thắng</span>
+        <span id="topbarAdminBadge" style="display:none" class="admin-badge">ADMIN</span>
+      </div>
+    </div>
+    <div class="topbar-avatar" id="topbarAvatar" onclick="UI.openProfile()">🐱</div>
+  </div>
+  
+  <div class="menu-body">
+    <button class="btn-mega" onclick="UI.quickPlay()">▶ Bắt Đầu Chơi</button>
+    
+    <div class="menu-grid">
+      <div class="menu-card" onclick="UI.openSoloModal()">
+        <div class="menu-card-icon">🎮</div>
+        <div class="menu-card-title">Solo</div>
+        <div class="menu-card-sub">Chơi với Bot</div>
+      </div>
+      <div class="menu-card" onclick="UI.openCreateRoomModal()">
+        <div class="menu-card-icon">➕</div>
+        <div class="menu-card-title">Tạo Phòng</div>
+        <div class="menu-card-sub">Host game</div>
+      </div>
+      <div class="menu-card" onclick="UI.openJoinRoomModal()">
+        <div class="menu-card-icon">🔗</div>
+        <div class="menu-card-title">Vào Phòng</div>
+        <div class="menu-card-sub">Nhập mã</div>
+      </div>
+      <div class="menu-card" id="adminCard" style="display:none" onclick="UI.openAdminPanel()">
+        <div class="menu-card-icon">👑</div>
+        <div class="menu-card-title">Admin</div>
+        <div class="menu-card-sub">Quản trị</div>
+      </div>
+      <div class="menu-card" id="profileCard" onclick="UI.openProfile()">
+        <div class="menu-card-icon">👤</div>
+        <div class="menu-card-title">Hồ Sơ</div>
+        <div class="menu-card-sub">Tài khoản</div>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- LOBBY -->
 <div id="sc-lobby" class="screen">
-  <div class="glass lobby-box">
-    <h2 style="text-align:center;color:var(--red-dark)">Phòng Chờ Online</h2>
+  <div class="glass bevel lobby-box">
+    <h2 style="text-align:center;font-size:20px">🎯 Phòng Chờ</h2>
     <div class="room-code" id="lobbyCode" onclick="UI.copyCode()">------</div>
-    <div id="lobbyStatus" style="text-align:center;font-size:12px;font-weight:bold;color:#666; min-height:30px;">Nhấn mã để copy · Chia sẻ cho bạn bè</div>
+    <div id="lobbyStatus" style="text-align:center;font-size:12px;font-weight:bold;color:var(--text-2);min-height:30px">Đang kết nối...</div>
     
     <div class="plist" id="lobbyPlayers"></div>
     
-    <div id="hostControls" style="display:none; flex-direction:column; gap:8px;">
-      <label style="font-size:12px;font-weight:bold;color:var(--text-l);">Chế độ Bot (khi vào game):</label>
-      <select id="lobbyBotMode" class="mode-select">
+    <div id="hostControls" style="display:none;flex-direction:column;gap:8px">
+      <label style="font-size:12px;font-weight:bold;color:var(--text-2)">Chế độ Bot:</label>
+      <select id="lobbyBotMode">
         <option value="normal">😴 Bình thường</option>
         <option value="smart" selected>🧠 Thông minh</option>
         <option value="ultimate">👑 Tối thượng</option>
       </select>
-      <div style="display:flex; gap:8px; margin-top:5px;">
+      <div style="display:flex;gap:8px">
         <button class="btn-o" style="flex:1" onclick="UI.addBot()">+ Thêm Bot</button>
         <button class="btn-o" style="flex:1" onclick="UI.removeBot()">- Xóa Bot</button>
       </div>
     </div>
-
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap; margin-top:10px;">
-      <button class="btn-p" id="btnStart" style="display:none; width:100%;" onclick="UI.startMultiplayerGame()">Bắt Đầu Game</button>
-      <button class="btn-d" style="width:100%;" onclick="UI.leaveRoom()">Rời Phòng</button>
+    
+    <div style="display:flex;gap:8px;flex-direction:column">
+      <button class="btn-p" id="btnStart" style="display:none" onclick="UI.startMultiplayerGame()">🚀 Bắt Đầu Game</button>
+      <button class="btn-danger" onclick="UI.leaveRoom()">Rời Phòng</button>
     </div>
   </div>
 </div>
 
 <!-- GAME -->
 <div id="sc-game" class="screen">
-  <div class="glass ghead" style="--cut:14px">
-    <div class="badge">Sống: <span id="uiAlive">0</span></div>
+  <div class="glass bevel ghead">
+    <div class="badge">Sống: <b id="uiAlive">0</b></div>
     <div class="badge hot" id="uiTurn">Lượt: ...</div>
-    <div class="badge timer" id="uiTimer">⏱️ 45s</div>
-    <div class="badge">Bài: <span id="uiDeck">0</span></div>
-    <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--red);color:#fff;">×1</div>
-    <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:transparent;border:1px solid var(--red);color:var(--red)">Thoát</button>
+    <div class="badge timer" id="uiTimer">⏱️ 10s</div>
+    <div class="badge">Bài: <b id="uiDeck">0</b></div>
+    <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--red);color:#fff">×1</div>
+    <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:rgba(255,59,48,0.3);border:1px solid var(--red)">Thoát</button>
   </div>
   <div class="opps" id="opponentsArea"></div>
   <div class="board">
@@ -293,13 +672,14 @@
       🂠 <div class="badge-p" id="deckBadge">0</div>
     </div>
   </div>
-  <div class="glass hand-area">
+  <div class="glass bevel hand-area">
     <div class="hand-action-bar" id="handActionBar"></div>
-    <div style="font-size:11px;font-weight:bold;color:var(--text-l);margin-bottom:4px;">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
+    <div style="font-size:11px;font-weight:bold;color:var(--text-2);margin-bottom:4px">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
     <div class="hand-scroll" id="handArea"></div>
   </div>
 </div>
 
+<!-- Chat -->
 <div class="chat-ov" id="chatOverlay" onclick="UI.toggleChat()"></div>
 <div class="chat-p" id="chatPanel">
   <div class="chat-h"><span>💬 Chat</span><span class="chat-x" onclick="UI.toggleChat()">✖</span></div>
@@ -311,14 +691,15 @@
 </div>
 <div class="chat-f" id="chatFab" onclick="UI.toggleChat()">💬</div>
 
+<!-- Modal -->
 <div class="ov" id="overlayModal">
-  <div class="glass modal" id="modalContent"></div>
+  <div class="glass bevel modal" id="modalContent"></div>
 </div>
 
 <script>
-window.addEventListener('error', function(e) {
-    console.error('[Global Error]', e.message);
-    if(typeof UI !== 'undefined' && UI.toast) UI.toast('Lỗi: ' + e.message);
+window.addEventListener('error', e => {
+  console.error('[Global Error]', e.message);
+  if(typeof UI !== 'undefined' && UI.toast) UI.toast('Lỗi: ' + e.message);
 });
 
 /* ========== CARDS ========== */
@@ -339,15 +720,14 @@ const CARDS = {
 };
 const CATS = ['CAT_TACO','CAT_RAINBOW','CAT_BEARD','CAT_POTATO','CAT_HAIRY'];
 const NOPE_WINDOW = 3500;
-const NOPE_WINDOW_FAVOR = 2000; // ✅ Favor nhanh hơn
-const TURN_TIME_MS = 45000; // ✅ 45s/lượt
+const NOPE_WINDOW_FAVOR = 2000;
+const TURN_TIME_MS = 10000; // 10s auto-draw
 
 const BOT_MODES = {
   normal:{label:'Bình thường',icon:'😴',playProb:0.55,nopeProb:0.05,catProb:0.4,skipProb:0.45,attackProb:0.55,smartTarget:false},
   smart:{label:'Thông minh',icon:'🧠',playProb:0.88,nopeProb:0.18,catProb:0.85,skipProb:0.6,attackProb:0.9,smartTarget:true},
   ultimate:{label:'Tối thượng',icon:'👑',playProb:1.0,nopeProb:0.35,catProb:1.0,skipProb:0.9,attackProb:1.0,smartTarget:true}
 };
-
 const BOT_NAMES = ['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo Ngu','Mèo Khôn','Mèo Bự'];
 
 /* ========== UTILS ========== */
@@ -383,13 +763,12 @@ const Sound = {
 
 const VFX = {
   shake(){document.body.classList.add('shake');setTimeout(()=>document.body.classList.remove('shake'),500)},
-  flash(){const el=document.getElementById('sc-game');el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),600)},
   explode(x,y){
-    this.shake();this.flash();Sound.play('boom');
+    Sound.play('boom');
     for(let i=0;i<35;i++){
       const p=document.createElement('div');p.className='particle';
       const s=Math.random()*18+8;
-      p.style.cssText=`width:${s}px;height:${s}px;left:${x}px;top:${y}px;background:hsl(${Math.random()*40},100%,55%)`;
+      p.style.cssText=`width:${s}px;height:${s}px;left:${x}px;top:${y}px;background:hsl(${Math.random()*40},100%,55%);z-index:9000`;
       document.body.appendChild(p);
       const a=Math.random()*Math.PI*2,v=Math.random()*160+50;
       p.animate([{transform:'translate(0,0) scale(1)',opacity:1},
@@ -397,6 +776,77 @@ const VFX = {
         {duration:600+Math.random()*400,easing:'cubic-bezier(0,.9,.57,1)'}).onfinish=()=>p.remove();
     }
   }
+};
+
+/* ========== AUTH ========== */
+const Auth = {
+  KEY:'ek_accounts_v2',
+  USER_KEY:'ek_current_user',
+  ADMIN:{username:'vanbacazerst.vn2908', password:'aBc@2908vanbac0809'},
+  
+  init(){
+    const accounts = this.all();
+    if(!accounts[this.ADMIN.username]){
+      accounts[this.ADMIN.username] = {
+        password:this.ADMIN.password, isAdmin:true, avatar:'👑',
+        games:0, wins:0, createdAt:Date.now()
+      };
+      this._save(accounts);
+    }
+  },
+  all(){try{return JSON.parse(localStorage.getItem(this.KEY)||'{}')}catch{return {}}},
+  _save(d){localStorage.setItem(this.KEY, JSON.stringify(d))},
+  
+  register(username, password){
+    username = String(username||'').trim();
+    if(username.length < 3) return {ok:false, msg:'Tên phải ≥ 3 ký tự'};
+    if(!password || password.length < 4) return {ok:false, msg:'Mật khẩu phải ≥ 4 ký tự'};
+    const accounts = this.all();
+    if(accounts[username]) return {ok:false, msg:'Tên đã tồn tại'};
+    accounts[username] = {password, isAdmin:false, avatar:'🐱', games:0, wins:0, createdAt:Date.now()};
+    this._save(accounts);
+    localStorage.setItem(this.USER_KEY, username);
+    return {ok:true};
+  },
+  
+  login(username, password){
+    username = String(username||'').trim();
+    const accounts = this.all();
+    const acc = accounts[username];
+    if(!acc) return {ok:false, msg:'Không tìm thấy tài khoản'};
+    if(acc.password !== password) return {ok:false, msg:'Mật khẩu sai'};
+    localStorage.setItem(this.USER_KEY, username);
+    return {ok:true};
+  },
+  
+  current(){
+    const u = localStorage.getItem(this.USER_KEY);
+    if(!u) return null;
+    const acc = this.all()[u];
+    if(!acc) return null;
+    return {username:u, ...acc};
+  },
+  
+  updateStats(won){
+    const u = localStorage.getItem(this.USER_KEY);
+    if(!u) return;
+    const accounts = this.all();
+    if(!accounts[u]) return;
+    accounts[u].games = (accounts[u].games||0) + 1;
+    if(won) accounts[u].wins = (accounts[u].wins||0) + 1;
+    this._save(accounts);
+  },
+  
+  setAvatar(emoji){
+    const u = localStorage.getItem(this.USER_KEY);
+    if(!u) return;
+    const accounts = this.all();
+    if(!accounts[u]) return;
+    accounts[u].avatar = emoji;
+    this._save(accounts);
+  },
+  
+  logout(){localStorage.removeItem(this.USER_KEY)}
 };
 
 /* ========== ENGINE ========== */
@@ -407,13 +857,14 @@ const Engine = {
     this.hostId = hostId;
     this.state = {
       phase:'playing',
-      players: players.map(p=>({
+      players: players.map(p => ({
         id:p.id, name:p.name, isBot:!!p.isBot, hand:[], alive:true,
         stats:{turns:0, cardsPlayed:0, defuses:0}
       })),
       deck:[], discard:[], turnIdx:0, turnsLeft:1,
       pending:null, peekFor:null, awaitingChoice:null,
-      winner:null, logs:[], lastDraw:null, botMode: botMode||'smart'
+      winner:null, logs:[], lastDraw:null, lastSteal:null,
+      botMode: botMode||'smart', startedAt: Date.now()
     };
     this.setupDeck();
     this.state.turnIdx = Math.floor(Math.random() * players.length);
@@ -426,22 +877,24 @@ const Engine = {
   setupDeck(){
     const n = this.state.players.length;
     const deck = this.state.deck;
+    // Ít lá trùng hơn - phân bố hợp lý
     for(let i=0;i<4;i++) deck.push('ATTACK');
     for(let i=0;i<4;i++) deck.push('SKIP');
     for(let i=0;i<4;i++) deck.push('FAVOR');
-    for(let i=0;i<4;i++) deck.push('SHUFFLE');
-    for(let i=0;i<5;i++) deck.push('SEE_FUTURE');
+    for(let i=0;i<3;i++) deck.push('SHUFFLE');
+    for(let i=0;i<4;i++) deck.push('SEE_FUTURE');
     for(let i=0;i<5;i++) deck.push('NOPE');
-    for(const c of CATS) for(let i=0;i<4;i++) deck.push(c);
+    for(const c of CATS) for(let i=0;i<3;i++) deck.push(c); // 15 cats
     
-    let totalDefuse = 4;
-    let deckDefuse = Math.max(0, totalDefuse - n); 
-    for(let i=0;i<deckDefuse;i++) deck.push('DEFUSE');
+    // Defuse trong deck
+    for(let i=0;i<5;i++) deck.push('DEFUSE');
     
     U.shuffle(deck);
-    for(let i=0;i<7;i++) for(const p of this.state.players) p.hand.push(deck.pop());
+    // 5 lá từ deck + 1 defuse cho mỗi người
+    for(let i=0;i<5;i++) for(const p of this.state.players) p.hand.push(deck.pop());
     for(const p of this.state.players) p.hand.push('DEFUSE');
     
+    // EK
     for(let i=0;i<n-1;i++) deck.push('EK');
     U.shuffle(deck);
   },
@@ -452,7 +905,6 @@ const Engine = {
   log(msg){this.state.logs.push(msg);if(this.state.logs.length>30)this.state.logs.shift()},
   notify(meta){if(this.onChange)this.onChange(meta)},
 
-  /* ✅ TURN TIMER */
   startTurnTimer(){
     clearTimeout(this.turnTimerId);
     const s = this.state;
@@ -470,11 +922,11 @@ const Engine = {
       if(st.turnIdx !== turnIdx) return;
       if(this.cur()?.id !== playerId) return;
       if(st.pending || st.awaitingChoice){
-        this._scheduleAutoDraw(turnIdx, playerId, 3000);
+        this._scheduleAutoDraw(turnIdx, playerId, 2000);
         return;
       }
       const pl = this.byId(playerId);
-      this.log(`⏱️ Hết giờ! ${pl?.name||''} tự động bốc bài.`);
+      this.log(`⏱️ Hết 10s! ${pl?.name||''} tự động bốc bài.`);
       try { this.drawCard(playerId); } catch(e){ console.error('[AutoDraw]', e); }
     }, delayMs);
   },
@@ -525,7 +977,7 @@ const Engine = {
       hand.splice(idx,1);
     }
     const primary = cardTypes[0];
-    if(primary==='EK'||primary==='DEFUSE'||primary==='NOPE') return false;
+    if(['EK','DEFUSE','NOPE'].includes(primary)) return false;
     if(CATS.includes(primary)){
       if(cardTypes.length!==2 && cardTypes.length!==3) return false;
       if(!cardTypes.every(c=>c===primary)) return false;
@@ -541,12 +993,11 @@ const Engine = {
       this.state.discard.push(c);
     }
     p.stats.cardsPlayed += cardTypes.length;
-    // ✅ FAVOR có NOPE window ngắn hơn
     const winMs = primary==='FAVOR' ? NOPE_WINDOW_FAVOR : NOPE_WINDOW;
-    this.state.pending = {playerId, primary, cards:cardTypes, targetId, payload, nopeCount:0, timestamp:Date.now(), windowMs: winMs};
+    this.state.pending = {playerId, primary, cards:cardTypes, targetId, payload, nopeCount:0, timestamp:Date.now(), windowMs:winMs};
     this.log(`${p.name} đánh ${CARDS[primary].name}${cardTypes.length>1?' ×'+cardTypes.length:''}`);
     this.scheduleResolve();
-    this.notify({type:'play', playerId});
+    this.notify({type:'play', playerId, primary});
     return true;
   },
 
@@ -628,9 +1079,10 @@ const Engine = {
   doCatCombo(p, targetId, count, payload){
     const t = this.byId(targetId);
     if(!t||!t.alive||t.hand.length===0) return;
+    let stolen = null;
     if(count===2){
       const idx = Math.floor(Math.random()*t.hand.length);
-      const stolen = t.hand.splice(idx,1)[0];
+      stolen = t.hand.splice(idx,1)[0];
       p.hand.unshift(stolen);
       this.log(`🐱 ${p.name} cướp 1 lá từ ${t.name}.`);
       Sound.play('draw');
@@ -639,12 +1091,17 @@ const Engine = {
       if(!wanted) return;
       const idx = t.hand.indexOf(wanted);
       if(idx>-1){
-        t.hand.splice(idx,1); p.hand.unshift(wanted);
+        stolen = t.hand.splice(idx,1)[0];
+        p.hand.unshift(stolen);
         this.log(`🐱 ${p.name} lấy ${CARDS[wanted].name} từ ${t.name}.`);
         Sound.play('draw');
       } else {
         this.log(`🐱 ${t.name} không có ${CARDS[wanted].name}.`);
       }
+    }
+    // Animation trigger
+    if(stolen){
+      this.state.lastSteal = {thiefId:p.id, victimId:t.id, card:stolen, id:Math.random()};
     }
   },
 
@@ -652,7 +1109,7 @@ const Engine = {
     if(!this.canAct(playerId,'draw')) return false;
     const p = this.byId(playerId);
 
-    // ✅ Xáo lại discard khi deck cạn (giữa/cuối game)
+    // Xáo lại discard khi deck hết
     if(this.state.deck.length===0){
       const reshufflable = this.state.discard.filter(c => c !== 'EK');
       if(reshufflable.length > 0){
@@ -721,8 +1178,8 @@ const Engine = {
 
   resolveFavor(targetId, cardIdx){
     if(!this.state.awaitingChoice||this.state.awaitingChoice.type!=='favor') return false;
-    const {fromId, targetId:expectedTarget} = this.state.awaitingChoice;
-    if(targetId!==expectedTarget) return false;
+    const {fromId, targetId:exp} = this.state.awaitingChoice;
+    if(targetId!==exp) return false;
     const target = this.byId(targetId);
     const from = this.byId(fromId);
     if(!target||!from) return false;
@@ -730,6 +1187,7 @@ const Engine = {
     const card = target.hand.splice(cardIdx,1)[0];
     from.hand.unshift(card);
     this.log(`🫴 ${from.name} nhận ${CARDS[card].name} từ ${target.name}.`);
+    this.state.lastSteal = {thiefId:from.id, victimId:target.id, card, id:Math.random()};
     this.state.awaitingChoice = null;
     this.notify({type:'favor-done'});
     return true;
@@ -742,6 +1200,21 @@ const Engine = {
     return true;
   },
 
+  handlePlayerDisconnect(playerId){
+    const p = this.byId(playerId);
+    if(!p||!p.alive) return;
+    p.alive = false;
+    this.state.discard.push(...p.hand);
+    p.hand = [];
+    this.log(`🚪 ${p.name} đã thoát!`);
+    if(this.checkWin()) return;
+    if(this.state.players[this.state.turnIdx].id === playerId){
+      this.endTurn();
+    } else {
+      this.notify();
+    }
+  },
+
   checkWin(){
     const alive = this.alive();
     if(alive.length<=1){
@@ -750,7 +1223,7 @@ const Engine = {
       this.state.awaitingChoice = null;
       this.state.pending = null;
       clearTimeout(this.pendingTimer);
-      clearTimeout(this.turnTimerId); // ✅ Dừng turn timer
+      clearTimeout(this.turnTimerId);
       if(alive[0]) this.log(`🏆 ${alive[0].name} CHIẾN THẮNG!`);
       Sound.play('win');
       this.notify({type:'win', winner:this.state.winner});
@@ -762,46 +1235,43 @@ const Engine = {
 
 /* ========== NET ========== */
 const Net = {
-  peer: null, conn: null, conns: [], isHost: false, roomCode: null, retryCount: 0,
-  onHostReady:null, onClientDisconnect:null, onJoin:null, onAction:null, onChat:null,
-  onState:null, onLobby:null, onStart:null, onHostLeft:null, onError:null, onConnectSuccess:null, onNewCode:null,
+  peer:null, conn:null, conns:[], isHost:false, roomCode:null, retryCount:0,
+  playerByConn:new Map(),
+  onHostReady:null,onClientDisconnect:null,onJoin:null,onAction:null,onChat:null,
+  onState:null,onLobby:null,onStart:null,onHostLeft:null,onError:null,onConnectSuccess:null,onNewCode:null,
 
   host(code){
-    this.roomCode = code; 
-    this.isHost = true;
-    this.retryCount = 0;
+    this.roomCode = code; this.isHost = true; this.retryCount = 0;
+    this.playerByConn.clear();
     this._createHostPeer(code);
   },
 
   _createHostPeer(code){
-    if (typeof Peer === 'undefined') {
-      if (this.onError) this.onError('Lỗi: Thư viện mạng chưa tải xong. Vui lòng tải lại trang.');
+    if(typeof Peer === 'undefined'){
+      if(this.onError) this.onError('Thư viện mạng chưa tải. Vui lòng tải lại trang.');
       return;
     }
-    try {
-      this.peer = new Peer('ek_room_' + code, {
-        config: {'iceServers': [
-          { url: 'stun:stun.l.google.com:19302' },
-          { url: 'stun:stun1.l.google.com:19302' },
-          { url: 'stun:stun2.l.google.com:19302' }
+    try{
+      this.peer = new Peer('ek_room_'+code, {
+        config:{iceServers:[
+          {url:'stun:stun.l.google.com:19302'},
+          {url:'stun:stun1.l.google.com:19302'},
+          {url:'stun:stun2.l.google.com:19302'}
         ]}
       });
-    } catch(e) {
-      if (this.onError) this.onError('Lỗi khởi tạo: ' + e.message);
-      return;
-    }
+    }catch(e){if(this.onError) this.onError('Lỗi khởi tạo: '+e.message);return;}
 
     const timeout = setTimeout(() => {
-        if (this.peer && !this.peer.destroyed && !this.peer.open) {
-            try{this.peer.destroy()}catch(e){}
-            if (this.onError) this.onError('Máy chủ kết nối quá tải. Vui lòng thử lại!');
-        }
+      if(this.peer && !this.peer.destroyed && !this.peer.open){
+        try{this.peer.destroy()}catch(e){}
+        if(this.onError) this.onError('Kết nối quá tải. Thử lại!');
+      }
     }, 10000);
 
     this.peer.on('open', () => {
       clearTimeout(timeout);
       this.retryCount = 0;
-      if (this.onHostReady) this.onHostReady();
+      if(this.onHostReady) this.onHostReady();
     });
 
     this.peer.on('connection', (c) => {
@@ -809,111 +1279,100 @@ const Net = {
       c.on('data', (data) => this.route(data, c));
       c.on('close', () => {
         this.conns = this.conns.filter(x => x !== c);
-        if (this.onClientDisconnect) this.onClientDisconnect(c);
+        const pid = this.playerByConn.get(c);
+        this.playerByConn.delete(c);
+        if(this.onClientDisconnect) this.onClientDisconnect(c, pid);
       });
     });
 
     this.peer.on('error', (err) => {
       clearTimeout(timeout);
-      if(err.type === 'unavailable-id' && this.retryCount < 3) {
+      if(err.type === 'unavailable-id' && this.retryCount < 3){
         this.retryCount++;
         try{this.peer.destroy()}catch(e){}
         const newCode = U.code();
         this.roomCode = newCode;
-        if (this.onNewCode) this.onNewCode(newCode);
+        if(this.onNewCode) this.onNewCode(newCode);
         setTimeout(() => this._createHostPeer(newCode), 600);
         return;
       }
-      let msg = 'Lỗi máy chủ: ' + err.type;
-      if(err.type === 'unavailable-id') msg = 'Mã phòng bị trùng, vui lòng thử lại!';
-      else if(err.type === 'network') msg = 'Lỗi mạng, kiểm tra kết nối!';
-      else if(err.type === 'server-error') msg = 'Máy chủ PeerJS quá tải, thử lại sau!';
+      let msg = 'Lỗi: '+err.type;
+      if(err.type === 'unavailable-id') msg = 'Mã phòng trùng, thử lại!';
+      else if(err.type === 'network') msg = 'Lỗi mạng!';
+      else if(err.type === 'server-error') msg = 'Server quá tải!';
       if(this.onError) this.onError(msg);
     });
   },
 
   join(code){
-    this.roomCode = code; 
-    this.isHost = false;
-    if (typeof Peer === 'undefined') {
-      if (this.onError) this.onError('Lỗi: Thư viện mạng chưa tải xong. Vui lòng tải lại trang.');
+    this.roomCode = code; this.isHost = false;
+    if(typeof Peer === 'undefined'){
+      if(this.onError) this.onError('Thư viện mạng chưa tải.');
       return;
     }
-    try {
-      this.peer = new Peer({
-        config: {'iceServers': [
-          { url: 'stun:stun.l.google.com:19302' },
-          { url: 'stun:stun1.l.google.com:19302' },
-          { url: 'stun:stun2.l.google.com:19302' }
-        ]}
-      });
-    } catch(e) {
-      if (this.onError) this.onError('Lỗi khởi tạo: ' + e.message);
-      return;
-    }
-    
+    try{
+      this.peer = new Peer({config:{iceServers:[
+        {url:'stun:stun.l.google.com:19302'},
+        {url:'stun:stun1.l.google.com:19302'},
+        {url:'stun:stun2.l.google.com:19302'}
+      ]}});
+    }catch(e){if(this.onError) this.onError('Lỗi: '+e.message);return;}
+
     const timeout = setTimeout(() => {
-        if (this.peer && !this.peer.destroyed && !this.peer.open) {
-            try{this.peer.destroy()}catch(e){}
-            if (this.onError) this.onError('Máy chủ kết nối quá tải. Vui lòng thử lại!');
-        }
+      if(this.peer && !this.peer.destroyed && !this.peer.open){
+        try{this.peer.destroy()}catch(e){}
+        if(this.onError) this.onError('Kết nối quá tải!');
+      }
     }, 10000);
 
     this.peer.on('open', () => {
       clearTimeout(timeout);
-      this.conn = this.peer.connect('ek_room_' + code, { reliable: true });
-      this.conn.on('open', () => {
-        if(this.onConnectSuccess) this.onConnectSuccess();
-      });
+      this.conn = this.peer.connect('ek_room_'+code, {reliable:true});
+      this.conn.on('open', () => {if(this.onConnectSuccess) this.onConnectSuccess();});
       this.conn.on('data', (data) => this.route(data));
-      this.conn.on('close', () => {
-        if(this.onHostLeft) this.onHostLeft();
-      });
-      this.conn.on('error', () => {
-        if(this.onError) this.onError('Lỗi đường truyền. Vui lòng thử lại.');
-      });
+      this.conn.on('close', () => {if(this.onHostLeft) this.onHostLeft();});
+      this.conn.on('error', () => {if(this.onError) this.onError('Lỗi đường truyền.');});
     });
 
     this.peer.on('error', (err) => {
       clearTimeout(timeout);
-      if(err.type === 'peer-unavailable') {
-        if(this.onError) this.onError('Không tìm thấy phòng ' + code + '. Kiểm tra lại mã!');
-      } else if(err.type === 'network') {
-        if(this.onError) this.onError('Lỗi mạng. Kiểm tra kết nối Internet!');
-      } else {
-        if(this.onError) this.onError('Lỗi kết nối: ' + err.type);
-      }
+      if(err.type === 'peer-unavailable'){if(this.onError) this.onError('Không tìm thấy phòng '+code);}
+      else if(err.type === 'network'){if(this.onError) this.onError('Lỗi mạng!');}
+      else {if(this.onError) this.onError('Lỗi: '+err.type);}
     });
   },
 
   close(){
     if(this.conn) try{this.conn.close()}catch(e){}
-    if(this.conns) this.conns.forEach(c => { try{c.close()}catch(e){} });
+    if(this.conns) this.conns.forEach(c => {try{c.close()}catch(e){}});
     if(this.peer) try{this.peer.destroy()}catch(e){}
-    this.conn = null; this.conns = []; this.peer = null;
-    this.retryCount = 0;
+    this.conn=null; this.conns=[]; this.peer=null; this.retryCount=0;
+    this.playerByConn.clear();
   },
 
-  send(msg, targetConn = null){
-    try {
+  send(msg, targetConn=null){
+    try{
       if(this.isHost){
-        if(targetConn){ if(targetConn.open) targetConn.send(msg); }
-        else { this.conns.forEach(c => { if(c.open) c.send(msg) }); }
+        if(targetConn){if(targetConn.open) targetConn.send(msg);}
+        else {this.conns.forEach(c => {if(c.open) c.send(msg);});}
       } else {
         if(this.conn && this.conn.open) this.conn.send(msg);
       }
-    } catch(e) { console.error('[Net.send]', e); }
+    }catch(e){console.error('[Net.send]', e);}
   },
 
   route(msg, conn){
     if(!msg||!msg.type) return;
     if(this.isHost){
       switch(msg.type){
-        case 'join': if(this.onJoin) this.onJoin(msg.player, conn); break;
+        case 'join':
+          if(msg.player) this.playerByConn.set(conn, msg.player.id);
+          if(this.onJoin) this.onJoin(msg.player, conn);
+          break;
         case 'action': if(this.onAction) this.onAction(msg.playerId, msg.action, msg.payload); break;
-        case 'chat': 
-          if(this.onChat) this.onChat(msg.name, msg.text); 
-          this.send({type:'chat', name:msg.name, text:msg.text}); 
+        case 'chat':
+          if(this.onChat) this.onChat(msg.name, msg.text);
+          this.send({type:'chat', name:msg.name, text:msg.text});
           break;
       }
     } else {
@@ -923,9 +1382,9 @@ const Net = {
         case 'start': if(this.onStart) this.onStart(msg.state); break;
         case 'chat': if(this.onChat) this.onChat(msg.name, msg.text); break;
         case 'host_left': if(this.onHostLeft) this.onHostLeft(); break;
-        case 'error': 
-          if(this.onError) this.onError(msg.message); 
-          setTimeout(() => { try{this.conn.close()}catch(e){} }, 300);
+        case 'error':
+          if(this.onError) this.onError(msg.message);
+          setTimeout(() => {try{this.conn.close()}catch(e){}}, 300);
           break;
       }
     }
@@ -936,115 +1395,251 @@ const Net = {
 const UI = {
   myId:null, roomCode:null, isHost:false,
   lobbyPlayers:[], botScheduled:false,
-  currentModal:null, _animatedDrawId:null,
+  currentModal:null, _animatedDrawId:null, _lastStealId:null,
   selectedCatIndices:[], pendingCatPlay:null, _handSig:'',
-  isShuffling:false,
-  nopeSkippedFor:null, // ✅ Timestamp đã skip nope
-  _lastTurnKey:null,
-  _turnCountdownId:null,
+  isShuffling:false, nopeSkippedFor:null,
+  _lastTurnKey:null, _turnCountdownId:null,
+  _lastPendingTs:null, _dealing:false,
 
   init(){
-    this.myId = 'p_' + U.uid();
-    let savedName = null;
-    try{savedName = localStorage.getItem('ek_name')}catch(e){}
-    if(!savedName) savedName = 'Player_' + Math.floor(Math.random()*1000);
-    document.getElementById('playerName').value = savedName;
+    Auth.init();
+    this.myId = 'p_'+U.uid();
     Engine.onChange = (meta) => this.onEngineChange(meta);
+    
+    // Auth tabs
+    this.switchAuthTab('login');
+    
+    // Check session
+    const cur = Auth.current();
+    if(cur){ this.enterMenu(cur); }
+    else { this.showScreen('sc-auth'); }
   },
 
-  saveName(v){
-    try{localStorage.setItem('ek_name', v)}catch(e){}
+  // === AUTH ===
+  switchAuthTab(tab){
+    document.querySelectorAll('.auth-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.getElementById('authLoginForm').style.display = tab==='login'?'flex':'none';
+    document.getElementById('authRegisterForm').style.display = tab==='register'?'flex':'none';
+    document.getElementById('authMsg').textContent = '';
+    document.getElementById('authMsg').className = 'auth-msg';
   },
 
-  showScreen(id){
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-    document.getElementById(id).classList.add('on');
-  },
-  toast(msg){
-    const t = document.createElement('div');
-    t.className = 'toast'; t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3500);
-  },
-  copyCode(){
-    try{navigator.clipboard.writeText(this.roomCode);this.toast('✅ Đã copy mã phòng')}
-    catch(e){this.toast('Mã phòng: ' + this.roomCode)}
-  },
-  getMyName(){
-    const v = document.getElementById('playerName').value.trim() || 'Player';
-    try{localStorage.setItem('ek_name', v)}catch(e){}
-    return v;
-  },
-  me(){return Engine.state?.players.find(p => p.id === this.myId)},
-
-  _reEnableButtons(){
-    const btnC = document.getElementById('btnCreateRoom');
-    if(btnC) btnC.disabled = false;
-    const btnJ = document.getElementById('btnJoinRoom');
-    if(btnJ) btnJ.disabled = false;
+  authMsg(text, isErr){
+    const el = document.getElementById('authMsg');
+    el.textContent = text;
+    el.className = 'auth-msg ' + (isErr ? 'err' : 'ok');
   },
 
-  _showLobbyError(msg){
-    const status = document.getElementById('lobbyStatus');
-    if(status){
-      status.innerHTML = `⚠️ <span style="color:red">${this.escapeHtml(msg)}</span><br>
-        <button class="retry-btn" onclick="UI.leaveRoom()">← Quay Lại & Thử Lại</button>`;
+  doLogin(){
+    const u = document.getElementById('loginUser').value;
+    const p = document.getElementById('loginPass').value;
+    const res = Auth.login(u, p);
+    if(!res.ok){ this.authMsg(res.msg, true); return; }
+    this.authMsg('Đăng nhập thành công!', false);
+    setTimeout(() => this.enterMenu(Auth.current()), 300);
+  },
+
+  doRegister(){
+    const u = document.getElementById('regUser').value;
+    const p = document.getElementById('regPass').value;
+    const p2 = document.getElementById('regPass2').value;
+    if(p !== p2){ this.authMsg('Mật khẩu nhập lại không khớp', true); return; }
+    const res = Auth.register(u, p);
+    if(!res.ok){ this.authMsg(res.msg, true); return; }
+    this.authMsg('Tạo tài khoản thành công!', false);
+    setTimeout(() => this.enterMenu(Auth.current()), 300);
+  },
+
+  enterMenu(acc){
+    if(!acc){ this.showScreen('sc-auth'); return; }
+    this.myId = 'p_'+U.uid();
+    document.getElementById('topbarName').textContent = '👤 ' + acc.username;
+    document.getElementById('topbarGames').textContent = acc.games || 0;
+    document.getElementById('topbarWins').textContent = acc.wins || 0;
+    document.getElementById('topbarAvatar').textContent = acc.avatar || '🐱';
+    document.getElementById('topbarAdminBadge').style.display = acc.isAdmin ? 'inline-block' : 'none';
+    document.getElementById('adminCard').style.display = acc.isAdmin ? 'flex' : 'none';
+    this.showScreen('sc-menu');
+  },
+
+  // === PROFILE ===
+  openProfile(){
+    const acc = Auth.current();
+    if(!acc) return;
+    const avatars = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','👑','😎'];
+    this.openModal('profile', `
+      <h2>👤 Hồ Sơ</h2>
+      <p><b>${this.escapeHtml(acc.username)}</b>${acc.isAdmin?' <span class="admin-badge">ADMIN</span>':''}</p>
+      <div class="stat-row"><span>🎮 Số trận</span><b>${acc.games||0}</b></div>
+      <div class="stat-row"><span>🏆 Thắng</span><b>${acc.wins||0}</b></div>
+      <div class="stat-row"><span>📊 Tỷ lệ</span><b>${acc.games?Math.round((acc.wins/acc.games)*100):0}%</b></div>
+      <div style="text-align:left;margin-top:10px;font-size:12px;font-weight:bold">Chọn Avatar:</div>
+      <div class="avatar-picker">
+        ${avatars.map(a => `<div class="avatar-opt ${acc.avatar===a?'selected':''}" onclick="UI.pickAvatar('${a}')">${a}</div>`).join('')}
+      </div>
+      <button class="btn-p" onclick="UI.closeModal()">Đóng</button>
+      <button class="btn-danger" onclick="UI.doLogout()">Đăng Xuất</button>
+    `);
+  },
+
+  pickAvatar(emoji){
+    Auth.setAvatar(emoji);
+    document.getElementById('topbarAvatar').textContent = emoji;
+    document.querySelectorAll('.avatar-opt').forEach(el => {
+      el.classList.toggle('selected', el.textContent === emoji);
+    });
+  },
+
+  doLogout(){
+    Auth.logout();
+    this.closeModal();
+    this.myId = 'p_'+U.uid();
+    this.showScreen('sc-auth');
+  },
+
+  // === ADMIN PANEL ===
+  openAdminPanel(){
+    const acc = Auth.current();
+    if(!acc || !acc.isAdmin) return;
+    const accounts = Auth.all();
+    const rows = Object.entries(accounts).map(([name, a]) => `
+      <div class="stat-row">
+        <span>${a.isAdmin?'👑':'👤'} ${this.escapeHtml(name)}</span>
+        <span style="font-size:11px">${a.games||0} trận · ${a.wins||0} thắng</span>
+      </div>
+    `).join('');
+    this.openModal('admin', `
+      <h2>👑 Admin Panel</h2>
+      <p style="font-size:12px">Quản lý tài khoản</p>
+      <div style="max-height:300px;overflow-y:auto;text-align:left;padding:8px 0">
+        ${rows}
+      </div>
+      <button class="btn-o" onclick="UI.adminResetStats()">🔄 Reset tất cả stats</button>
+      <button class="btn-p" onclick="UI.closeModal()">Đóng</button>
+    `);
+  },
+
+  adminResetStats(){
+    if(!confirm('Reset stats của TẤT CẢ tài khoản?')) return;
+    const accounts = Auth.all();
+    for(const k of Object.keys(accounts)){
+      accounts[k].games = 0;
+      accounts[k].wins = 0;
     }
-    this._reEnableButtons();
+    localStorage.setItem(Auth.KEY, JSON.stringify(accounts));
+    this.toast('✅ Đã reset tất cả stats');
+    this.enterMenu(Auth.current());
+    this.openAdminPanel();
   },
 
+  // === MENU ACTIONS ===
+  quickPlay(){
+    // Instant solo 3 players smart bots
+    this.startSoloGame(3, 'smart');
+  },
+
+  openSoloModal(){
+    this.openModal('solo', `
+      <h2>🎮 Chơi với Bot</h2>
+      <p>Chọn số người & độ khó</p>
+      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--text-2)">Số người:</label>
+      <select id="soloCount" style="margin-bottom:8px">
+        <option value="2">2 người</option>
+        <option value="3" selected>3 người</option>
+        <option value="4">4 người</option>
+        <option value="5">5 người</option>
+        <option value="6">6 người</option>
+      </select>
+      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--text-2)">Độ khó Bot:</label>
+      <select id="soloBotMode">
+        <option value="normal">😴 Bình thường</option>
+        <option value="smart" selected>🧠 Thông minh</option>
+        <option value="ultimate">👑 Tối thượng</option>
+      </select>
+      <button class="btn-p" onclick="UI.startSoloFromModal()" style="margin-top:8px">🚀 Bắt Đầu</button>
+      <button class="btn-o" onclick="UI.closeModal()">Hủy</button>
+    `);
+  },
+
+  startSoloFromModal(){
+    const n = parseInt(document.getElementById('soloCount').value) || 3;
+    const mode = document.getElementById('soloBotMode').value || 'smart';
+    this.closeModal();
+    this.startSoloGame(n, mode);
+  },
+
+  startSoloGame(total, botMode){
+    const acc = Auth.current();
+    if(!acc) return;
+    this.isHost = true;
+    this.myId = 'p_'+U.uid();
+    const players = [{id:this.myId, name:acc.username, isBot:false}];
+    const used = [];
+    for(let i = 1; i < total; i++){
+      let name = BOT_NAMES[i % BOT_NAMES.length];
+      while(used.includes(name)) name = name + '_' + i;
+      used.push(name);
+      players.push({id:'bot_'+i, name, isBot:true});
+    }
+    Engine.createGame(players, this.myId, botMode);
+    this.enterGame(true);
+  },
+
+  openCreateRoomModal(){
+    this.createRoom();
+  },
+
+  openJoinRoomModal(){
+    this.openModal('join', `
+      <h2>🔗 Vào Phòng</h2>
+      <p>Nhập mã 6 số từ bạn bè</p>
+      <input type="tel" id="joinCodeInput" placeholder="------" maxlength="6" inputmode="numeric"
+        style="text-align:center;font-family:monospace;font-size:22px;letter-spacing:8px;font-weight:bold">
+      <button class="btn-p" onclick="UI.doJoinFromModal()">Vào Phòng</button>
+      <button class="btn-o" onclick="UI.closeModal()">Hủy</button>
+    `);
+    setTimeout(() => document.getElementById('joinCodeInput')?.focus(), 100);
+  },
+
+  doJoinFromModal(){
+    const raw = document.getElementById('joinCodeInput').value.trim();
+    if(!/^\d{6}$/.test(raw)) return this.toast('Mã phải là 6 chữ số');
+    this.closeModal();
+    this.doJoinRoom(raw);
+  },
+
+  // === CREATE / JOIN ROOM ===
   createRoom(){
-    try {
-      const btn = document.getElementById('btnCreateRoom');
-      if(btn) btn.disabled = true;
-      if(Net.peer) Net.close();
-      this.roomCode = U.code();
-      this.isHost = true;
-      this.lobbyPlayers = [{ id:this.myId, name:this.getMyName(), isHost:true, isBot:false }];
-      this.showScreen('sc-lobby');
-      document.getElementById('lobbyCode').innerText = this.roomCode;
-      document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang kết nối tới máy chủ mạng...';
-      document.getElementById('hostControls').style.display = 'flex';
-      document.getElementById('btnStart').style.display = 'block';
-      this.renderLobby();
-      setTimeout(() => {
-        try { this.setupNet(true); }
-        catch(e) { this.toast('Lỗi: ' + e.message); this._reEnableButtons(); }
-      }, 100);
-    } catch (e) {
-      this.toast('Lỗi: ' + e.message);
-      this._reEnableButtons();
-    }
+    const acc = Auth.current();
+    if(!acc) return;
+    if(Net.peer) Net.close();
+    this.roomCode = U.code();
+    this.isHost = true;
+    this.myId = 'p_'+U.uid();
+    this.lobbyPlayers = [{id:this.myId, name:acc.username, isHost:true, isBot:false}];
+    this.showScreen('sc-lobby');
+    document.getElementById('lobbyCode').textContent = this.roomCode;
+    document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang khởi tạo phòng...';
+    document.getElementById('hostControls').style.display = 'flex';
+    document.getElementById('btnStart').style.display = 'block';
+    this.renderLobby();
+    setTimeout(() => this.setupNet(true), 100);
   },
 
-  joinRoom(){
-    try {
-      const raw = document.getElementById('joinCode').value.trim();
-      if(!/^\d{6}$/.test(raw)) {
-        this.toast('Mã phòng phải là 6 chữ số');
-        this._reEnableButtons();
-        return;
-      }
-      const btn = document.getElementById('btnJoinRoom');
-      if(btn) btn.disabled = true;
-      if(Net.peer) Net.close();
-      this.roomCode = raw;
-      this.isHost = false;
-      this.lobbyPlayers = [];
-      this.showScreen('sc-lobby');
-      document.getElementById('lobbyCode').innerText = this.roomCode;
-      document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang kết nối tới phòng...';
-      document.getElementById('hostControls').style.display = 'none';
-      document.getElementById('btnStart').style.display = 'none';
-      this.renderLobby();
-      setTimeout(() => {
-        try { this.setupNet(false); }
-        catch(e) { this.toast('Lỗi: ' + e.message); this._showLobbyError(e.message); }
-      }, 100);
-    } catch (e) {
-      this.toast('Lỗi: ' + e.message);
-      this._reEnableButtons();
-    }
+  doJoinRoom(code){
+    if(Net.peer) Net.close();
+    this.roomCode = code;
+    this.isHost = false;
+    this.lobbyPlayers = [];
+    this.showScreen('sc-lobby');
+    document.getElementById('lobbyCode').textContent = code;
+    document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang kết nối...';
+    document.getElementById('hostControls').style.display = 'none';
+    document.getElementById('btnStart').style.display = 'none';
+    this.renderLobby();
+    setTimeout(() => this.setupNet(false), 100);
   },
 
   setupNet(host){
@@ -1052,38 +1647,48 @@ const UI = {
     
     if(host){
       Net.onHostReady = () => {
-        document.getElementById('lobbyStatus').innerHTML = '✅ Phòng đã sẵn sàng · Chia sẻ mã cho bạn bè';
+        document.getElementById('lobbyStatus').innerHTML = '✅ Phòng sẵn sàng · Chia sẻ mã!';
       };
       Net.onNewCode = (newCode) => {
         this.roomCode = newCode;
-        document.getElementById('lobbyCode').innerText = newCode;
-        document.getElementById('lobbyStatus').innerHTML = '🔄 Mã phòng bị trùng, đã đổi sang mã mới...';
-        this.toast('Mã phòng bị trùng, đã tự đổi mã mới');
+        document.getElementById('lobbyCode').textContent = newCode;
+        document.getElementById('lobbyStatus').innerHTML = '🔄 Đã đổi mã mới';
       };
-      Net.onError = (msg) => { this.toast(msg); this._showLobbyError(msg); };
+      Net.onError = (msg) => {
+        this.toast(msg);
+        document.getElementById('lobbyStatus').innerHTML = `⚠️ <span style="color:#ff8a7a">${this.escapeHtml(msg)}</span><br>
+          <button class="retry-btn" onclick="UI.leaveRoom()">← Quay Lại</button>`;
+      };
       Net.onJoin = (player, conn) => {
-        if(this.lobbyPlayers.some(p => p.id === player.id)) {
-            Net.send({ type:'error', message:'ID trùng lặp!' }, conn);
-            setTimeout(() => { try{conn.close()}catch(e){} }, 300);
-            return;
+        if(this.lobbyPlayers.some(p => p.id === player.id)){
+          Net.send({type:'error', message:'ID trùng!'}, conn);
+          setTimeout(()=>{try{conn.close()}catch(e){}}, 300);
+          return;
         }
-        if(this.lobbyPlayers.length >= 6) {
-            Net.send({ type:'error', message:'Phòng đã đầy!' }, conn);
-            setTimeout(() => { try{conn.close()}catch(e){} }, 300);
-            return;
+        if(this.lobbyPlayers.length >= 6){
+          Net.send({type:'error', message:'Phòng đầy!'}, conn);
+          setTimeout(()=>{try{conn.close()}catch(e){}}, 300);
+          return;
         }
-        player.conn = conn; 
+        player.conn = conn;
         this.lobbyPlayers.push(player);
         this.broadcastLobby();
         this.renderLobby();
       };
-      Net.onClientDisconnect = (conn) => {
-         const idx = this.lobbyPlayers.findIndex(p => p.conn === conn);
-         if (idx > -1) {
-             this.lobbyPlayers.splice(idx, 1);
-             this.broadcastLobby();
-             this.renderLobby();
-         }
+      Net.onClientDisconnect = (conn, playerId) => {
+        // Handle in-game disconnect
+        if(Engine.state && Engine.state.phase === 'playing' && playerId){
+          const inGame = Engine.state.players.find(p => p.id === playerId);
+          if(inGame && inGame.alive){
+            Engine.handlePlayerDisconnect(playerId);
+          }
+        }
+        const idx = this.lobbyPlayers.findIndex(p => p.conn === conn);
+        if(idx > -1){
+          this.lobbyPlayers.splice(idx, 1);
+          this.broadcastLobby();
+          this.renderLobby();
+        }
       };
       Net.onAction = (pid, action, payload) => {
         try{ this.hostAction(pid, action, payload); }
@@ -1093,60 +1698,75 @@ const UI = {
       Net.host(this.roomCode);
     } else {
       Net.onConnectSuccess = () => {
-        Net.send({ type:'join', player: { id:this.myId, name:this.getMyName() } });
+        const acc = Auth.current();
+        Net.send({type:'join', player:{id:this.myId, name:acc.username}});
       };
-      Net.onError = (msg) => { this.toast(msg); this._showLobbyError(msg); };
+      Net.onError = (msg) => {
+        this.toast(msg);
+        document.getElementById('lobbyStatus').innerHTML = `⚠️ <span style="color:#ff8a7a">${this.escapeHtml(msg)}</span><br>
+          <button class="retry-btn" onclick="UI.leaveRoom()">← Quay Lại</button>`;
+      };
       Net.onLobby = (players) => {
         this.lobbyPlayers = players;
         this.renderLobby();
-        document.getElementById('lobbyStatus').innerHTML = '✅ Đã kết nối · Nhấn mã để copy';
+        document.getElementById('lobbyStatus').innerHTML = '✅ Đã kết nối';
       };
-      Net.onStart = (state) => { 
-        Engine.state = state; 
-        this.enterGame(false); 
+      Net.onStart = (state) => {
+        Engine.state = state;
+        this.enterGame(false);
       };
-      // ✅ Sync client: đồng bộ + restart countdown
-      Net.onState = (state) => { 
-        Engine.state = state; 
-        this.render(); 
+      Net.onState = (state) => {
+        Engine.state = state;
+        this.render();
         this.updateModals();
       };
       Net.onChat = (name, text) => this.addChatMsg(name, text);
       Net.onHostLeft = () => {
-        this.toast('Chủ phòng đã rời đi!');
-        setTimeout(() => this.leaveRoom(), 1000);
+        // Host left → if in game, I win
+        if(Engine.state && Engine.state.phase === 'playing'){
+          Engine.state.phase = 'ended';
+          const me = Engine.state.players.find(p => p.id === this.myId);
+          Engine.state.winner = me || null;
+          clearTimeout(Engine.turnTimerId);
+          clearTimeout(Engine.pendingTimer);
+          this.render();
+          this.showWinModal('Chủ phòng đã thoát khỏi trận!');
+        } else {
+          this.toast('Chủ phòng đã rời đi');
+          setTimeout(() => this.leaveRoom(), 1000);
+        }
       };
       Net.join(this.roomCode);
     }
   },
 
-  broadcastLobby(){ 
-    if(this.isHost) {
-        const safePlayers = this.lobbyPlayers.map(p => ({id:p.id, name:p.name, isBot:p.isBot, isHost:p.isHost}));
-        Net.send({ type:'lobby', players: safePlayers }); 
+  broadcastLobby(){
+    if(this.isHost){
+      const safe = this.lobbyPlayers.map(p => ({id:p.id, name:p.name, isBot:p.isBot, isHost:p.isHost}));
+      Net.send({type:'lobby', players:safe});
     }
   },
 
   renderLobby(){
     const box = document.getElementById('lobbyPlayers');
     if(this.lobbyPlayers.length === 0){
-      box.innerHTML = '<div class="plist-empty">Đang chờ kết nối...</div>';
+      box.innerHTML = '<div class="plist-empty">Đang chờ...</div>';
       return;
     }
     box.innerHTML = this.lobbyPlayers.map(p => `
       <div class="pitem">
         <div class="av">${p.isBot?'🤖':'👤'}</div>
         <div class="nm">${this.escapeHtml(p.name)}${p.id===this.myId?' (bạn)':''}</div>
-        <div class="st">${p.isHost?'Host':(p.isBot?'Bot':'Sẵn sàng')}</div>
+        <div class="st">${p.isHost?'HOST':(p.isBot?'BOT':'OK')}</div>
       </div>
     `).join('');
   },
 
   addBot(){
-    if(this.lobbyPlayers.length >= 6) return this.toast('Tối đa 6 người');
+    if(this.lobbyPlayers.length >= 6) return this.toast('Tối đa 6');
     this.lobbyPlayers.push({
       id:'bot_'+U.uid(),
-      name: U.pick(BOT_NAMES) + ' ' + this.lobbyPlayers.length,
+      name:U.pick(BOT_NAMES)+' '+(this.lobbyPlayers.length),
       isBot:true, isHost:false
     });
     this.broadcastLobby();
@@ -1154,39 +1774,20 @@ const UI = {
   },
 
   removeBot(){
-    const botIdx = this.lobbyPlayers.findIndex(p => p.isBot);
-    if(botIdx > -1){
-        this.lobbyPlayers.splice(botIdx, 1);
-        this.broadcastLobby();
-        this.renderLobby();
-    } else {
-        this.toast('Không có Bot nào để xóa');
-    }
-  },
-
-  startSolo(){
-    this.isHost = true;
-    this.myId = 'p_' + U.uid();
-    const total = parseInt(document.getElementById('soloPlayerCount').value) || 3;
-    const botMode = document.getElementById('botMode').value || 'smart';
-    const players = [{ id:this.myId, name:this.getMyName(), isBot:false }];
-    const usedNames = [];
-    for(let i = 1; i < total; i++){
-      let name = BOT_NAMES[i % BOT_NAMES.length];
-      while(usedNames.includes(name)) name = name + i;
-      usedNames.push(name);
-      players.push({ id:'bot_'+i, name, isBot:true });
-    }
-    Engine.createGame(players, this.myId, botMode);
-    this.enterGame(true);
+    const i = this.lobbyPlayers.findIndex(p => p.isBot);
+    if(i > -1){
+      this.lobbyPlayers.splice(i, 1);
+      this.broadcastLobby();
+      this.renderLobby();
+    } else this.toast('Không có bot');
   },
 
   startMultiplayerGame(){
     if(this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
     const botMode = document.getElementById('lobbyBotMode')?.value || 'smart';
-    const players = this.lobbyPlayers.map(p => ({ id:p.id, name:p.name, isBot:p.isBot }));
+    const players = this.lobbyPlayers.map(p => ({id:p.id, name:p.name, isBot:p.isBot}));
     Engine.createGame(players, this.myId, botMode);
-    Net.send({ type:'start', state: U.clone(Engine.state) });
+    Net.send({type:'start', state:U.clone(Engine.state)});
     this.enterGame(true);
   },
 
@@ -1194,24 +1795,34 @@ const UI = {
     this.isHost = asHost;
     this.showScreen('sc-game');
     document.getElementById('chatFab').classList.add('on');
+    this._dealing = true;
     this.render();
     this.updateModals();
+    // Dealing animation
+    setTimeout(() => {
+      this._dealing = false;
+      document.querySelectorAll('.card.deal-in').forEach(c => c.classList.remove('deal-in'));
+    }, 1500);
     if(asHost) this.processBots();
   },
 
   leaveRoom(){
+    // If in game & still playing → record loss
+    const acc = Auth.current();
+    if(Engine.state && Engine.state.phase === 'playing' && acc){
+      Auth.updateStats(false);
+    }
+    
     if(Net.peer){
       if(this.isHost) Net.send({type:'host_left'});
       Net.close();
     }
-    // ✅ Cleanup timers
     clearTimeout(Engine.turnTimerId);
     clearTimeout(Engine.pendingTimer);
     Engine.turnTimerId = null;
     Engine.pendingTimer = null;
-    Engine.hostId = null;
     clearInterval(this._turnCountdownId);
-
+    
     Engine.state = null;
     this.isHost = false;
     this.roomCode = null;
@@ -1221,26 +1832,21 @@ const UI = {
     this.botScheduled = false;
     this.nopeSkippedFor = null;
     this._lastTurnKey = null;
+    this._lastPendingTs = null;
+    this._animatedDrawId = null;
+    this._lastStealId = null;
     document.getElementById('chatFab').classList.remove('on');
     this.closeModal();
-    // Remove nope container
     const nc = document.getElementById('nopeContainer');
     if(nc) nc.remove();
-    this.showScreen('sc-home');
-    this._reEnableButtons();
-    const joinArea = document.getElementById('joinArea');
-    if(joinArea) joinArea.style.display = 'none';
-    const joinCodeInput = document.getElementById('joinCode');
-    if(joinCodeInput) joinCodeInput.value = '';
+    
+    this.enterMenu(Auth.current());
   },
 
-  act(action, payload = {}){
+  act(action, payload={}){
     if(!Engine.state) return;
-    if(this.isHost) {
-        this.hostAction(this.myId, action, payload);
-    } else {
-        Net.send({ type:'action', playerId:this.myId, action, payload });
-    }
+    if(this.isHost) this.hostAction(this.myId, action, payload);
+    else Net.send({type:'action', playerId:this.myId, action, payload});
   },
 
   hostAction(playerId, action, payload){
@@ -1255,22 +1861,42 @@ const UI = {
         case 'clearPeek': ok = Engine.clearPeek(playerId); break;
       }
     }catch(e){ console.error('[EK] Engine error:', e); }
-    // ✅ Luôn sync state sau action (thành công hoặc thất bại)
-    if(!ok && this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
+    if(!ok && this.isHost) Net.send({type:'state', state:U.clone(Engine.state)});
   },
 
-  onEngineChange(){
+  onEngineChange(meta){
     const me = this.me();
     const sig = me ? me.hand.join('|') : '';
     if(sig !== this._handSig){
       this.selectedCatIndices = [];
       this._handSig = sig;
     }
-    if(this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
+    if(this.isHost) Net.send({type:'state', state:U.clone(Engine.state)});
     this.render();
     this.updateModals();
     this.renderVFX();
     if(this.isHost) this.processBots();
+    
+    // Opponent action notification
+    const s = Engine.state;
+    if(s?.pending && s.pending.playerId !== this.myId && s.pending.timestamp !== this._lastPendingTs){
+      this._lastPendingTs = s.pending.timestamp;
+      const opp = Engine.byId(s.pending.playerId);
+      if(opp) this.showOpponentAction(opp.name, s.pending.primary);
+    }
+  },
+
+  showOpponentAction(name, cardType){
+    const card = CARDS[cardType];
+    if(!card) return;
+    const el = document.createElement('div');
+    el.className = 'opp-action-toast';
+    el.innerHTML = `
+      <div class="opp-action-name">${this.escapeHtml(name)} vừa dùng</div>
+      <div class="opp-action-card">${card.icon} ${card.name}</div>
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
   },
 
   renderVFX(){
@@ -1284,15 +1910,91 @@ const UI = {
       }
     }
     if(lastLog.includes('xáo bài')){
-        if(!this.isShuffling){
-            this.isShuffling = true;
-            const deck = document.getElementById('deckPile');
-            if(deck){
-                deck.classList.add('shuffling');
-                setTimeout(() => { deck.classList.remove('shuffling'); this.isShuffling = false; }, 800);
-            }
+      if(!this.isShuffling){
+        this.isShuffling = true;
+        const deck = document.getElementById('deckPile');
+        if(deck){
+          deck.classList.add('shuffling');
+          setTimeout(() => { deck.classList.remove('shuffling'); this.isShuffling = false; }, 800);
         }
+      }
     }
+    
+    // Draw animation
+    if(s.lastDraw && s.lastDraw.playerId === this.myId && s.lastDraw.id !== this._animatedDrawId){
+      this._animatedDrawId = s.lastDraw.id;
+      this.animateDraw(s.lastDraw.card);
+    }
+    
+    // Steal animation
+    if(s.lastSteal && s.lastSteal.id !== this._lastStealId){
+      this._lastStealId = s.lastSteal.id;
+      this.animateSteal(s.lastSteal);
+    }
+  },
+
+  animateDraw(cardType){
+    const deckEl = document.getElementById('deckPile');
+    const handEl = document.getElementById('handArea');
+    if(!deckEl || !handEl) return;
+    const startRect = deckEl.getBoundingClientRect();
+    const endRect = handEl.getBoundingClientRect();
+    this._flyCard(cardType, startRect, {left: endRect.left, top: endRect.top, width: 86, height: 124});
+  },
+
+  animateSteal(steal){
+    const s = Engine.state;
+    const card = steal.card;
+    // Find positions
+    let startEl, endEl;
+    if(steal.victimId === this.myId){
+      startEl = document.getElementById('handArea');
+    } else {
+      const opps = document.querySelectorAll('.opp');
+      const oppIdx = s.players.filter(p => p.id !== this.myId).findIndex(p => p.id === steal.victimId);
+      startEl = opps[oppIdx];
+    }
+    if(steal.thiefId === this.myId){
+      endEl = document.getElementById('handArea');
+    } else {
+      const opps = document.querySelectorAll('.opp');
+      const oppIdx = s.players.filter(p => p.id !== this.myId).findIndex(p => p.id === steal.thiefId);
+      endEl = opps[oppIdx];
+    }
+    if(!startEl || !endEl) return;
+    const startRect = startEl.getBoundingClientRect();
+    const endRect = endEl.getBoundingClientRect();
+    this._flyCard(card, startRect, endRect);
+  },
+
+  _flyCard(cardType, startRect, endRect){
+    const card = CARDS[cardType];
+    if(!card) return;
+    const flyer = document.createElement('div');
+    flyer.className = 'anim-card';
+    flyer.innerHTML = `
+      <div class="anim-card-ic">${card.icon}</div>
+      <div class="anim-card-tt">${card.name}</div>
+    `;
+    const startX = startRect.left + startRect.width/2 - 40;
+    const startY = startRect.top + startRect.height/2 - 60;
+    flyer.style.left = startX + 'px';
+    flyer.style.top = startY + 'px';
+    flyer.style.width = '80px';
+    flyer.style.height = '120px';
+    flyer.style.zIndex = '5000';
+    document.body.appendChild(flyer);
+    
+    const centerX = window.innerWidth/2 - startX - 40;
+    const centerY = window.innerHeight/2 - startY - 60;
+    const endX = endRect.left + endRect.width/2 - startX - 40;
+    const endY = endRect.top + endRect.height/2 - startY - 60;
+    
+    flyer.animate([
+      {transform:'translate(0,0) scale(0.3) rotate(-30deg)', opacity:0},
+      {transform:`translate(${centerX}px, ${centerY}px) scale(1.8) rotate(0deg)`, opacity:1, offset:0.5},
+      {transform:`translate(${endX}px, ${endY}px) scale(0.7) rotate(0deg)`, opacity:0.6}
+    ], {duration:1400, easing:'cubic-bezier(0.34,1.56,0.64,1)'}).onfinish = () => flyer.remove();
   },
 
   processBots(){
@@ -1300,7 +2002,6 @@ const UI = {
     const s = Engine.state;
     if(!s || s.phase !== 'playing') return;
 
-    // ✅ Bot tự clear peek
     if(s.peekFor && Engine.byId(s.peekFor.playerId)?.isBot && !s.pending && !s.awaitingChoice){
       this.botScheduled = true;
       setTimeout(() => {
@@ -1319,12 +2020,12 @@ const UI = {
           const ch = Engine.state.awaitingChoice;
           if(!ch) return;
           if(ch.type==='defuse' && ch.playerId===p.id){
-            const pos = Math.random()<0.3 ? 'top' : (Math.random()<0.5 ? 'random' : 'bottom');
+            const pos = Math.random()<0.3?'top':(Math.random()<0.5?'random':'bottom');
             Engine.placeDefuse(p.id, pos);
           } else if(ch.type==='favor' && ch.targetId===p.id){
             Engine.resolveFavor(p.id, Math.floor(Math.random()*p.hand.length));
           }
-        }, 500); // ✅ Nhanh hơn
+        }, 500);
         return;
       }
       return;
@@ -1378,7 +2079,7 @@ const UI = {
       if(mode.smartTarget){
         const withCards = opponents.filter(o=>o.hand.length>0);
         target = withCards.length
-          ? withCards.reduce((a,b)=>a.hand.length < b.hand.length ? a : b)
+          ? withCards.reduce((a,b)=>a.hand.length<b.hand.length?a:b)
           : U.pick(opponents);
       } else target = U.pick(opponents);
     }
@@ -1389,7 +2090,7 @@ const UI = {
     for(const cat of CATS){
       if(cnt(cat)>=3 && target && target.hand.length>0 && Math.random() < mode.catProb){
         const named = U.pick(['SKIP','ATTACK','NOPE','FAVOR','SEE_FUTURE','SHUFFLE',...CATS]);
-        return this.botPlay([cat,cat,cat], target.id, { namedCard:named });
+        return this.botPlay([cat,cat,cat], target.id, {namedCard:named});
       }
     }
     for(const cat of CATS){
@@ -1411,24 +2112,24 @@ const UI = {
     Engine.playCards(Engine.cur().id, cards, targetId||null, extra||{});
   },
 
+  // === RENDER GAME ===
   render(){
     const s = Engine.state; if(!s) return;
     const me = this.me(); if(!me) return;
 
-    document.getElementById('uiAlive').innerText = s.players.filter(p => p.alive).length;
-    document.getElementById('uiDeck').innerText = s.deck.length;
-    document.getElementById('deckBadge').innerText = s.deck.length;
-    document.getElementById('uiHandCount').innerText = me.hand.length;
+    document.getElementById('uiAlive').textContent = s.players.filter(p => p.alive).length;
+    document.getElementById('uiDeck').textContent = s.deck.length;
+    document.getElementById('deckBadge').textContent = s.deck.length;
+    document.getElementById('uiHandCount').textContent = me.hand.length;
 
     const cur = s.players[s.turnIdx];
     const modeInfo = s.botMode && BOT_MODES[s.botMode] ? ` · ${BOT_MODES[s.botMode].icon}` : '';
     document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${this.escapeHtml(cur.name)}${modeInfo}`;
 
-    const turnsEl = document.getElementById('uiTurnsLeft');
-    if(s.turnsLeft > 1){ turnsEl.style.display = 'inline-block'; turnsEl.innerText = `×${s.turnsLeft}`; }
-    else turnsEl.style.display = 'none';
+    const tEl = document.getElementById('uiTurnsLeft');
+    if(s.turnsLeft > 1){ tEl.style.display='inline-block'; tEl.textContent = `×${s.turnsLeft}`; }
+    else tEl.style.display = 'none';
 
-    // ✅ Countdown restart khi đổi turn
     if(s.turnIdx !== this._lastTurnKey){
       this._lastTurnKey = s.turnIdx;
       this._restartTurnCountdown();
@@ -1446,7 +2147,7 @@ const UI = {
     const disc = document.getElementById('discardPile');
     if(s.discard.length > 0){
       const top = s.discard[s.discard.length-1];
-      disc.innerHTML = `<div style="font-size:38px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.2))">${CARDS[top].icon}</div>`;
+      disc.innerHTML = `<div style="font-size:38px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4))">${CARDS[top].icon}</div>`;
     } else disc.innerHTML = '🗑️';
 
     const myTurn = cur.id === me.id && s.phase === 'playing';
@@ -1457,19 +2158,22 @@ const UI = {
 
     let newDrawIdx = -1;
     if(s.lastDraw && s.lastDraw.playerId === me.id && s.lastDraw.id !== this._animatedDrawId){
-      this._animatedDrawId = s.lastDraw.id;
       newDrawIdx = 0;
     }
 
     const handBox = document.getElementById('handArea');
+    const isDealing = this._dealing;
     handBox.innerHTML = [...me.hand].map((c, idx) => {
       const card = CARDS[c];
-      const playable = canPlay && c!=='EK' && c!=='DEFUSE' && c!=='NOPE'
+      const playable = canPlay && !['EK','DEFUSE','NOPE'].includes(c)
         && (CATS.includes(c) ? me.hand.filter(x => x===c).length>=2 : true);
       const isNew = idx === newDrawIdx;
-      const isSelected = this.selectedCatIndices.includes(idx);
+      const isSel = this.selectedCatIndices.includes(idx);
+      const dealClass = isDealing ? 'deal-in' : '';
+      const dealDelay = isDealing ? `animation-delay: ${idx * 0.06}s;` : '';
       return `
-        <div class="card c-${card.class} ${playable?'':'dis'} ${isNew?'new-draw':''} ${isSelected?'selected':''}"
+        <div class="card c-${card.class} ${playable?'':'dis'} ${isNew?'new-draw':''} ${isSel?'selected':''} ${dealClass}"
+          style="${dealDelay}"
           onclick="UI.clickCard('${c}', ${idx})">
           <div class="ic">${card.icon}</div>
           <div class="tt">${card.name}</div>
@@ -1495,17 +2199,13 @@ const UI = {
     el.style.display = 'inline-block';
     el.className = 'badge timer';
     let remaining = Math.floor(TURN_TIME_MS/1000);
-    el.innerText = '⏱️ ' + remaining + 's';
+    el.textContent = '⏱️ ' + remaining + 's';
     this._turnCountdownId = setInterval(() => {
       remaining--;
-      if(remaining <= 0){
-        clearInterval(this._turnCountdownId);
-        el.innerText = '⏱️ 0s';
-        return;
-      }
-      el.innerText = '⏱️ ' + remaining + 's';
-      if(remaining <= 5) el.className = 'badge timer danger';
-      else if(remaining <= 15) el.className = 'badge timer warn';
+      if(remaining <= 0){ clearInterval(this._turnCountdownId); el.textContent = '⏱️ 0s'; return; }
+      el.textContent = '⏱️ ' + remaining + 's';
+      if(remaining <= 3) el.className = 'badge timer danger';
+      else if(remaining <= 6) el.className = 'badge timer warn';
     }, 1000);
   },
 
@@ -1521,25 +2221,23 @@ const UI = {
     bar.innerHTML = `
       <span>Đã chọn <b>${n}</b> lá ${CARDS[card].icon} ${CARDS[card].name}</span>
       <button class="btn-p" onclick="UI.confirmCatSelection()">Chơi ${n} lá</button>
-      ${n===2 && totalOfType>=3 ? '<span style="font-size:10px;color:#666">(click thêm 1 lá để chơi 3)</span>' : ''}
+      ${n===2 && totalOfType>=3 ? '<span style="font-size:10px;opacity:0.7">(thêm 1 để chơi 3)</span>' : ''}
       <button class="btn-o" onclick="UI.cancelCatSelection()">Huỷ</button>
     `;
   },
 
-  // ✅ NOPE với nút Bỏ qua
   updateNopeButton(){
     const s = Engine.state;
     const me = this.me();
     let container = document.getElementById('nopeContainer');
-
-    // Reset skip nếu pending đã thay đổi
+    
     if(this.nopeSkippedFor && (!s?.pending || s.pending.timestamp !== this.nopeSkippedFor)){
       this.nopeSkippedFor = null;
     }
-
-    const show = s && me && me.alive && s.pending && s.pending.playerId !== me.id 
+    
+    const show = s && me && me.alive && s.pending && s.pending.playerId !== me.id
       && me.hand.includes('NOPE') && this.nopeSkippedFor !== s.pending.timestamp;
-
+    
     if(show && !container){
       container = document.createElement('div');
       container.id = 'nopeContainer';
@@ -1561,6 +2259,7 @@ const UI = {
     this.updateNopeButton();
   },
 
+  // === MODALS ===
   openModal(type, html){
     this.currentModal = type;
     document.getElementById('modalContent').innerHTML = html;
@@ -1594,9 +2293,9 @@ const UI = {
   showDefuseModal(){
     this.openModal('defuse', `
       <h2>🧯 Bạn đã dùng DEFUSE!</h2>
-      <p>Chọn vị trí giấu lại Mèo Nổ:</p>
+      <p>Chọn vị trí giấu Mèo Nổ:</p>
       <div class="mcol">
-        <button class="btn-d" onclick="UI.act('defuse',{pos:'top'}); UI.closeModal();">⬆️ Trên cùng (nguy hiểm)</button>
+        <button class="btn-danger" onclick="UI.act('defuse',{pos:'top'}); UI.closeModal();">⬆️ Trên cùng (nguy hiểm)</button>
         <button onclick="UI.act('defuse',{pos:'random'}); UI.closeModal();">🎲 Ngẫu nhiên</button>
         <button class="btn-p" onclick="UI.act('defuse',{pos:'bottom'}); UI.closeModal();">⬇️ Dưới cùng (an toàn)</button>
       </div>
@@ -1606,11 +2305,11 @@ const UI = {
   showFavorModal(){
     const me = this.me();
     const s = Engine.state;
-    const requester = s.players.find(p => p.id === s.awaitingChoice.fromId);
+    const req = s.players.find(p => p.id === s.awaitingChoice.fromId);
     this.openModal('favor', `
-      <h2>🫴 ${this.escapeHtml(requester?.name||'Ai đó')} xin bài!</h2>
+      <h2>🫴 ${this.escapeHtml(req?.name||'Ai đó')} xin bài!</h2>
       <p>Chọn 1 lá để đưa:</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
         ${me.hand.map((c,i) => `
           <div class="card c-${CARDS[c].class}" onclick="UI.act('favor',{idx:${i}}); UI.closeModal();">
             <div class="ic">${CARDS[c].icon}</div>
@@ -1625,8 +2324,8 @@ const UI = {
   showPeekModal(cards){
     this.openModal('peek', `
       <h2>🔮 Nhìn Tương Lai</h2>
-      <p>3 lá trên cùng (thứ tự rút):</p>
-      <div style="display:flex;gap:10px;justify-content:center;margin:15px 0;">
+      <p>3 lá trên cùng:</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin:15px 0">
         ${cards.map(c => `
           <div class="card c-${CARDS[c].class}" style="width:76px;height:106px">
             <div class="ic">${CARDS[c].icon}</div>
@@ -1639,24 +2338,35 @@ const UI = {
     `);
   },
 
-  showWinModal(){
+  showWinModal(reason){
     const s = Engine.state;
+    if(!s) return;
     const w = s.winner;
+    const isMeWinner = w && w.id === this.myId;
+    
+    // Record stats
+    if(w && s.phase === 'ended' && !this._statsRecorded){
+      this._statsRecorded = true;
+      Auth.updateStats(isMeWinner);
+    }
+    
     const rows = [...s.players].sort((a,b) => (a.alive===b.alive)?0:(a.alive?-1:1)).map(p => `
       <div class="stat-row">
         <span>${p.alive?'🏆':'💀'} ${this.escapeHtml(p.name)}</span>
-        <span>${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá</span>
+        <span style="font-size:11px">${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá</span>
       </div>
     `).join('');
     this.openModal('win', `
-      <h1 style="color:var(--red);font-size:36px;">🎉 CHIẾN THẮNG!</h1>
-      <div style="font-size:70px;margin:10px 0;">🏆</div>
+      <h1 style="font-size:32px;color:${isMeWinner?'#ffcc00':'#ff8a7a'}">${isMeWinner?'🎉 CHIẾN THẮNG!':'💀 THUA CUỘC'}</h1>
+      ${reason ? `<p style="color:#ffcc00">${this.escapeHtml(reason)}</p>` : ''}
+      <div style="font-size:64px;margin:8px 0">${isMeWinner?'🏆':'💀'}</div>
       <h2>${this.escapeHtml(w?.name||'Không ai')}</h2>
-      <div style="text-align:left;margin:15px 0;">${rows}</div>
-      <button class="btn-p" onclick="UI.leaveRoom()">Về Trang Chủ</button>
+      <div style="text-align:left;margin:12px 0">${rows}</div>
+      <button class="btn-p" onclick="UI._statsRecorded=false; UI.leaveRoom()">Về Menu</button>
     `);
   },
 
+  // === GAME CLICKS ===
   clickCard(card, idx){
     const s = Engine.state;
     if(!s || s.phase!=='playing') return;
@@ -1664,19 +2374,18 @@ const UI = {
     if(s.pending || s.awaitingChoice) return this.toast('Đang chờ hành động...');
     if(s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
     if(!me.alive) return;
-
-    // ✅ Cat: kiểm tra có ít nhất 2 lá cùng loại
+    
     if(CATS.includes(card)){
       const count = me.hand.filter(x => x === card).length;
-      if(count < 2) return this.toast('Cần ít nhất 2 lá cùng loại để combo');
+      if(count < 2) return this.toast('Cần ít nhất 2 lá cùng loại');
       return this.toggleCatSelection(card, idx);
     }
-
+    
     this.selectedCatIndices = [];
-
+    
     if(card === 'FAVOR'){
       const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
-      if(targets.length === 0) return this.toast('Không có ai để xin');
+      if(!targets.length) return this.toast('Không có ai để xin');
       this.openModal('target', `
         <h2>🫴 Xin bài từ ai?</h2>
         <div class="mcol">
@@ -1686,11 +2395,13 @@ const UI = {
       `);
       return;
     }
+    
     if(['ATTACK','SKIP','SHUFFLE','SEE_FUTURE'].includes(card)){
-      this.act('play', { cards:[card] });
+      this.act('play', {cards:[card]});
       return;
     }
-    this.toast('Không thể đánh lá này trực tiếp');
+    
+    this.toast('Không thể đánh lá này');
   },
 
   toggleCatSelection(card, idx){
@@ -1730,16 +2441,14 @@ const UI = {
       this.cancelCatSelection();
       return;
     }
-    this.pendingCatPlay = { card, count };
-
+    this.pendingCatPlay = {card, count};
     const s = Engine.state;
     const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
-    if(targets.length === 0){
+    if(!targets.length){
       this.toast('Không có ai để combo');
       this.cancelCatSelection();
       return;
     }
-
     this.openModal('cattarget', `
       <h2>${CARDS[card].icon} ${CARDS[card].name} ×${count}</h2>
       <p>Chọn mục tiêu:</p>
@@ -1751,13 +2460,13 @@ const UI = {
   },
 
   chooseCatTarget(targetId){
-    const { card, count } = this.pendingCatPlay || {};
+    const {card, count} = this.pendingCatPlay || {};
     if(!card) return;
     if(count === 3){
       this.showCatName(card, targetId);
     } else {
       const cards = [card, card];
-      this.act('play', { cards, targetId });
+      this.act('play', {cards, targetId});
       this.closeModal();
       this.cancelCatSelection();
     }
@@ -1776,7 +2485,7 @@ const UI = {
 
   chooseCatName(card, targetId, namedCard){
     const cards = [card, card, card];
-    this.act('play', { cards, targetId, extra: { namedCard } });
+    this.act('play', {cards, targetId, extra:{namedCard}});
     this.closeModal();
     this.cancelCatSelection();
   },
@@ -1792,6 +2501,7 @@ const UI = {
     this.act('draw');
   },
 
+  // === CHAT ===
   toggleChat(){
     document.getElementById('chatPanel').classList.toggle('on');
     document.getElementById('chatOverlay').classList.toggle('on');
@@ -1801,9 +2511,10 @@ const UI = {
     const txt = inp.value.trim();
     if(!txt) return;
     inp.value = '';
-    const name = this.getMyName();
+    const acc = Auth.current();
+    const name = acc?.username || 'Player';
     this.addChatMsg(name, txt);
-    if(Net.peer) Net.send({ type:'chat', name, text:txt });
+    if(Net.peer) Net.send({type:'chat', name, text:txt});
   },
   addChatMsg(name, text){
     const box = document.getElementById('chatMsgs');
@@ -1812,10 +2523,30 @@ const UI = {
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   },
+
+  // === HELPERS ===
+  showScreen(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+    document.getElementById(id).classList.add('on');
+  },
+  toast(msg){
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3200);
+  },
+  copyCode(){
+    try{navigator.clipboard.writeText(this.roomCode);this.toast('✅ Đã copy: ' + this.roomCode)}
+    catch(e){this.toast('Mã: ' + this.roomCode)}
+  },
+  me(){return Engine.state?.players.find(p => p.id === this.myId)},
   escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 };
+
+// Fix VFX.shake (used in CSS class)
+document.head.insertAdjacentHTML('beforeend', '<style>@keyframes shake{10%,90%{transform:translate3d(-4px,0,0)}20%,80%{transform:translate3d(6px,0,0)}30%,50%,70%{transform:translate3d(-8px,0,0)}40%,60%{transform:translate3d(8px,0,0)}}.shake{animation:shake .5s cubic-bezier(.36,.07,.19,.97) both}</style>');
 
 document.addEventListener('DOMContentLoaded', () => UI.init());
 </script>
