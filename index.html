@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens - Full Rewrite</title>
+<title>Exploding Kittens - Fixed Join</title>
 <style>
   :root{
     --red:#d93828; --red-dark:#b52a1c; --bg-main:#eef2f6; --grid:rgba(0,0,0,0.07);
@@ -48,26 +48,26 @@
   .lobby-box{width:100%;max-width:500px;padding:30px;display:flex;flex-direction:column;gap:16px}
   .room-code{font-size:32px;font-weight:900;letter-spacing:4px;color:var(--red);text-align:center;
     cursor:pointer;padding:12px;border-radius:8px;background:rgba(255,255,255,.4);font-family:monospace}
-  .plist{display:flex;flex-direction:column;gap:8px;max-height:250px;overflow-y:auto}
+  .plist{display:flex;flex-direction:column;gap:8px;max-height:250px;overflow-y:auto;min-height:60px}
   .pitem{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.5);
     border-radius:8px;border:1px solid rgba(255,255,255,.8)}
   .pitem .av{font-size:22px} .pitem .nm{flex:1;font-weight:bold}
   .pitem .st{font-size:11px;font-weight:bold;color:var(--red);text-transform:uppercase}
+  .plist-empty{text-align:center;padding:24px;color:var(--text-l);font-size:13px;font-style:italic}
   #sc-game{display:none;flex-direction:column;height:100%;padding:8px;overflow:hidden;gap:8px}
   #sc-game.on{display:flex}
-  .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:13px;flex-shrink:0}
-  .badge{background:rgba(255,255,255,.6);padding:5px 12px;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,.05)}
+  .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:13px;flex-shrink:0;gap:6px;flex-wrap:wrap}
+  .badge{background:rgba(255,255,255,.6);padding:5px 12px;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,.05);font-size:12px}
   .badge.hot{background:var(--red);color:#fff;animation:pulseBadge 1.5s infinite}
   @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
   .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
-  .opp{display:flex;flex-direction:column;align-items:center;padding:8px 12px;min-width:76px;transition:.3s;position:relative}
+  .opp{display:flex;flex-direction:column;align-items:center;padding:8px 12px;min-width:76px;transition:.3s;position:relative;--cut:12px}
   .opp.turn{box-shadow:0 0 20px var(--red);border:2px solid var(--red);transform:scale(1.05)}
   .opp.dead{opacity:.4;filter:grayscale(1)}
   .opp.dead::after{content:'💀';position:absolute;font-size:36px;top:50%;left:50%;transform:translate(-50%,-50%)}
   .opp .av{font-size:28px;margin-bottom:2px}
   .opp .nm{font-size:11px;font-weight:bold;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
   .opp .cnt{font-size:11px;color:var(--red-dark);font-weight:bold}
-  .opp .turns{font-size:9px;color:#fff;background:var(--red);padding:1px 6px;border-radius:10px;margin-top:2px;font-weight:bold}
   .board{flex:1;display:flex;justify-content:center;align-items:center;gap:30px;position:relative;min-height:0}
   .pile{width:96px;height:134px;border-radius:12px;display:flex;align-items:center;justify-content:center;
     font-size:38px;position:relative;flex-shrink:0;transition:transform .2s}
@@ -83,7 +83,7 @@
     font-weight:bold;font-size:13px;box-shadow:0 2px 5px rgba(0,0,0,.2)}
   .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;
     padding:8px 10px;border-radius:8px;pointer-events:none;max-width:220px;backdrop-filter:blur(5px);line-height:1.4}
-  .hand-area{padding:12px;min-height:160px;display:flex;flex-direction:column;flex-shrink:0}
+  .hand-area{padding:12px;min-height:160px;display:flex;flex-direction:column;flex-shrink:0;--cut:14px}
   .hand-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 0 12px;align-items:center;scrollbar-width:thin}
   .card{width:86px;height:124px;border-radius:10px;flex-shrink:0;display:flex;flex-direction:column;
     align-items:center;justify-content:space-between;padding:6px 4px;cursor:pointer;position:relative;
@@ -140,11 +140,11 @@
     color:#fff;border-radius:50px;box-shadow:0 0 20px rgba(255,0,0,.6);border:3px solid #fff;cursor:pointer;
     animation:pulseNope .6s infinite alternate}
   @keyframes pulseNope{from{transform:translate(-50%,50%) scale(1)}to{transform:translate(-50%,50%) scale(1.08)}}
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);
     color:#fff;padding:12px 24px;border-radius:30px;font-weight:bold;z-index:10000;
-    animation:toastIn .3s ease-out;font-size:14px}
+    animation:toastIn .3s ease-out;font-size:14px;max-width:90%;text-align:center}
   @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
-  .stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.1);font-size:13px}
+  .stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.1);font-size:13px;gap:10px}
   .stat-row:last-child{border:none}
   @media (max-width:600px){
     .card{width:66px;height:98px}
@@ -159,16 +159,15 @@
 <body>
 <div class="glow"></div>
 
-<!-- ============ HOME ============ -->
 <div id="sc-home" class="screen on">
   <div class="glass home-box">
     <h1 class="home-title">Mèo Nổ</h1>
     <p class="home-sub">Exploding Kittens · Full Rules</p>
     <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="15">
-    <button class="btn-p" onclick="UI.createRoom()">Tạo Phòng (BroadcastChannel)</button>
+    <button class="btn-p" onclick="UI.createRoom()">Tạo Phòng</button>
     <button class="btn-o" onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia</button>
     <div id="joinArea" style="display:none; flex-direction:column; gap:8px;">
-      <input type="text" id="joinCode" placeholder="Mã phòng" maxlength="6" style="text-transform:uppercase">
+      <input type="text" id="joinCode" placeholder="Mã phòng (6 ký tự)" maxlength="6" style="text-transform:uppercase;font-family:monospace;letter-spacing:3px;text-align:center">
       <button onclick="UI.joinRoom()">Vào Phòng</button>
     </div>
     <hr style="border:0;border-top:1px solid rgba(0,0,0,.1)">
@@ -176,12 +175,11 @@
   </div>
 </div>
 
-<!-- ============ LOBBY ============ -->
 <div id="sc-lobby" class="screen">
   <div class="glass lobby-box">
     <h2 style="text-align:center;color:var(--red-dark)">Phòng Chờ</h2>
-    <div class="room-code" id="lobbyCode" onclick="navigator.clipboard.writeText(this.innerText); UI.toast('Đã copy!')">------</div>
-    <div style="text-align:center;font-size:11px;color:#666">Nhấn mã để copy · Chia sẻ mã cho bạn bè</div>
+    <div class="room-code" id="lobbyCode" onclick="UI.copyCode()">------</div>
+    <div style="text-align:center;font-size:11px;color:#666">Nhấn mã để copy · Chia sẻ cho bạn bè cùng browser</div>
     <div class="plist" id="lobbyPlayers"></div>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
       <button id="btnAddBot" style="display:none" onclick="UI.addBot()" class="btn-o">+ Bot</button>
@@ -191,7 +189,6 @@
   </div>
 </div>
 
-<!-- ============ GAME ============ -->
 <div id="sc-game" class="screen">
   <div class="glass ghead" style="--cut:14px">
     <div class="badge">Sống: <span id="uiAlive">0</span></div>
@@ -208,13 +205,12 @@
       🂠 <div class="badge-p" id="deckBadge">0</div>
     </div>
   </div>
-  <div class="glass hand-area" style="--cut:14px">
+  <div class="glass hand-area">
     <div style="font-size:11px;font-weight:bold;color:var(--text-l);margin-bottom:4px;">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
     <div class="hand-scroll" id="handArea"></div>
   </div>
 </div>
 
-<!-- ============ CHAT ============ -->
 <div class="chat-ov" id="chatOverlay" onclick="UI.toggleChat()"></div>
 <div class="chat-p" id="chatPanel">
   <div class="chat-h"><span>💬 Chat</span><span class="chat-x" onclick="UI.toggleChat()">✖</span></div>
@@ -226,23 +222,20 @@
 </div>
 <div class="chat-f" id="chatFab" onclick="UI.toggleChat()">💬</div>
 
-<!-- ============ MODAL ============ -->
 <div class="ov" id="overlayModal">
   <div class="glass modal" id="modalContent"></div>
 </div>
 
 <script>
-/* ==================================================================
-   CONSTANTS
-   ================================================================== */
+/* ========== CONSTANTS ========== */
 const CARDS = {
   EK:          { name:'Mèo Nổ',       icon:'💥', class:'EK',         desc:'Rút trúng là nổ' },
   DEFUSE:      { name:'Gỡ Bom',       icon:'🧯', class:'DEFUSE',     desc:'Cứu mạng' },
   NOPE:        { name:'Nope',         icon:'🙅', class:'NOPE',       desc:'Chặn hành động' },
-  ATTACK:      { name:'Tấn Công',     icon:'⚔️', class:'ATTACK',     desc:'+2 lượt cho người sau' },
+  ATTACK:      { name:'Tấn Công',     icon:'⚔️', class:'ATTACK',     desc:'+2 lượt' },
   SKIP:        { name:'Bỏ Lượt',      icon:'⏭️', class:'SKIP',       desc:'Kết thúc không rút' },
   SEE_FUTURE:  { name:'Nhìn Trước',   icon:'🔮', class:'SEE_FUTURE', desc:'Xem 3 lá đầu' },
-  SHUFFLE:     { name:'Xáo Bài',      icon:'🔀', class:'SHUFFLE',    desc:'Xáo trộn bộ bài' },
+  SHUFFLE:     { name:'Xáo Bài',      icon:'🔀', class:'SHUFFLE',    desc:'Xáo trộn' },
   FAVOR:       { name:'Xin Bài',      icon:'🫴', class:'FAVOR',      desc:'Xin 1 lá' },
   CAT_TACO:    { name:'Mèo Taco',     icon:'🌮', class:'CAT' },
   CAT_RAINBOW: { name:'Mèo Cầu Vồng', icon:'🌈', class:'CAT' },
@@ -251,101 +244,81 @@ const CARDS = {
   CAT_HAIRY:   { name:'Mèo Lông',     icon:'🐈', class:'CAT' }
 };
 const CATS = ['CAT_TACO','CAT_RAINBOW','CAT_BEARD','CAT_POTATO','CAT_HAIRY'];
-const NOPE_WINDOW = 3500; // ms
+const NOPE_WINDOW = 3500;
 
-/* ==================================================================
-   UTILS
-   ================================================================== */
+/* ========== UTILS ========== */
 const U = {
-  uid: () => Math.random().toString(36).slice(2,10),
-  shuffle: a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; },
-  code: () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; },
+  uid: () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4),
+  shuffle: a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; },
+  code: () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)]; return r; },
   clone: o => JSON.parse(JSON.stringify(o)),
   pick: arr => arr[Math.floor(Math.random()*arr.length)]
 };
 
-/* ==================================================================
-   SOUND
-   ================================================================== */
+/* ========== SOUND ========== */
 const Sound = {
   ctx:null,
-  init(){ if(!this.ctx) try { this.ctx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} },
+  init(){ if(!this.ctx) try{this.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){} },
   play(type){
     try{
       this.init(); if(!this.ctx) return;
       if(this.ctx.state==='suspended') this.ctx.resume();
-      const t = this.ctx.currentTime;
-      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      const t=this.ctx.currentTime;
+      const o=this.ctx.createOscillator(), g=this.ctx.createGain();
       o.connect(g); g.connect(this.ctx.destination);
       const cfg = {
-        draw:   { f:380, f2:620, dur:.1,  wave:'sine',     vol:.08 },
-        play:   { f:340, f2:120, dur:.18, wave:'triangle', vol:.12 },
-        boom:   { f:110, f2:25,  dur:.5,  wave:'sawtooth', vol:.28 },
-        defuse: { f:700, f2:1200,dur:.25, wave:'sine',     vol:.15 },
-        nope:   { f:220, f2:150, dur:.15, wave:'square',   vol:.12 },
-        win:    { f:500, f2:800, dur:.4,  wave:'sine',     vol:.2 }
+        draw:{f:380,f2:620,d:.1,w:'sine',v:.08}, play:{f:340,f2:120,d:.18,w:'triangle',v:.12},
+        boom:{f:110,f2:25,d:.5,w:'sawtooth',v:.28}, defuse:{f:700,f2:1200,d:.25,w:'sine',v:.15},
+        nope:{f:220,f2:150,d:.15,w:'square',v:.12}, win:{f:500,f2:800,d:.4,w:'sine',v:.2}
       }[type];
       if(!cfg) return;
-      o.type = cfg.wave;
-      o.frequency.setValueAtTime(cfg.f, t);
-      o.frequency.exponentialRampToValueAtTime(cfg.f2, t+cfg.dur);
-      g.gain.setValueAtTime(cfg.vol, t);
-      g.gain.exponentialRampToValueAtTime(.001, t+cfg.dur);
-      o.start(t); o.stop(t+cfg.dur);
-    } catch(e){}
+      o.type=cfg.w; o.frequency.setValueAtTime(cfg.f,t);
+      o.frequency.exponentialRampToValueAtTime(cfg.f2,t+cfg.d);
+      g.gain.setValueAtTime(cfg.v,t); g.gain.exponentialRampToValueAtTime(.001,t+cfg.d);
+      o.start(t); o.stop(t+cfg.d);
+    }catch(e){}
   }
 };
 
-/* ==================================================================
-   VFX
-   ================================================================== */
+/* ========== VFX ========== */
 const VFX = {
-  shake(){ document.body.classList.add('shake'); setTimeout(()=>document.body.classList.remove('shake'),500); },
-  flash(){ const el = document.getElementById('sc-game'); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),600); },
+  shake(){document.body.classList.add('shake'); setTimeout(()=>document.body.classList.remove('shake'),500)},
+  flash(){const el=document.getElementById('sc-game'); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),600)},
   explode(x,y){
     this.shake(); this.flash(); Sound.play('boom');
     for(let i=0;i<35;i++){
-      const p = document.createElement('div');
-      p.className = 'particle';
-      const s = Math.random()*18+8;
-      p.style.cssText = `width:${s}px;height:${s}px;left:${x}px;top:${y}px;background:hsl(${Math.random()*40},100%,55%)`;
+      const p=document.createElement('div');
+      p.className='particle';
+      const s=Math.random()*18+8;
+      p.style.cssText=`width:${s}px;height:${s}px;left:${x}px;top:${y}px;background:hsl(${Math.random()*40},100%,55%)`;
       document.body.appendChild(p);
-      const a = Math.random()*Math.PI*2, v = Math.random()*160+50;
+      const a=Math.random()*Math.PI*2, v=Math.random()*160+50;
       p.animate([
-        { transform:'translate(0,0) scale(1)', opacity:1 },
-        { transform:`translate(${Math.cos(a)*v}px,${Math.sin(a)*v}px) scale(0)`, opacity:0 }
-      ], { duration:600+Math.random()*400, easing:'cubic-bezier(0,.9,.57,1)' }).onfinish = () => p.remove();
+        {transform:'translate(0,0) scale(1)', opacity:1},
+        {transform:`translate(${Math.cos(a)*v}px,${Math.sin(a)*v}px) scale(0)`, opacity:0}
+      ],{duration:600+Math.random()*400, easing:'cubic-bezier(0,.9,.57,1)'}).onfinish=()=>p.remove();
     }
   }
 };
 
-/* ==================================================================
-   ENGINE — pure game logic (runs only on HOST)
-   ================================================================== */
+/* ========== ENGINE ========== */
 const Engine = {
-  state: null,
-  hostId: null,
-  pendingTimer: null,
-  onChange: null,        // callback khi state đổi
-  onChangeMeta: null,    // callback với meta {type, data}
+  state: null, hostId: null, pendingTimer: null,
+  onChange: null,
 
-  /* ---------- INIT ---------- */
-  createGame(players, hostId) {
+  createGame(players, hostId){
     this.hostId = hostId;
     this.state = {
-      phase: 'playing',
+      phase:'playing',
       players: players.map(p => ({
-        id: p.id, name: p.name, isBot: !!p.isBot,
-        hand: [], alive: true,
-        stats: { turns: 0, cardsPlayed: 0, defuses: 0 }
+        id:p.id, name:p.name, isBot:!!p.isBot,
+        hand:[], alive:true,
+        stats:{ turns:0, cardsPlayed:0, defuses:0 }
       })),
-      deck: [], discard: [],
-      turnIdx: 0, turnsLeft: 1,
-      pending: null,       // { playerId, primary, cards, targetId, payload, nopeCount }
-      peekFor: null,       // { playerId, cards }
-      awaitingChoice: null,// { type:'defuse'|'favor', playerId/targetId }
-      winner: null,
-      logs: []
+      deck:[], discard:[],
+      turnIdx:0, turnsLeft:1,
+      pending:null, peekFor:null, awaitingChoice:null,
+      winner:null, logs:[]
     };
     this.setupDeck();
     this.state.turnIdx = Math.floor(Math.random() * players.length);
@@ -354,286 +327,220 @@ const Engine = {
     this.notify();
   },
 
-  setupDeck() {
+  setupDeck(){
     const n = this.state.players.length;
     const deck = this.state.deck;
-
-    // Basic cards
-    for (let i=0;i<4;i++) deck.push('ATTACK');
-    for (let i=0;i<4;i++) deck.push('SKIP');
-    for (let i=0;i<4;i++) deck.push('FAVOR');
-    for (let i=0;i<4;i++) deck.push('SHUFFLE');
-    for (let i=0;i<5;i++) deck.push('SEE_FUTURE');
-    for (let i=0;i<5;i++) deck.push('NOPE');
-    for (const c of CATS) for (let i=0;i<4;i++) deck.push(c);
-    // Extra defuses (6 total, 1 per player, rest into deck)
-    for (let i=0;i<Math.max(0, 6-n);i++) deck.push('DEFUSE');
-
+    for(let i=0;i<4;i++) deck.push('ATTACK');
+    for(let i=0;i<4;i++) deck.push('SKIP');
+    for(let i=0;i<4;i++) deck.push('FAVOR');
+    for(let i=0;i<4;i++) deck.push('SHUFFLE');
+    for(let i=0;i<5;i++) deck.push('SEE_FUTURE');
+    for(let i=0;i<5;i++) deck.push('NOPE');
+    for(const c of CATS) for(let i=0;i<4;i++) deck.push(c);
+    for(let i=0;i<Math.max(0,6-n);i++) deck.push('DEFUSE');
     U.shuffle(deck);
-
-    // Deal 7 each + 1 Defuse
-    for (let i=0;i<7;i++) for (const p of this.state.players) p.hand.push(deck.pop());
-    for (const p of this.state.players) p.hand.push('DEFUSE');
-
-    // Add n-1 EKs
-    for (let i=0;i<n-1;i++) deck.push('EK');
+    for(let i=0;i<7;i++) for(const p of this.state.players) p.hand.push(deck.pop());
+    for(const p of this.state.players) p.hand.push('DEFUSE');
+    for(let i=0;i<n-1;i++) deck.push('EK');
     U.shuffle(deck);
-
-    // Avoid instant death: top 3 not EK
-    for (let i=0;i<3 && i<deck.length;i++){
-      const idx = deck.length - 1 - i;
-      if (deck[idx] === 'EK'){
-        for (let j=0;j<deck.length-3;j++){
-          if (deck[j] !== 'EK'){ [deck[idx],deck[j]] = [deck[j],deck[idx]]; break; }
+    for(let i=0;i<3 && i<deck.length;i++){
+      const idx = deck.length-1-i;
+      if(deck[idx]==='EK'){
+        for(let j=0;j<deck.length-3;j++){
+          if(deck[j]!=='EK'){ [deck[idx],deck[j]]=[deck[j],deck[idx]]; break; }
         }
       }
     }
   },
 
-  /* ---------- HELPERS ---------- */
   cur(){ return this.state.players[this.state.turnIdx]; },
-  byId(id){ return this.state.players.find(p => p.id === id); },
-  alive(){ return this.state.players.filter(p => p.alive); },
-  log(msg){ this.state.logs.push(msg); if (this.state.logs.length > 30) this.state.logs.shift(); },
-  notify(meta){
-    if (this.onChange) this.onChange(meta);
-  },
+  byId(id){ return this.state.players.find(p=>p.id===id); },
+  alive(){ return this.state.players.filter(p=>p.alive); },
+  log(msg){ this.state.logs.push(msg); if(this.state.logs.length>30) this.state.logs.shift(); },
+  notify(meta){ if(this.onChange) this.onChange(meta); },
 
-  /* ---------- TURN ---------- */
   endTurn(){
-    this.state.pending = null;
-    this.state.peekFor = null;
-    clearTimeout(this.pendingTimer);
-    let idx = this.state.turnIdx;
-    do { idx = (idx + 1) % this.state.players.length; } while (!this.state.players[idx].alive);
-    this.state.turnIdx = idx;
-    this.state.turnsLeft = 1;
+    this.state.pending=null; this.state.peekFor=null; clearTimeout(this.pendingTimer);
+    let idx=this.state.turnIdx;
+    do { idx=(idx+1)%this.state.players.length; } while(!this.state.players[idx].alive);
+    this.state.turnIdx=idx; this.state.turnsLeft=1;
     this.cur().stats.turns++;
     this.log(`→ Lượt của ${this.cur().name}`);
-    this.notify({ type:'turn' });
+    this.notify({type:'turn'});
   },
 
   advanceTo(turns){
-    this.state.pending = null;
-    this.state.peekFor = null;
-    clearTimeout(this.pendingTimer);
-    let idx = this.state.turnIdx;
-    do { idx = (idx + 1) % this.state.players.length; } while (!this.state.players[idx].alive);
-    this.state.turnIdx = idx;
-    this.state.turnsLeft = turns;
+    this.state.pending=null; this.state.peekFor=null; clearTimeout(this.pendingTimer);
+    let idx=this.state.turnIdx;
+    do { idx=(idx+1)%this.state.players.length; } while(!this.state.players[idx].alive);
+    this.state.turnIdx=idx; this.state.turnsLeft=turns;
     this.cur().stats.turns++;
     this.log(`→ Lượt của ${this.cur().name} (${turns} lượt)`);
-    this.notify({ type:'turn' });
+    this.notify({type:'turn'});
   },
 
-  /* ---------- VALIDATION ---------- */
   canAct(playerId, action){
-    if (this.state.phase !== 'playing') return false;
-    const p = this.byId(playerId);
-    if (!p || !p.alive) return false;
-
-    if (action === 'nope') {
-      return !!this.state.pending && p.hand.includes('NOPE');
-    }
-    if (action === 'clearPeek') {
-      return this.state.peekFor?.playerId === playerId;
-    }
-    if (action === 'defuse') {
-      return this.state.awaitingChoice?.type === 'defuse' && this.state.awaitingChoice.playerId === playerId;
-    }
-    if (action === 'favor') {
-      return this.state.awaitingChoice?.type === 'favor' && this.state.awaitingChoice.targetId === playerId;
-    }
-
-    // Normal turn actions
-    if (this.state.awaitingChoice) return false;
-    if (this.state.pending) return false;
-    if (this.cur().id !== playerId) return false;
+    if(this.state.phase!=='playing') return false;
+    const p=this.byId(playerId);
+    if(!p || !p.alive) return false;
+    if(action==='nope') return !!this.state.pending && p.hand.includes('NOPE');
+    if(action==='clearPeek') return this.state.peekFor?.playerId===playerId;
+    if(action==='defuse') return this.state.awaitingChoice?.type==='defuse' && this.state.awaitingChoice.playerId===playerId;
+    if(action==='favor') return this.state.awaitingChoice?.type==='favor' && this.state.awaitingChoice.targetId===playerId;
+    if(this.state.awaitingChoice) return false;
+    if(this.state.pending) return false;
+    if(this.cur().id!==playerId) return false;
     return true;
   },
 
-  /* ---------- PLAY CARD ---------- */
-  playCards(playerId, cardTypes, targetId, payload = {}) {
-    if (!this.canAct(playerId, 'play')) return false;
+  playCards(playerId, cardTypes, targetId, payload={}){
+    if(!this.canAct(playerId,'play')) return false;
     const p = this.byId(playerId);
-
-    // Check hand has all cards
     const hand = [...p.hand];
-    for (const c of cardTypes) {
+    for(const c of cardTypes){
       const idx = hand.indexOf(c);
-      if (idx === -1) return false;
-      hand.splice(idx, 1);
+      if(idx===-1) return false;
+      hand.splice(idx,1);
     }
-
     const primary = cardTypes[0];
-    if (primary === 'EK' || primary === 'DEFUSE' || primary === 'NOPE') return false;
-
-    if (CATS.includes(primary)) {
-      if (cardTypes.length !== 2 && cardTypes.length !== 3) return false;
-      if (!cardTypes.every(c => c === primary)) return false;
+    if(primary==='EK' || primary==='DEFUSE' || primary==='NOPE') return false;
+    if(CATS.includes(primary)){
+      if(cardTypes.length!==2 && cardTypes.length!==3) return false;
+      if(!cardTypes.every(c=>c===primary)) return false;
       const t = this.byId(targetId);
-      if (!t || !t.alive || t.id === playerId) return false;
+      if(!t || !t.alive || t.id===playerId) return false;
     }
-    if (primary === 'FAVOR') {
+    if(primary==='FAVOR'){
       const t = this.byId(targetId);
-      if (!t || !t.alive || t.id === playerId || t.hand.length === 0) return false;
+      if(!t || !t.alive || t.id===playerId || t.hand.length===0) return false;
     }
-
-    // Consume cards
-    for (const c of cardTypes) {
-      p.hand.splice(p.hand.indexOf(c), 1);
+    for(const c of cardTypes){
+      p.hand.splice(p.hand.indexOf(c),1);
       this.state.discard.push(c);
     }
     p.stats.cardsPlayed += cardTypes.length;
-
-    // Setup pending
-    this.state.pending = {
-      playerId, primary, cards: cardTypes, targetId, payload,
-      nopeCount: 0, timestamp: Date.now()
-    };
-    this.log(`${p.name} đánh ${CARDS[primary].name}${cardTypes.length > 1 ? ' ×'+cardTypes.length : ''}`);
-
+    this.state.pending = { playerId, primary, cards:cardTypes, targetId, payload, nopeCount:0, timestamp:Date.now() };
+    this.log(`${p.name} đánh ${CARDS[primary].name}${cardTypes.length>1?' ×'+cardTypes.length:''}`);
     this.scheduleResolve();
-    this.notify({ type:'play', playerId });
+    this.notify({type:'play', playerId});
     return true;
   },
 
   scheduleResolve(){
     clearTimeout(this.pendingTimer);
     const pending = this.state.pending;
-    this.pendingTimer = setTimeout(() => {
-      if (this.state.pending === pending) this.resolvePending();
+    this.pendingTimer = setTimeout(()=>{
+      if(this.state.pending===pending) this.resolvePending();
     }, NOPE_WINDOW);
   },
 
-  /* ---------- NOPE ---------- */
   playNope(playerId){
-    if (!this.state.pending) return false;
+    if(!this.state.pending) return false;
     const p = this.byId(playerId);
-    if (!p || !p.alive || !p.hand.includes('NOPE')) return false;
-
-    p.hand.splice(p.hand.indexOf('NOPE'), 1);
+    if(!p || !p.alive || !p.hand.includes('NOPE')) return false;
+    p.hand.splice(p.hand.indexOf('NOPE'),1);
     this.state.discard.push('NOPE');
     p.stats.cardsPlayed++;
     this.state.pending.nopeCount++;
     this.log(`${p.name} hô NOPE! (×${this.state.pending.nopeCount})`);
     Sound.play('nope');
-
     this.scheduleResolve();
-    this.notify({ type:'nope' });
+    this.notify({type:'nope'});
     return true;
   },
 
   resolvePending(){
     clearTimeout(this.pendingTimer);
     const pending = this.state.pending;
-    if (!pending) return;
+    if(!pending) return;
     this.state.pending = null;
-
-    if (pending.nopeCount % 2 === 1) {
+    if(pending.nopeCount % 2 === 1){
       this.log(`❌ Hành động bị NOPE hủy!`);
-      this.notify({ type:'resolve', cancelled:true });
+      this.notify({type:'resolve', cancelled:true});
       return;
     }
-
     const p = this.byId(pending.playerId);
-    if (!p || !p.alive) {
-      this.notify({ type:'resolve', cancelled:true });
-      return;
-    }
+    if(!p || !p.alive){ this.notify({type:'resolve',cancelled:true}); return; }
 
-    switch (pending.primary) {
-      case 'ATTACK': {
+    switch(pending.primary){
+      case 'ATTACK':{
         const nextTurns = this.state.turnsLeft + 1;
-        this.log(`⚔️ ${p.name} tấn công! Người sau phải đi ${nextTurns} lượt.`);
+        this.log(`⚔️ ${p.name} tấn công! ${nextTurns} lượt cho người sau.`);
         this.advanceTo(nextTurns);
         return;
       }
-      case 'SKIP': {
+      case 'SKIP':{
         this.state.turnsLeft--;
         this.log(`⏭️ ${p.name} bỏ lượt.`);
-        if (this.state.turnsLeft <= 0) this.endTurn();
-        else this.notify({ type:'resolve' });
+        if(this.state.turnsLeft<=0) this.endTurn();
+        else this.notify({type:'resolve'});
         return;
       }
-      case 'SHUFFLE': {
+      case 'SHUFFLE':{
         U.shuffle(this.state.deck);
         this.log(`🔀 ${p.name} xáo bài.`);
         break;
       }
-      case 'SEE_FUTURE': {
-        const top = [];
-        for (let i=0;i<3 && i<this.state.deck.length;i++){
-          top.push(this.state.deck[this.state.deck.length-1-i]);
-        }
-        this.state.peekFor = { playerId: pending.playerId, cards: top };
+      case 'SEE_FUTURE':{
+        const top=[];
+        for(let i=0;i<3 && i<this.state.deck.length;i++) top.push(this.state.deck[this.state.deck.length-1-i]);
+        this.state.peekFor = { playerId:pending.playerId, cards:top };
         this.log(`🔮 ${p.name} xem tương lai.`);
         break;
       }
-      case 'FAVOR': {
+      case 'FAVOR':{
         const t = this.byId(pending.targetId);
-        if (t && t.alive && t.hand.length > 0) {
+        if(t && t.alive && t.hand.length>0){
           this.log(`🫴 ${p.name} xin bài từ ${t.name}.`);
-          this.state.awaitingChoice = { type:'favor', fromId: pending.playerId, targetId: t.id };
-        } else {
-          this.log(`Không thể xin bài.`);
+          this.state.awaitingChoice = { type:'favor', fromId:pending.playerId, targetId:t.id };
         }
         break;
       }
-      default: {
-        if (CATS.includes(pending.primary)) this.doCatCombo(p, pending.targetId, pending.cards.length, pending.payload);
-      }
+      default: if(CATS.includes(pending.primary)) this.doCatCombo(p, pending.targetId, pending.cards.length, pending.payload);
     }
-    this.notify({ type:'resolve' });
+    this.notify({type:'resolve'});
   },
 
   doCatCombo(p, targetId, count, payload){
     const t = this.byId(targetId);
-    if (!t || !t.alive || t.hand.length === 0) return;
-
-    if (count === 2) {
-      const idx = Math.floor(Math.random() * t.hand.length);
-      const stolen = t.hand.splice(idx, 1)[0];
+    if(!t || !t.alive || t.hand.length===0) return;
+    if(count===2){
+      const idx = Math.floor(Math.random()*t.hand.length);
+      const stolen = t.hand.splice(idx,1)[0];
       p.hand.push(stolen);
-      this.log(`🐱 ${p.name} cướp ngẫu nhiên 1 lá từ ${t.name}.`);
+      this.log(`🐱 ${p.name} cướp 1 lá từ ${t.name}.`);
       Sound.play('draw');
-    } else if (count === 3) {
+    } else if(count===3){
       const wanted = payload.namedCard;
-      if (!wanted) return;
+      if(!wanted) return;
       const idx = t.hand.indexOf(wanted);
-      if (idx > -1) {
-        t.hand.splice(idx, 1);
-        p.hand.push(wanted);
+      if(idx>-1){
+        t.hand.splice(idx,1); p.hand.push(wanted);
         this.log(`🐱 ${p.name} lấy ${CARDS[wanted].name} từ ${t.name}.`);
         Sound.play('draw');
       } else {
-        this.log(`🐱 ${t.name} không có ${CARDS[wanted].name}. Mất lượt combo.`);
+        this.log(`🐱 ${t.name} không có ${CARDS[wanted].name}.`);
       }
     }
   },
 
-  /* ---------- DRAW ---------- */
   drawCard(playerId){
-    if (!this.canAct(playerId, 'draw')) return false;
+    if(!this.canAct(playerId,'draw')) return false;
     const p = this.byId(playerId);
-
-    if (this.state.deck.length === 0) {
+    if(this.state.deck.length===0){
       this.log(`Bộ bài trống, ${p.name} không rút được.`);
       this.endTurn();
       return true;
     }
-
     const card = this.state.deck.pop();
     Sound.play('draw');
     this.log(`${p.name} rút 1 lá...`);
-
-    if (card === 'EK') {
-      this.handleEK(p);
-    } else {
+    if(card==='EK') this.handleEK(p);
+    else {
       p.hand.push(card);
       this.state.turnsLeft--;
-      if (this.state.turnsLeft <= 0) this.endTurn();
-      else this.notify({ type:'draw' });
+      if(this.state.turnsLeft<=0) this.endTurn();
+      else this.notify({type:'draw'});
     }
     return true;
   },
@@ -642,171 +549,155 @@ const Engine = {
     this.state.discard.push('EK');
     this.log(`💥 ${p.name} rút trúng MÈO NỔ!`);
     const defIdx = p.hand.indexOf('DEFUSE');
-
-    if (defIdx === -1) {
+    if(defIdx===-1){
       p.alive = false;
       this.state.discard.push(...p.hand);
       p.hand = [];
       this.log(`☠️ ${p.name} BỊ LOẠI!`);
-      if (this.checkWin()) return;
+      if(this.checkWin()) return;
       this.state.turnsLeft = 0;
       this.endTurn();
     } else {
-      p.hand.splice(defIdx, 1);
+      p.hand.splice(defIdx,1);
       p.stats.defuses++;
       this.state.discard.push('DEFUSE');
       this.log(`🧯 ${p.name} dùng DEFUSE!`);
       Sound.play('defuse');
-      this.state.awaitingChoice = { type:'defuse', playerId: p.id };
-      this.notify({ type:'defuse-prompt', playerId: p.id });
+      this.state.awaitingChoice = { type:'defuse', playerId:p.id };
+      this.notify({type:'defuse-prompt', playerId:p.id});
     }
   },
 
   placeDefuse(playerId, pos){
-    if (!this.state.awaitingChoice || this.state.awaitingChoice.type !== 'defuse') return false;
-    if (this.state.awaitingChoice.playerId !== playerId) return false;
-
+    if(!this.state.awaitingChoice || this.state.awaitingChoice.type!=='defuse') return false;
+    if(this.state.awaitingChoice.playerId!==playerId) return false;
     let idx;
-    if (pos === 'top') idx = this.state.deck.length;
-    else if (pos === 'bottom') idx = 0;
-    else if (typeof pos === 'number') idx = Math.max(0, Math.min(this.state.deck.length, pos));
-    else idx = Math.floor(Math.random() * (this.state.deck.length + 1));
-
-    this.state.deck.splice(idx, 0, 'EK');
+    if(pos==='top') idx = this.state.deck.length;
+    else if(pos==='bottom') idx = 0;
+    else if(typeof pos==='number') idx = Math.max(0, Math.min(this.state.deck.length, pos));
+    else idx = Math.floor(Math.random()*(this.state.deck.length+1));
+    this.state.deck.splice(idx,0,'EK');
     this.state.awaitingChoice = null;
     this.log(`Bom được giấu lại.`);
-
-    // Drawing ends 1 turn
     this.state.turnsLeft--;
-    if (this.state.turnsLeft <= 0) this.endTurn();
-    else this.notify({ type:'defuse-done' });
+    if(this.state.turnsLeft<=0) this.endTurn();
+    else this.notify({type:'defuse-done'});
     return true;
   },
 
-  /* ---------- FAVOR RESOLUTION ---------- */
   resolveFavor(targetId, cardIdx){
-    if (!this.state.awaitingChoice || this.state.awaitingChoice.type !== 'favor') return false;
-    const { fromId, targetId: expectedTarget } = this.state.awaitingChoice;
-    if (targetId !== expectedTarget) return false;
-
+    if(!this.state.awaitingChoice || this.state.awaitingChoice.type!=='favor') return false;
+    const { fromId, targetId:expectedTarget } = this.state.awaitingChoice;
+    if(targetId!==expectedTarget) return false;
     const target = this.byId(targetId);
     const from = this.byId(fromId);
-    if (!target || !from) return false;
-    if (cardIdx < 0 || cardIdx >= target.hand.length) return false;
-
-    const card = target.hand.splice(cardIdx, 1)[0];
+    if(!target || !from) return false;
+    if(cardIdx<0 || cardIdx>=target.hand.length) return false;
+    const card = target.hand.splice(cardIdx,1)[0];
     from.hand.push(card);
     this.log(`🫴 ${from.name} nhận ${CARDS[card].name} từ ${target.name}.`);
     this.state.awaitingChoice = null;
-    this.notify({ type:'favor-done' });
+    this.notify({type:'favor-done'});
     return true;
   },
 
   clearPeek(playerId){
-    if (this.state.peekFor?.playerId !== playerId) return false;
+    if(this.state.peekFor?.playerId!==playerId) return false;
     this.state.peekFor = null;
-    this.notify({ type:'peek-cleared' });
+    this.notify({type:'peek-cleared'});
     return true;
   },
 
-  /* ---------- WIN ---------- */
   checkWin(){
     const alive = this.alive();
-    if (alive.length <= 1) {
+    if(alive.length<=1){
       this.state.phase = 'ended';
       this.state.winner = alive[0] || null;
       this.state.awaitingChoice = null;
       this.state.pending = null;
       clearTimeout(this.pendingTimer);
-      if (alive[0]) this.log(`🏆 ${alive[0].name} CHIẾN THẮNG!`);
+      if(alive[0]) this.log(`🏆 ${alive[0].name} CHIẾN THẮNG!`);
       Sound.play('win');
-      this.notify({ type:'win', winner: this.state.winner });
+      this.notify({type:'win', winner:this.state.winner});
       return true;
     }
     return false;
   }
 };
 
-/* ==================================================================
-   NET — BroadcastChannel wrapper (host = authority)
-   ================================================================== */
+/* ========== NET ========== */
 const Net = {
-  ch: null,
-  isHost: false,
-  roomCode: null,
-  onJoin: null,
-  onAction: null,
-  onChat: null,
-  onState: null,
-  onLobby: null,
-  onStart: null,
-  onHostLeft: null,
+  ch:null, isHost:false, roomCode:null,
+  onJoin:null, onAction:null, onChat:null, onState:null, onLobby:null, onStart:null, onHostLeft:null,
 
-  host(roomCode){
-    this.roomCode = roomCode;
-    this.isHost = true;
-    this.ch = new BroadcastChannel('ek_room_' + roomCode);
+  host(code){
+    this.roomCode = code; this.isHost = true;
+    this.ch = new BroadcastChannel('ek_room_'+code);
     this.ch.onmessage = e => this.route(e.data);
   },
-  join(roomCode){
-    this.roomCode = roomCode;
-    this.isHost = false;
-    this.ch = new BroadcastChannel('ek_room_' + roomCode);
+  join(code){
+    this.roomCode = code; this.isHost = false;
+    this.ch = new BroadcastChannel('ek_room_'+code);
     this.ch.onmessage = e => this.route(e.data);
   },
-  close(){ if (this.ch) { try { this.ch.close(); } catch(e){} this.ch = null; } },
-  send(msg){ if (this.ch) { try { this.ch.postMessage(msg); } catch(e){} } },
+  close(){ if(this.ch){ try{this.ch.close()}catch(e){} this.ch=null; } },
+  send(msg){ if(this.ch){ try{this.ch.postMessage(msg)}catch(e){} } },
 
   route(msg){
-    if (this.isHost) {
-      switch (msg.type) {
-        case 'join':    this.onJoin?.(msg.player); break;
-        case 'action':  this.onAction?.(msg.playerId, msg.action, msg.payload); break;
-        case 'chat':
-          this.onChat?.(msg.name, msg.text);
-          this.send({ type:'chat', name:msg.name, text:msg.text });
-          break;
-        case 'leave':   this.onJoin?.(msg.playerId, 'leave'); break;
+    if(!msg || !msg.type) return;
+    if(this.isHost){
+      switch(msg.type){
+        case 'join': this.onJoin?.(msg.player); break;
+        case 'action': this.onAction?.(msg.playerId, msg.action, msg.payload); break;
+        case 'chat': this.onChat?.(msg.name, msg.text); this.send({type:'chat', name:msg.name, text:msg.text}); break;
+        case 'leave': this.onJoin?.(msg.playerId, 'leave'); break;
       }
     } else {
-      switch (msg.type) {
-        case 'lobby':   this.onLobby?.(msg.players); break;
-        case 'state':   this.onState?.(msg.state); break;
-        case 'start':   this.onStart?.(msg.state); break;
-        case 'chat':    this.onChat?.(msg.name, msg.text); break;
+      switch(msg.type){
+        case 'lobby': this.onLobby?.(msg.players); break;
+        case 'state': this.onState?.(msg.state); break;
+        case 'start': this.onStart?.(msg.state); break;
+        case 'chat': this.onChat?.(msg.name, msg.text); break;
         case 'host_left': this.onHostLeft?.(); break;
-        case 'kicked':  this.onHostLeft?.(); break;
       }
     }
   }
 };
 
-/* ==================================================================
-   UI — Controller
-   ================================================================== */
+/* ========== UI ========== */
 const UI = {
-  myId: null,
-  roomCode: null,
-  isHost: false,
-  lobbyPlayers: [],
-  catFlow: null,
-  botScheduled: false,
-  currentModal: null,
-  awaitingDefuse: false,
+  myId: null, roomCode: null, isHost: false,
+  lobbyPlayers: [], catFlow: null, botScheduled: false,
+  currentModal: null, joinTimeout: null,
 
   init(){
-    // Persist identity
-    this.myId = localStorage.getItem('ek_myId') || U.uid();
-    localStorage.setItem('ek_myId', this.myId);
+    // 🔑 FIX: sessionStorage = per-tab identity (không share giữa các tab)
+    let myId = null;
+    try {
+      myId = sessionStorage.getItem('ek_myId');
+      if(!myId){
+        myId = 'p_' + U.uid();
+        sessionStorage.setItem('ek_myId', myId);
+      }
+    } catch(e){
+      myId = 'p_' + U.uid(); // fallback
+    }
+    this.myId = myId;
 
-    const savedName = localStorage.getItem('ek_name') || 'Player_' + Math.floor(Math.random()*1000);
+    // Tên: cũng dùng sessionStorage để tránh trùng
+    let savedName = null;
+    try { savedName = sessionStorage.getItem('ek_name'); } catch(e){}
+    if(!savedName) savedName = 'Player_' + Math.floor(Math.random()*1000);
     document.getElementById('playerName').value = savedName;
 
-    // Setup engine callback
     Engine.onChange = (meta) => this.onEngineChange(meta);
+
+    // Global error handler để không bị crash im lặng
+    window.addEventListener('error', e => {
+      console.error('[EK]', e.message, e.filename, e.lineno);
+    });
   },
 
-  /* ---------- NAV ---------- */
   showScreen(id){
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
     document.getElementById(id).classList.add('on');
@@ -815,90 +706,132 @@ const UI = {
     const t = document.createElement('div');
     t.className = 'toast'; t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2200);
+    setTimeout(() => t.remove(), 2400);
   },
-
+  copyCode(){
+    try {
+      navigator.clipboard.writeText(this.roomCode);
+      this.toast('✅ Đã copy mã phòng');
+    } catch(e){ this.toast('Mã phòng: ' + this.roomCode); }
+  },
   getMyName(){
-    const v = document.getElementById('playerName').value.trim();
-    localStorage.setItem('ek_name', v || 'Player');
-    return v || 'Player';
+    const v = document.getElementById('playerName').value.trim() || 'Player';
+    try { sessionStorage.setItem('ek_name', v); } catch(e){}
+    return v;
   },
-
   me(){ return Engine.state?.players.find(p => p.id === this.myId); },
 
   /* ---------- ROOM ---------- */
   createRoom(){
     this.roomCode = U.code();
     this.isHost = true;
-    this.lobbyPlayers = [{ id: this.myId, name: this.getMyName(), isHost: true, isBot: false }];
+    this.lobbyPlayers = [{ id:this.myId, name:this.getMyName(), isHost:true, isBot:false }];
     this.setupNet(true);
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
     document.getElementById('btnAddBot').style.display = 'inline-block';
     document.getElementById('btnStart').style.display = 'inline-block';
     this.renderLobby();
+    console.log('[EK] Room created:', this.roomCode, 'hostId:', this.myId);
   },
 
   joinRoom(){
     const code = document.getElementById('joinCode').value.toUpperCase().trim();
-    if (code.length !== 6) return this.toast('Mã phòng phải 6 ký tự');
+    if(code.length !== 6) return this.toast('Mã phòng phải có 6 ký tự');
 
     this.roomCode = code;
     this.isHost = false;
     this.setupNet(false);
-    Net.send({ type:'join', player: { id: this.myId, name: this.getMyName() } });
+
+    // Send join
+    Net.send({ type:'join', player: { id:this.myId, name:this.getMyName() } });
+    console.log('[EK] Join sent. myId:', this.myId, 'room:', code);
+
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
+    document.getElementById('btnAddBot').style.display = 'none';
+    document.getElementById('btnStart').style.display = 'none';
+    this.renderLobby();
+
+    // ⏱️ Timeout check: nếu sau 3s không nhận lobby → báo lỗi
+    clearTimeout(this.joinTimeout);
+    this.joinTimeout = setTimeout(() => {
+      if(this.lobbyPlayers.length === 0){
+        this.toast('⚠️ Không kết nối được. Kiểm tra mã và đảm bảo host đã mở phòng!');
+      }
+    }, 3000);
   },
 
   setupNet(host){
-    if (Net.ch) Net.close();
-    if (host) {
+    if(Net.ch) Net.close();
+    if(host){
       Net.host(this.roomCode);
       Net.onJoin = (player, action) => {
-        if (action === 'leave') {
+        if(action==='leave'){
           this.lobbyPlayers = this.lobbyPlayers.filter(p => p.id !== player);
         } else {
-          if (!this.lobbyPlayers.find(p => p.id === player.id)) this.lobbyPlayers.push(player);
+          if(!this.lobbyPlayers.find(p => p.id === player.id)){
+            this.lobbyPlayers.push(player);
+            console.log('[EK] Player joined:', player.name, player.id);
+          }
         }
         this.broadcastLobby();
         this.renderLobby();
       };
-      Net.onAction = (pid, action, payload) => this.hostAction(pid, action, payload);
+      Net.onAction = (pid, action, payload) => {
+        try { this.hostAction(pid, action, payload); }
+        catch(e){ console.error('[EK] hostAction error:', e); }
+      };
       Net.onChat = (name, text) => this.addChatMsg(name, text);
     } else {
       Net.join(this.roomCode);
-      Net.onLobby = (players) => { this.lobbyPlayers = players; this.renderLobby(); };
+      Net.onLobby = (players) => {
+        console.log('[EK] Lobby received:', players.length, 'players');
+        clearTimeout(this.joinTimeout);
+        this.lobbyPlayers = players;
+        this.renderLobby();
+      };
       Net.onStart = (state) => {
+        console.log('[EK] Game starting');
         Engine.state = state;
-        Engine.hostId = null;
         this.enterGame(false);
       };
-      Net.onState = (state) => { Engine.state = state; this.render(); this.updateModals(); };
+      Net.onState = (state) => {
+        Engine.state = state;
+        this.render();
+        this.updateModals();
+      };
       Net.onChat = (name, text) => this.addChatMsg(name, text);
-      Net.onHostLeft = () => { this.toast('Host đã rời phòng'); setTimeout(() => this.leaveRoom(), 500); };
+      Net.onHostLeft = () => {
+        this.toast('Host đã rời phòng');
+        setTimeout(() => this.leaveRoom(), 500);
+      };
     }
   },
 
   broadcastLobby(){
-    if (this.isHost) Net.send({ type:'lobby', players: this.lobbyPlayers });
+    if(this.isHost) Net.send({ type:'lobby', players: this.lobbyPlayers });
   },
 
   renderLobby(){
     const box = document.getElementById('lobbyPlayers');
+    if(this.lobbyPlayers.length === 0){
+      box.innerHTML = '<div class="plist-empty">Đang chờ kết nối...<br><small>Nếu lâu quá, kiểm tra mã phòng</small></div>';
+      return;
+    }
     box.innerHTML = this.lobbyPlayers.map(p => `
       <div class="pitem">
-        <div class="av">${p.isBot ? '🤖' : '👤'}</div>
-        <div class="nm">${p.name}</div>
-        <div class="st">${p.isHost ? 'Host' : 'Ready'}</div>
+        <div class="av">${p.isBot?'🤖':'👤'}</div>
+        <div class="nm">${p.name}${p.id===this.myId?' (bạn)':''}</div>
+        <div class="st">${p.isHost?'Host':'Sẵn sàng'}</div>
       </div>
     `).join('');
   },
 
   addBot(){
-    if (this.lobbyPlayers.length >= 5) return this.toast('Tối đa 5 người');
+    if(this.lobbyPlayers.length >= 5) return this.toast('Tối đa 5 người');
     this.lobbyPlayers.push({
-      id: 'bot_' + U.uid(),
+      id: 'bot_'+U.uid(),
       name: U.pick(['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo Ngu']),
       isBot: true, isHost: false
     });
@@ -909,21 +842,25 @@ const UI = {
   startSolo(){
     this.isHost = true;
     const players = [
-      { id: this.myId, name: this.getMyName(), isBot: false },
-      { id: 'bot1', name: 'Mèo Béo', isBot: true },
-      { id: 'bot2', name: 'Mèo Ngáo', isBot: true }
+      { id:this.myId, name:this.getMyName(), isBot:false },
+      { id:'bot1', name:'Mèo Béo', isBot:true },
+      { id:'bot2', name:'Mèo Ngáo', isBot:true }
     ];
     Engine.createGame(players, this.myId);
     this.enterGame(true);
   },
 
   startMultiplayerGame(){
-    if (this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
-    const players = this.lobbyPlayers.map(p => ({ id: p.id, name: p.name, isBot: p.isBot }));
-    Engine.createGame(players, this.myId);
+    if(this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
 
-    // Give each client their own sanitized view
-    // (BroadcastChannel: everyone gets same message → send full state, hide in UI)
+    // 🛡️ Sanity: đảm bảo ID unique
+    const ids = new Set(this.lobbyPlayers.map(p => p.id));
+    if(ids.size !== this.lobbyPlayers.length){
+      return this.toast('⚠️ Phát hiện trùng ID người chơi. Hãy refresh và thử lại!');
+    }
+
+    const players = this.lobbyPlayers.map(p => ({ id:p.id, name:p.name, isBot:p.isBot }));
+    Engine.createGame(players, this.myId);
     Net.send({ type:'start', state: U.clone(Engine.state) });
     this.enterGame(true);
   },
@@ -934,162 +871,131 @@ const UI = {
     document.getElementById('chatFab').classList.add('on');
     this.render();
     this.updateModals();
-    if (asHost) this.processBots();
+    if(asHost) this.processBots();
   },
 
   leaveRoom(){
-    if (Net.ch) {
-      if (this.isHost) Net.send({ type:'host_left' });
-      else Net.send({ type:'leave', playerId: this.myId });
+    clearTimeout(this.joinTimeout);
+    if(Net.ch){
+      if(this.isHost) Net.send({type:'host_left'});
+      else Net.send({type:'leave', playerId:this.myId});
       Net.close();
     }
     Engine.state = null;
     this.isHost = false;
     this.roomCode = null;
     this.lobbyPlayers = [];
+    this.catFlow = null;
+    this.botScheduled = false;
     document.getElementById('chatFab').classList.remove('on');
     this.closeModal();
     this.showScreen('sc-home');
   },
 
-  /* ---------- ACTIONS (from UI clicks) ---------- */
+  /* ---------- ACTIONS ---------- */
   act(action, payload = {}){
-    if (this.isHost) {
-      this.hostAction(this.myId, action, payload);
-    } else {
-      Net.send({ type:'action', playerId: this.myId, action, payload });
-    }
+    if(this.isHost) this.hostAction(this.myId, action, payload);
+    else Net.send({ type:'action', playerId:this.myId, action, payload });
   },
 
   hostAction(playerId, action, payload){
     let ok = false;
-    switch (action) {
-      case 'play':   ok = Engine.playCards(playerId, payload.cards, payload.targetId, payload.extra || {}); break;
-      case 'draw':   ok = Engine.drawCard(playerId); break;
-      case 'nope':   ok = Engine.playNope(playerId); break;
-      case 'defuse': ok = Engine.placeDefuse(playerId, payload.pos); break;
-      case 'favor':  ok = Engine.resolveFavor(playerId, payload.idx); break;
-      case 'clearPeek': ok = Engine.clearPeek(playerId); break;
-    }
-    // Engine.notify() handles the rest via onChange
-    if (!ok) {
-      // Send state anyway so client doesn't get stuck
-      if (!this.isHost) {
-        // no-op, just log
+    try {
+      switch(action){
+        case 'play':   ok = Engine.playCards(playerId, payload.cards, payload.targetId, payload.extra||{}); break;
+        case 'draw':   ok = Engine.drawCard(playerId); break;
+        case 'nope':   ok = Engine.playNope(playerId); break;
+        case 'defuse': ok = Engine.placeDefuse(playerId, payload.pos); break;
+        case 'favor':  ok = Engine.resolveFavor(playerId, payload.idx); break;
+        case 'clearPeek': ok = Engine.clearPeek(playerId); break;
       }
+    } catch(e){
+      console.error('[EK] Engine error:', e);
     }
+    // Nếu fail, force sync để client reset UI (không bị stuck)
+    if(!ok && this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
   },
 
-  /* ---------- ENGINE CHANGE (host only) ---------- */
   onEngineChange(){
-    if (this.isHost) {
-      // Broadcast full state (BroadcastChannel limitation: can't send per-client)
-      // In production: use WebSocket with per-client filtering
-      Net.send({ type:'state', state: U.clone(Engine.state) });
-    }
+    if(this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
     this.render();
     this.updateModals();
-
-    // Trigger VFX based on last log
     this.renderVFX();
-
-    if (this.isHost) this.processBots();
+    if(this.isHost) this.processBots();
   },
 
   renderVFX(){
-    const s = Engine.state;
-    if (!s) return;
-    const lastLog = s.logs[s.logs.length - 1] || '';
-
-    if (lastLog.includes('MÈO NỔ')) {
+    const s = Engine.state; if(!s) return;
+    const lastLog = s.logs[s.logs.length-1] || '';
+    if(lastLog.includes('MÈO NỔ')){
       const deck = document.getElementById('deckPile');
-      if (deck) {
+      if(deck){
         const r = deck.getBoundingClientRect();
         setTimeout(() => VFX.explode(r.left + r.width/2, r.top + r.height/2), 100);
       }
     }
-    if (lastLog.includes('CHIẾN THẮNG')) {
-      this.showWinModal();
-    }
   },
 
-  /* ---------- BOT PROCESSING (host only) ---------- */
+  /* ---------- BOT ---------- */
   processBots(){
-    if (!this.isHost || this.botScheduled) return;
+    if(!this.isHost || this.botScheduled) return;
     const s = Engine.state;
-    if (!s || s.phase !== 'playing') return;
+    if(!s || s.phase !== 'playing') return;
 
-    // Awaiting choice for a bot?
-    if (s.awaitingChoice) {
+    if(s.awaitingChoice){
       const p = Engine.byId(s.awaitingChoice.playerId || s.awaitingChoice.targetId);
-      if (p?.isBot) {
+      if(p?.isBot){
         this.botScheduled = true;
         setTimeout(() => {
           this.botScheduled = false;
           const ch = Engine.state.awaitingChoice;
-          if (!ch) return;
-          if (ch.type === 'defuse' && ch.playerId === p.id) {
-            const pos = Math.random() < 0.3 ? 'top' : (Math.random() < 0.5 ? 'random' : 'bottom');
+          if(!ch) return;
+          if(ch.type==='defuse' && ch.playerId===p.id){
+            const pos = Math.random()<0.3 ? 'top' : (Math.random()<0.5 ? 'random' : 'bottom');
             Engine.placeDefuse(p.id, pos);
-          } else if (ch.type === 'favor' && ch.targetId === p.id) {
-            Engine.resolveFavor(p.id, Math.floor(Math.random() * p.hand.length));
+          } else if(ch.type==='favor' && ch.targetId===p.id){
+            Engine.resolveFavor(p.id, Math.floor(Math.random()*p.hand.length));
           }
         }, 1200);
         return;
       }
-      return; // waiting for human
-    }
-
-    // Pending action → schedule bot nope check
-    if (s.pending) {
-      this.botScheduled = true;
-      setTimeout(() => {
-        this.botScheduled = false;
-        this.botNopeCheck();
-      }, 800);
       return;
     }
 
-    // Current player bot?
-    if (Engine.cur()?.isBot) {
+    if(s.pending){
       this.botScheduled = true;
-      setTimeout(() => {
-        this.botScheduled = false;
-        this.runBotTurn();
-      }, 1400);
+      setTimeout(() => { this.botScheduled = false; this.botNopeCheck(); }, 800);
+      return;
+    }
+
+    if(Engine.cur()?.isBot){
+      this.botScheduled = true;
+      setTimeout(() => { this.botScheduled = false; this.runBotTurn(); }, 1400);
     }
   },
 
   botNopeCheck(){
-    if (!this.isHost) return;
     const s = Engine.state;
-    if (!s || !s.pending) return;
+    if(!s || !s.pending) return;
     const pending = s.pending;
-
-    for (const p of s.players) {
-      if (!p.isBot || !p.alive) continue;
-      if (!p.hand.includes('NOPE')) continue;
-      if (p.id === pending.playerId && pending.nopeCount === 0) continue;
-
+    for(const p of s.players){
+      if(!p.isBot || !p.alive || !p.hand.includes('NOPE')) continue;
+      if(p.id===pending.playerId && pending.nopeCount===0) continue;
       let prob = 0.05;
       const isTarget = pending.targetId === p.id;
-      if (pending.primary === 'ATTACK') prob = 0.25;
-      if (pending.primary === 'FAVOR' && isTarget) prob = 0.7;
-      if (CATS.includes(pending.primary) && isTarget) prob = 0.55;
-      if (pending.nopeCount > 0) prob = 0.3;
-
-      if (Math.random() < prob) {
-        Engine.playNope(p.id);
-        return;
-      }
+      if(pending.primary==='ATTACK') prob = 0.25;
+      if(pending.primary==='FAVOR' && isTarget) prob = 0.7;
+      if(CATS.includes(pending.primary) && isTarget) prob = 0.55;
+      if(pending.nopeCount>0) prob = 0.3;
+      if(Math.random()<prob){ Engine.playNope(p.id); return; }
     }
   },
 
   runBotTurn(){
     const s = Engine.state;
-    if (!s || s.phase !== 'playing') return;
+    if(!s || s.phase!=='playing') return;
     const bot = Engine.cur();
-    if (!bot?.isBot) return;
+    if(!bot?.isBot) return;
 
     const hand = bot.hand;
     const has = c => hand.includes(c);
@@ -1097,57 +1003,32 @@ const UI = {
     const opponents = s.players.filter(p => p.alive && p.id !== bot.id);
     const target = opponents.length ? U.pick(opponents) : null;
 
-    // 1. Play Attack if under attack (get out + pass on)
-    if (s.turnsLeft >= 2 && has('ATTACK')) {
-      this.botPlay(['ATTACK']);
-      return;
-    }
+    if(s.turnsLeft >= 2 && has('ATTACK')) return this.botPlay(['ATTACK']);
 
-    // 2. Cat 3-combo if possible and we know target has a card they want
-    for (const cat of CATS) {
-      if (cnt(cat) >= 3 && target && target.hand.length > 0) {
+    for(const cat of CATS){
+      if(cnt(cat)>=3 && target && target.hand.length>0){
         const named = U.pick(['SKIP','ATTACK','NOPE','FAVOR','SEE_FUTURE','SHUFFLE',...CATS]);
-        this.botPlay([cat, cat, cat], target.id, { namedCard: named });
-        return;
+        return this.botPlay([cat,cat,cat], target.id, { namedCard:named });
       }
     }
-
-    // 3. Cat 2-combo (steal random)
-    for (const cat of CATS) {
-      if (cnt(cat) >= 2 && target && target.hand.length > 0) {
-        this.botPlay([cat, cat], target.id);
-        return;
+    for(const cat of CATS){
+      if(cnt(cat)>=2 && target && target.hand.length>0){
+        return this.botPlay([cat,cat], target.id);
       }
     }
-
-    // 4. Favor if opponent rich
-    if (has('FAVOR') && target && target.hand.length > 3) {
-      this.botPlay(['FAVOR'], target.id);
-      return;
-    }
-
-    // 5. Skip if we have many cards (safe exit)
-    if (has('SKIP') && Math.random() < 0.6) {
-      this.botPlay(['SKIP']);
-      return;
-    }
-
-    // 6. Draw
+    if(has('FAVOR') && target && target.hand.length>3) return this.botPlay(['FAVOR'], target.id);
+    if(has('SKIP') && Math.random()<0.6) return this.botPlay(['SKIP']);
     Engine.drawCard(bot.id);
   },
 
   botPlay(cards, targetId, extra){
-    if (Engine.playCards(Engine.cur().id, cards, targetId || null, extra || {})) {
-      // onChange handles sync + next bot
-    }
+    Engine.playCards(Engine.cur().id, cards, targetId||null, extra||{});
   },
 
   /* ---------- RENDER ---------- */
   render(){
-    const s = Engine.state;
-    if (!s) return;
-    const me = this.me();
-    if (!me) return;
+    const s = Engine.state; if(!s) return;
+    const me = this.me(); if(!me) return;
 
     document.getElementById('uiAlive').innerText = s.players.filter(p => p.alive).length;
     document.getElementById('uiDeck').innerText = s.deck.length;
@@ -1155,58 +1036,48 @@ const UI = {
     document.getElementById('uiHandCount').innerText = me.hand.length;
 
     const cur = s.players[s.turnIdx];
-    document.getElementById('uiTurn').innerHTML = s.phase === 'ended'
-      ? 'Kết thúc'
-      : `Lượt: ${cur.name}`;
+    document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${cur.name}`;
 
     const turnsEl = document.getElementById('uiTurnsLeft');
-    if (s.turnsLeft > 1) { turnsEl.style.display = 'inline-block'; turnsEl.innerText = `×${s.turnsLeft}`; }
+    if(s.turnsLeft > 1){ turnsEl.style.display = 'inline-block'; turnsEl.innerText = `×${s.turnsLeft}`; }
     else turnsEl.style.display = 'none';
 
-    // Opponents
-    document.getElementById('opponentsArea').innerHTML = s.players
-      .filter(p => p.id !== me.id)
+    document.getElementById('opponentsArea').innerHTML = s.players.filter(p => p.id !== me.id)
       .map(p => `
-        <div class="glass opp ${cur.id === p.id ? 'turn' : ''} ${!p.alive ? 'dead' : ''}" style="--cut:12px">
-          <div class="av">${p.isBot ? '🤖' : '👤'}</div>
+        <div class="glass opp ${cur.id===p.id?'turn':''} ${!p.alive?'dead':''}">
+          <div class="av">${p.isBot?'🤖':'👤'}</div>
           <div class="nm">${p.name}</div>
           <div class="cnt">🂠 ${p.hand.length}</div>
         </div>
       `).join('');
 
-    // Discard pile
     const disc = document.getElementById('discardPile');
-    if (s.discard.length > 0) {
-      const top = s.discard[s.discard.length - 1];
+    if(s.discard.length > 0){
+      const top = s.discard[s.discard.length-1];
       disc.innerHTML = `<div style="font-size:38px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.2))">${CARDS[top].icon}</div>`;
     } else disc.innerHTML = '🗑️';
 
-    // Hand
     const myTurn = cur.id === me.id && s.phase === 'playing';
     const canPlay = myTurn && !s.pending && !s.awaitingChoice;
     const deckEl = document.getElementById('deckPile');
-    deckEl.classList.toggle('can', myTurn && !s.pending && !s.awaitingChoice);
-    deckEl.classList.toggle('locked', !(myTurn && !s.pending && !s.awaitingChoice));
+    deckEl.classList.toggle('can', canPlay);
+    deckEl.classList.toggle('locked', !canPlay);
 
     const handBox = document.getElementById('handArea');
-    const sorted = [...me.hand];
-    handBox.innerHTML = sorted.map(c => {
+    handBox.innerHTML = [...me.hand].map(c => {
       const card = CARDS[c];
-      const playable = canPlay && c !== 'EK' && c !== 'DEFUSE' && c !== 'NOPE'
-        && (CATS.includes(c) ? me.hand.filter(x => x === c).length >= 2 : true);
+      const playable = canPlay && c!=='EK' && c!=='DEFUSE' && c!=='NOPE'
+        && (CATS.includes(c) ? me.hand.filter(x => x===c).length>=2 : true);
       return `
-        <div class="card c-${card.class} ${playable ? '' : 'dis'}" onclick="UI.clickCard('${c}')">
+        <div class="card c-${card.class} ${playable?'':'dis'}" onclick="UI.clickCard('${c}')">
           <div class="ic">${card.icon}</div>
           <div class="tt">${card.name}</div>
-          <div class="ds">${card.desc || ''}</div>
+          <div class="ds">${card.desc||''}</div>
         </div>
       `;
     }).join('');
 
-    // Game log
     document.getElementById('gameLog').innerHTML = s.logs.slice(-4).map(l => `• ${l}`).join('<br>');
-
-    // Nope button
     this.updateNopeButton();
   },
 
@@ -1215,8 +1086,8 @@ const UI = {
     const me = this.me();
     let btn = document.getElementById('nopeBtn');
     const show = s && me && me.alive && s.pending && s.pending.playerId !== me.id && me.hand.includes('NOPE');
-    if (show) {
-      if (!btn) {
+    if(show){
+      if(!btn){
         btn = document.createElement('button');
         btn.id = 'nopeBtn';
         btn.className = 'nope-btn';
@@ -1224,10 +1095,10 @@ const UI = {
         btn.onclick = () => this.act('nope');
         document.body.appendChild(btn);
       }
-    } else if (btn) btn.remove();
+    } else if(btn) btn.remove();
   },
 
-  /* ---------- MODAL MANAGEMENT ---------- */
+  /* ---------- MODALS ---------- */
   openModal(type, html){
     this.currentModal = type;
     document.getElementById('modalContent').innerHTML = html;
@@ -1239,38 +1110,23 @@ const UI = {
   },
 
   updateModals(){
-    const s = Engine.state;
-    if (!s) return;
-    const me = this.me();
-    if (!me) return;
+    const s = Engine.state; if(!s) return;
+    const me = this.me(); if(!me) return;
 
-    // Defuse placement for me
-    if (s.awaitingChoice?.type === 'defuse' && s.awaitingChoice.playerId === this.myId) {
-      if (this.currentModal !== 'defuse') this.showDefuseModal();
+    if(s.awaitingChoice?.type==='defuse' && s.awaitingChoice.playerId===this.myId){
+      if(this.currentModal!=='defuse') this.showDefuseModal();
       return;
     }
-
-    // Favor choice for me (as target)
-    if (s.awaitingChoice?.type === 'favor' && s.awaitingChoice.targetId === this.myId) {
-      if (this.currentModal !== 'favor') this.showFavorModal();
+    if(s.awaitingChoice?.type==='favor' && s.awaitingChoice.targetId===this.myId){
+      if(this.currentModal!=='favor') this.showFavorModal();
       return;
     }
-
-    // Peek for me
-    if (s.peekFor?.playerId === this.myId && !s.pending) {
-      if (this.currentModal !== 'peek') this.showPeekModal(s.peekFor.cards);
+    if(s.peekFor?.playerId===this.myId && !s.pending){
+      if(this.currentModal!=='peek') this.showPeekModal(s.peekFor.cards);
       return;
     }
-
-    // Auto-close state-driven modals that no longer apply
-    if (['defuse','favor','peek'].includes(this.currentModal)) {
-      this.closeModal();
-    }
-
-    // Win modal
-    if (s.phase === 'ended' && this.currentModal !== 'win') {
-      this.showWinModal();
-    }
+    if(['defuse','favor','peek'].includes(this.currentModal)) this.closeModal();
+    if(s.phase==='ended' && this.currentModal!=='win') this.showWinModal();
   },
 
   showDefuseModal(){
@@ -1278,7 +1134,7 @@ const UI = {
       <h2>🧯 Bạn đã dùng DEFUSE!</h2>
       <p>Chọn vị trí giấu lại Mèo Nổ (bí mật):</p>
       <div class="mcol">
-        <button class="btn-d" onclick="UI.act('defuse',{pos:'top'}); UI.closeModal();">⬆️ Trên cùng (nguy hiểm cho người sau)</button>
+        <button class="btn-d" onclick="UI.act('defuse',{pos:'top'}); UI.closeModal();">⬆️ Trên cùng (nguy hiểm)</button>
         <button onclick="UI.act('defuse',{pos:'random'}); UI.closeModal();">🎲 Ngẫu nhiên</button>
         <button class="btn-p" onclick="UI.act('defuse',{pos:'bottom'}); UI.closeModal();">⬇️ Dưới cùng (an toàn)</button>
       </div>
@@ -1290,10 +1146,10 @@ const UI = {
     const s = Engine.state;
     const requester = s.players.find(p => p.id === s.awaitingChoice.fromId);
     this.openModal('favor', `
-      <h2>🫴 ${requester?.name || 'Ai đó'} xin bài!</h2>
+      <h2>🫴 ${requester?.name||'Ai đó'} xin bài!</h2>
       <p>Chọn 1 lá để đưa:</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-        ${me.hand.map((c, i) => `
+        ${me.hand.map((c,i) => `
           <div class="card c-${CARDS[c].class}" onclick="UI.act('favor',{idx:${i}}); UI.closeModal();">
             <div class="ic">${CARDS[c].icon}</div>
             <div class="tt">${CARDS[c].name}</div>
@@ -1306,7 +1162,7 @@ const UI = {
   showPeekModal(cards){
     this.openModal('peek', `
       <h2>🔮 Nhìn Tương Lai</h2>
-      <p>3 lá trên cùng (thứ tự rút từ trái → phải):</p>
+      <p>3 lá trên cùng (thứ tự rút):</p>
       <div style="display:flex;gap:10px;justify-content:center;margin:15px 0;">
         ${cards.map(c => `
           <div class="card c-${CARDS[c].class}" style="width:76px;height:106px">
@@ -1322,47 +1178,41 @@ const UI = {
   showWinModal(){
     const s = Engine.state;
     const w = s.winner;
-    const rows = s.players
-      .sort((a,b) => (a.alive === b.alive) ? 0 : (a.alive ? -1 : 1))
-      .map(p => `
-        <div class="stat-row">
-          <span>${p.alive ? '🏆' : '💀'} ${p.name}</span>
-          <span>${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá · ${p.stats.defuses} gỡ bom</span>
-        </div>
-      `).join('');
-
+    const rows = [...s.players].sort((a,b) => (a.alive===b.alive)?0:(a.alive?-1:1)).map(p => `
+      <div class="stat-row">
+        <span>${p.alive?'🏆':'💀'} ${p.name}</span>
+        <span>${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá · ${p.stats.defuses} gỡ bom</span>
+      </div>
+    `).join('');
     this.openModal('win', `
       <h1 style="color:var(--red);font-size:36px;">🎉 CHIẾN THẮNG!</h1>
       <div style="font-size:70px;margin:10px 0;">🏆</div>
-      <h2>${w?.name || 'Không ai'}</h2>
+      <h2>${w?.name||'Không ai'}</h2>
       <div style="text-align:left;margin:15px 0;">${rows}</div>
       <button class="btn-p" onclick="UI.leaveRoom()">Về Trang Chủ</button>
     `);
   },
 
-  /* ---------- CARD CLICKS ---------- */
+  /* ---------- CLICKS ---------- */
   clickCard(card){
     const s = Engine.state;
-    if (!s || s.phase !== 'playing') return;
-    const me = this.me();
-    if (!me) return;
-    if (s.pending || s.awaitingChoice) return this.toast('Đang chờ hành động khác...');
-    if (s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt của bạn');
-    if (!me.alive) return;
+    if(!s || s.phase!=='playing') return;
+    const me = this.me(); if(!me) return;
+    if(s.pending || s.awaitingChoice) return this.toast('Đang chờ hành động...');
+    if(s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
+    if(!me.alive) return;
 
-    const count = me.hand.filter(c => c === card).length;
-
-    if (CATS.includes(card)) {
-      if (count < 2) return this.toast('Cần ≥ 2 lá mèo giống để combo');
+    const count = me.hand.filter(c => c===card).length;
+    if(CATS.includes(card)){
+      if(count < 2) return this.toast('Cần ≥ 2 lá mèo giống để combo');
       this.catFlow = { card, count };
-      if (count >= 3) this.showCatCountChoice();
+      if(count >= 3) this.showCatCountChoice();
       else this.showCatTarget(2);
       return;
     }
-
-    if (card === 'FAVOR') {
+    if(card === 'FAVOR'){
       const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
-      if (targets.length === 0) return this.toast('Không có ai để xin');
+      if(targets.length === 0) return this.toast('Không có ai để xin');
       this.openModal('target', `
         <h2>🫴 Xin bài từ ai?</h2>
         <div class="mcol">
@@ -1372,13 +1222,10 @@ const UI = {
       `);
       return;
     }
-
-    if (['ATTACK','SKIP','SHUFFLE','SEE_FUTURE'].includes(card)) {
-      this.act('play', { cards: [card] });
+    if(['ATTACK','SKIP','SHUFFLE','SEE_FUTURE'].includes(card)){
+      this.act('play', { cards:[card] });
       return;
     }
-
-    // Should not reach here for EK/DEFUSE/NOPE
     this.toast('Không thể đánh lá này trực tiếp');
   },
 
@@ -1386,9 +1233,8 @@ const UI = {
     const { card, count } = this.catFlow;
     this.openModal('catcount', `
       <h2>${CARDS[card].icon} ${CARDS[card].name} ×${count}</h2>
-      <p>Bạn có ${count} lá. Chọn:</p>
       <div class="mcol">
-        <button onclick="UI.showCatTarget(2)">Chơi 2 lá → Cướp bài ngẫu nhiên</button>
+        <button onclick="UI.showCatTarget(2)">Chơi 2 lá → Cướp ngẫu nhiên</button>
         <button class="btn-p" onclick="UI.showCatTarget(3)">Chơi 3 lá → Gọi tên bài cụ thể</button>
         <button class="btn-o" onclick="UI.cancelCatFlow()">Hủy</button>
       </div>
@@ -1400,7 +1246,7 @@ const UI = {
     const s = Engine.state;
     const me = this.me();
     const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
-    if (targets.length === 0) return this.cancelCatFlow();
+    if(targets.length === 0) return this.cancelCatFlow();
     this.openModal('cattarget', `
       <h2>Chọn mục tiêu (${count} lá)</h2>
       <div class="mcol">
@@ -1412,12 +1258,9 @@ const UI = {
 
   chooseCatTarget(targetId){
     this.catFlow.targetId = targetId;
-    if (this.catFlow.count === 3) this.showCatName();
+    if(this.catFlow.count === 3) this.showCatName();
     else {
-      this.act('play', {
-        cards: [this.catFlow.card, this.catFlow.card],
-        targetId
-      });
+      this.act('play', { cards:[this.catFlow.card, this.catFlow.card], targetId });
       this.closeModal();
       this.catFlow = null;
     }
@@ -1436,7 +1279,7 @@ const UI = {
 
   chooseCatName(namedCard){
     this.act('play', {
-      cards: [this.catFlow.card, this.catFlow.card, this.catFlow.card],
+      cards:[this.catFlow.card, this.catFlow.card, this.catFlow.card],
       targetId: this.catFlow.targetId,
       extra: { namedCard }
     });
@@ -1448,11 +1291,11 @@ const UI = {
 
   onDrawClick(){
     const s = Engine.state;
-    if (!s || s.phase !== 'playing') return;
-    if (s.pending || s.awaitingChoice) return;
+    if(!s || s.phase!=='playing') return;
+    if(s.pending || s.awaitingChoice) return;
     const me = this.me();
-    if (!me || !me.alive) return;
-    if (s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
+    if(!me || !me.alive) return;
+    if(s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
     this.act('draw');
   },
 
@@ -1464,11 +1307,11 @@ const UI = {
   sendChat(){
     const inp = document.getElementById('chatInput');
     const txt = inp.value.trim();
-    if (!txt) return;
+    if(!txt) return;
     inp.value = '';
     const name = this.getMyName();
     this.addChatMsg(name, txt);
-    if (Net.ch) Net.send({ type:'chat', name, text: txt });
+    if(Net.ch) Net.send({ type:'chat', name, text:txt });
   },
   addChatMsg(name, text){
     const box = document.getElementById('chatMsgs');
@@ -1478,13 +1321,10 @@ const UI = {
     box.scrollTop = box.scrollHeight;
   },
   escapeHtml(s){
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 };
 
-/* ==================================================================
-   INIT
-   ================================================================== */
 document.addEventListener('DOMContentLoaded', () => UI.init());
 </script>
 </body>
