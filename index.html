@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens - Final</title>
+<title>Exploding Kittens - Online Multiplayer</title>
+<!-- Thư viện PeerJS dùng để kết nối P2P qua Internet -->
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
   :root{--red:#d93828;--red-dark:#b52a1c;--bg-main:#eef2f6;--grid:rgba(0,0,0,0.07);
     --glass:rgba(255,255,255,0.45);--text:#2c1b18;--text-l:#5a4a48;--cut:20px}
@@ -81,6 +83,14 @@
   .deck.can{animation:deckPulse 1.5s infinite}
   @keyframes deckPulse{0%,100%{box-shadow:0 0 15px rgba(217,56,40,.6)}50%{box-shadow:0 0 35px rgba(217,56,40,1)}}
   .deck.locked{opacity:.6;cursor:not-allowed;filter:grayscale(.5)}
+  .deck.shuffling{animation:shuffleAnim .8s ease-in-out}
+  @keyframes shuffleAnim{
+    0%{transform:translateY(0) rotate(0) scale(1)}
+    25%{transform:translateY(-15px) rotate(-10deg) scale(1.05)}
+    50%{transform:translateY(5px) rotate(10deg) scale(.95)}
+    75%{transform:translateY(-5px) rotate(-5deg) scale(1.02)}
+    100%{transform:translateY(0) rotate(0) scale(1)}
+  }
   .disc{background:rgba(255,255,255,.3);border:2px dashed rgba(255,255,255,.8)}
   .badge-p{position:absolute;bottom:-8px;right:-8px;background:#fff;color:var(--red);min-width:28px;height:28px;
     padding:0 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;
@@ -185,17 +195,23 @@
 <div id="sc-home" class="screen on">
   <div class="glass home-box">
     <h1 class="home-title">Mèo Nổ</h1>
-    <p class="home-sub">Exploding Kittens</p>
+    <p class="home-sub">Exploding Kittens - Online</p>
     <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="15">
-    <button class="btn-p" onclick="UI.createRoom()">Tạo Phòng</button>
-    <button class="btn-o" onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia</button>
-    <div id="joinArea" style="display:none; flex-direction:column; gap:8px;">
+    
+    <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+      <button class="btn-p" onclick="UI.createRoom()">Tạo Phòng Online</button>
+      <button class="btn-o" onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia Phòng</button>
+    </div>
+
+    <div id="joinArea" style="display:none; flex-direction:column; gap:8px; margin-top:8px;">
       <input type="tel" id="joinCode" placeholder="Mã phòng (6 số)" maxlength="6" inputmode="numeric" pattern="[0-9]*"
         style="font-family:monospace;letter-spacing:6px;text-align:center;font-size:18px;font-weight:bold">
       <button onclick="UI.joinRoom()">Vào Phòng</button>
     </div>
-    <hr style="border:0;border-top:1px solid rgba(0,0,0,.1)">
-    <label style="font-size:12px;font-weight:bold;color:var(--text-l);text-align:left;">Số người chơi:</label>
+
+    <hr style="border:0;border-top:1px solid rgba(0,0,0,.1); margin: 15px 0;">
+    
+    <label style="font-size:12px;font-weight:bold;color:var(--text-l);text-align:left;">Chơi Offline với Bot:</label>
     <select id="soloPlayerCount" class="mode-select">
       <option value="2">2 người</option>
       <option value="3" selected>3 người</option>
@@ -203,35 +219,40 @@
       <option value="5">5 người</option>
       <option value="6">6 người</option>
     </select>
-    <label style="font-size:12px;font-weight:bold;color:var(--text-l);text-align:left;">Chế độ Bot:</label>
     <select id="botMode" class="mode-select">
       <option value="normal">😴 Bot Bình thường</option>
       <option value="smart" selected>🧠 Bot Thông minh</option>
       <option value="ultimate">👑 Bot Tối thượng</option>
     </select>
-    <button onclick="UI.startSolo()">🎮 Chơi với Bot</button>
+    <button onclick="UI.startSolo()" style="margin-top:5px;">🎮 Chơi với Bot</button>
   </div>
 </div>
 
 <!-- LOBBY -->
 <div id="sc-lobby" class="screen">
   <div class="glass lobby-box">
-    <h2 style="text-align:center;color:var(--red-dark)">Phòng Chờ</h2>
+    <h2 style="text-align:center;color:var(--red-dark)">Phòng Chờ Online</h2>
     <div class="room-code" id="lobbyCode" onclick="UI.copyCode()">------</div>
-    <div id="lobbyStatus" style="text-align:center;font-size:11px;color:#666">Nhấn mã để copy · Chia sẻ cho bạn bè cùng browser</div>
+    <div id="lobbyStatus" style="text-align:center;font-size:11px;color:#666; min-height:20px;">Nhấn mã để copy · Chia sẻ cho bạn bè</div>
+    
     <div class="plist" id="lobbyPlayers"></div>
-    <div id="lobbyBotControls" style="display:none; flex-direction:column; gap:6px;">
-      <label style="font-size:12px;font-weight:bold;color:var(--text-l);">Chế độ Bot trong phòng:</label>
+    
+    <div id="hostControls" style="display:none; flex-direction:column; gap:8px;">
+      <label style="font-size:12px;font-weight:bold;color:var(--text-l);">Chế độ Bot (khi vào game):</label>
       <select id="lobbyBotMode" class="mode-select">
         <option value="normal">😴 Bình thường</option>
         <option value="smart" selected>🧠 Thông minh</option>
         <option value="ultimate">👑 Tối thượng</option>
       </select>
+      <div style="display:flex; gap:8px; margin-top:5px;">
+        <button class="btn-o" style="flex:1" onclick="UI.addBot()">+ Thêm Bot</button>
+        <button class="btn-o" style="flex:1" onclick="UI.removeBot()">- Xóa Bot</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-      <button id="btnAddBot" style="display:none" onclick="UI.addBot()" class="btn-o">+ Thêm Bot</button>
-      <button class="btn-p" id="btnStart" style="display:none" onclick="UI.startMultiplayerGame()">Bắt Đầu</button>
-      <button class="btn-d" onclick="UI.leaveRoom()">Rời</button>
+
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap; margin-top:10px;">
+      <button class="btn-p" id="btnStart" style="display:none; width:100%;" onclick="UI.startMultiplayerGame()">Bắt Đầu Game</button>
+      <button class="btn-d" style="width:100%;" onclick="UI.leaveRoom()">Rời Phòng</button>
     </div>
   </div>
 </div>
@@ -307,7 +328,6 @@ const BOT_NAMES = ['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo N
 const U = {
   uid:()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4),
   shuffle:a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},
-  /* FIX #2: ID phòng CHỈ LÀ SỐ, 6 chữ số */
   code:()=>String(Math.floor(Math.random()*1000000)).padStart(6,'0'),
   clone:o=>JSON.parse(JSON.stringify(o)),
   pick:arr=>arr[Math.floor(Math.random()*arr.length)]
@@ -372,7 +392,7 @@ const Engine = {
     this.setupDeck();
     this.state.turnIdx = Math.floor(Math.random() * players.length);
     this.state.players[this.state.turnIdx].stats.turns = 1;
-    this.log(`🎲 ${this.state.players[this.state.turnIdx].name} đi trước! · ${players.length} người · Bot ${BOT_MODES[this.state.botMode].label}`);
+    this.log(`🎲 ${this.state.players[this.state.turnIdx].name} đi trước!`);
     this.notify();
   },
 
@@ -386,12 +406,18 @@ const Engine = {
     for(let i=0;i<5;i++) deck.push('SEE_FUTURE');
     for(let i=0;i<5;i++) deck.push('NOPE');
     for(const c of CATS) for(let i=0;i<4;i++) deck.push(c);
-    for(let i=0;i<Math.max(0,6-n);i++) deck.push('DEFUSE');
+    
+    // GIẢM SỐ LƯỢNG GỠ BOM: Tổng tối đa 4 lá. Mỗi người cầm 1, số còn lại bỏ vào bài.
+    let totalDefuse = 4;
+    let deckDefuse = Math.max(0, totalDefuse - n); 
+    for(let i=0;i<deckDefuse;i++) deck.push('DEFUSE');
+    
     U.shuffle(deck);
     for(let i=0;i<7;i++) for(const p of this.state.players) p.hand.push(deck.pop());
-    for(const p of this.state.players) p.hand.push('DEFUSE');
+    for(const p of this.state.players) p.hand.push('DEFUSE'); // Tặng 1 gỡ bom khởi đầu
+    
     for(let i=0;i<n-1;i++) deck.push('EK');
-    U.shuffle(deck); /* FIX #5: Bom random 100% */
+    U.shuffle(deck);
   },
 
   cur(){return this.state.players[this.state.turnIdx]},
@@ -665,41 +691,113 @@ const Engine = {
   }
 };
 
-/* ========== NET ========== */
+/* ========== NET (PEERJS P2P) ========== */
 const Net = {
-  ch:null, isHost:false, roomCode:null,
+  peer: null,
+  conn: null, // Dành cho client kết nối tới host
+  conns: [], // Dành cho host quản lý nhiều client
+  isHost: false,
+  roomCode: null,
   onJoin:null, onAction:null, onChat:null, onState:null, onLobby:null, onStart:null, onHostLeft:null, onError:null,
 
   host(code){
-    this.roomCode = code; this.isHost = true;
-    this.ch = new BroadcastChannel('ek_room_'+code);
-    this.ch.onmessage = e => this.route(e.data);
-  },
-  join(code){
-    this.roomCode = code; this.isHost = false;
-    this.ch = new BroadcastChannel('ek_room_'+code);
-    this.ch.onmessage = e => this.route(e.data);
-  },
-  close(){if(this.ch){try{this.ch.close()}catch(e){}this.ch=null}},
-  send(msg){if(this.ch){try{this.ch.postMessage(msg)}catch(e){}}},
+    this.roomCode = code; 
+    this.isHost = true;
+    this.peer = new Peer('ek_room_' + code);
+    
+    this.peer.on('open', (id) => {
+      console.log('Host connected with ID:', id);
+    });
 
-  route(msg){
+    this.peer.on('connection', (c) => {
+      this.conns.push(c);
+      c.on('data', (data) => this.route(data, c));
+      c.on('close', () => {
+        this.conns = this.conns.filter(x => x !== c);
+        // Nếu client ngắt kết nối, thông báo cho UI (dùng tạm hàm onJoin với action rời)
+        if (data => data.type === 'join') {
+           // Sẽ xử lý ở UI
+        }
+      });
+    });
+
+    this.peer.on('error', (err) => {
+      console.error('Peer error:', err);
+      if(this.onError) this.onError('Lỗi máy chủ: ' + err.type);
+    });
+  },
+
+  join(code){
+    this.roomCode = code; 
+    this.isHost = false;
+    this.peer = new Peer();
+    
+    this.peer.on('open', () => {
+      this.conn = this.peer.connect('ek_room_' + code);
+      this.conn.on('open', () => {
+        if(this.onConnectSuccess) this.onConnectSuccess();
+      });
+      this.conn.on('data', (data) => this.route(data));
+      this.conn.on('close', () => {
+        if(this.onHostLeft) this.onHostLeft();
+      });
+      this.conn.on('error', (err) => {
+        if(this.onError) this.onError('Không thể kết nối tới phòng');
+      });
+    });
+
+    this.peer.on('error', (err) => {
+      console.error('Peer error:', err);
+      if(err.type === 'peer-unavailable') {
+        if(this.onError) this.onError('Không tìm thấy phòng ' + code);
+      } else {
+        if(this.onError) this.onError('Lỗi kết nối mạng');
+      }
+    });
+  },
+
+  close(){
+    if(this.conn) try{this.conn.close()}catch(e){}
+    if(this.conns) this.conns.forEach(c => try{c.close()}catch(e){});
+    if(this.peer) try{this.peer.destroy()}catch(e){}
+    this.conn = null; this.conns = []; this.peer = null;
+  },
+
+  send(msg, targetConn = null){
+    if(this.isHost){
+      if(targetConn){
+        if(targetConn.open) targetConn.send(msg);
+      } else {
+        this.conns.forEach(c => { if(c.open) c.send(msg) });
+      }
+    } else {
+      if(this.conn && this.conn.open) this.conn.send(msg);
+    }
+  },
+
+  route(msg, conn){
     if(!msg||!msg.type) return;
     if(this.isHost){
       switch(msg.type){
-        case 'join': this.onJoin?.(msg.player); break;
-        case 'action': this.onAction?.(msg.playerId, msg.action, msg.payload); break;
-        case 'chat': this.onChat?.(msg.name, msg.text); this.send({type:'chat', name:msg.name, text:msg.text}); break;
-        case 'leave': this.onJoin?.(msg.playerId, 'leave'); break;
+        case 'join': 
+          if(this.onJoin) this.onJoin(msg.player, conn); 
+          break;
+        case 'action': 
+          if(this.onAction) this.onAction(msg.playerId, msg.action, msg.payload); 
+          break;
+        case 'chat': 
+          if(this.onChat) this.onChat(msg.name, msg.text); 
+          this.send({type:'chat', name:msg.name, text:msg.text}); // Broadcast
+          break;
       }
     } else {
       switch(msg.type){
-        case 'lobby': this.onLobby?.(msg.players); break;
-        case 'state': this.onState?.(msg.state); break;
-        case 'start': this.onStart?.(msg.state); break;
-        case 'chat': this.onChat?.(msg.name, msg.text); break;
-        case 'host_left': this.onHostLeft?.(); break;
-        case 'error': this.onError?.(msg.message); break;
+        case 'lobby': if(this.onLobby) this.onLobby(msg.players); break;
+        case 'state': if(this.onState) this.onState(msg.state); break;
+        case 'start': if(this.onStart) this.onStart(msg.state); break;
+        case 'chat': if(this.onChat) this.onChat(msg.name, msg.text); break;
+        case 'host_left': if(this.onHostLeft) this.onHostLeft(); break;
+        case 'error': if(this.onError) this.onError(msg.message); break;
       }
     }
   }
@@ -709,11 +807,11 @@ const Net = {
 const UI = {
   myId:null, roomCode:null, isHost:false,
   lobbyPlayers:[], botScheduled:false,
-  currentModal:null, joinTimeout:null, _animatedDrawId:null,
+  currentModal:null, _animatedDrawId:null,
   selectedCatIndices:[], pendingCatPlay:null, _handSig:'',
+  isShuffling:false,
 
   init(){
-    /* FIX #1: ID sinh mới mỗi lần load → duplicate tab vẫn join được */
     this.myId = 'p_' + U.uid();
     let savedName = null;
     try{savedName = sessionStorage.getItem('ek_name')}catch(e){}
@@ -749,98 +847,124 @@ const UI = {
     this.roomCode = U.code();
     this.isHost = true;
     this.lobbyPlayers = [{ id:this.myId, name:this.getMyName(), isHost:true, isBot:false }];
+    
     this.setupNet(true);
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
-    document.getElementById('lobbyStatus').innerHTML = 'Nhấn mã để copy · Chia sẻ cho bạn bè cùng browser';
-    document.getElementById('btnAddBot').style.display = 'inline-block';
-    document.getElementById('btnStart').style.display = 'inline-block';
-    document.getElementById('lobbyBotControls').style.display = 'flex';
+    document.getElementById('lobbyStatus').innerHTML = 'Đang khởi tạo phòng...';
+    document.getElementById('hostControls').style.display = 'flex';
+    document.getElementById('btnStart').style.display = 'block';
     this.renderLobby();
+
+    // Đợi PeerJS kết nối xong mới báo thành công
+    setTimeout(() => {
+      if (Net.peer && !Net.peer.destroyed) {
+        document.getElementById('lobbyStatus').innerHTML = '✅ Phòng đã sẵn sàng · Chia sẻ mã cho bạn bè';
+      }
+    }, 2000);
   },
 
-  /* ---------- JOIN ROOM (FIXED) ---------- */
+  /* ---------- JOIN ROOM ---------- */
   joinRoom(){
     const raw = document.getElementById('joinCode').value.trim();
     if(!/^\d{6}$/.test(raw)) return this.toast('Mã phòng phải là 6 chữ số');
 
     this.roomCode = raw;
     this.isHost = false;
-
-    /* FIX #4: set lobbyPlayers TRƯỚC khi send để tránh race
-       (response 'lobby' về nhanh có thể bị ghi đè nếu set sau) */
-    this.lobbyPlayers = [{ id:this.myId, name:this.getMyName(), isHost:false, isBot:false }];
+    this.lobbyPlayers = [];
 
     this.setupNet(false);
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
     document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang kết nối tới phòng...';
-    document.getElementById('btnAddBot').style.display = 'none';
+    document.getElementById('hostControls').style.display = 'none';
     document.getElementById('btnStart').style.display = 'none';
-    document.getElementById('lobbyBotControls').style.display = 'none';
     this.renderLobby();
-
-    /* FIX #5: retry join nếu host chưa phản hồi (max 3 lần × 800ms) */
-    this._tryJoinWithRetry(0);
-  },
-
-  _tryJoinWithRetry(attempt){
-    if(this.lobbyPlayers.length > 1){ /* đã kết nối */ return; }
-    if(attempt >= 3){
-      document.getElementById('lobbyStatus').innerHTML =
-        '⚠️ Không tìm thấy phòng <b>' + this.roomCode + '</b>. Kiểm tra mã!';
-      this.toast('Không tìm thấy phòng');
-      return;
-    }
-    Net.send({ type:'join', player: { id:this.myId, name:this.getMyName() } });
-    clearTimeout(this.joinTimeout);
-    this.joinTimeout = setTimeout(() => {
-      if(this.lobbyPlayers.length <= 1) this._tryJoinWithRetry(attempt + 1);
-    }, 800);
   },
 
   setupNet(host){
-    if(Net.ch) Net.close();
+    if(Net.peer) Net.close();
+    
     if(host){
       Net.host(this.roomCode);
-      Net.onJoin = (player, action) => {
-        if(action==='leave'){
-          this.lobbyPlayers = this.lobbyPlayers.filter(p => p.id !== player);
-        } else {
-          if(this.lobbyPlayers.some(p => p.id === player.id)){
-            Net.send({ type:'error', message:'ID trùng, mở tab mới thay vì Duplicate' });
+      
+      Net.onError = (msg) => {
+        this.toast(msg);
+        document.getElementById('lobbyStatus').innerHTML = '⚠️ ' + msg;
+      };
+
+      Net.onJoin = (player, conn) => {
+        if(this.lobbyPlayers.some(p => p.id === player.id)) {
+            Net.send({ type:'error', message:'ID trùng lặp!' }, conn);
             return;
-          }
-          this.lobbyPlayers.push(player);
         }
+        if(this.lobbyPlayers.length >= 6) {
+            Net.send({ type:'error', message:'Phòng đã đầy!' }, conn);
+            return;
+        }
+        player.conn = conn; // Lưu conn lại để chat riêng nếu cần
+        this.lobbyPlayers.push(player);
         this.broadcastLobby();
         this.renderLobby();
       };
+
+      // Khi client ngắt kết nối (đóng tab)
+      Net.peer.on('disconnected', () => {
+         // Xử lý nếu cần
+      });
+
       Net.onAction = (pid, action, payload) => {
         try{ this.hostAction(pid, action, payload); }
         catch(e){ console.error('[EK] hostAction:', e); }
       };
+      
       Net.onChat = (name, text) => this.addChatMsg(name, text);
+
     } else {
       Net.join(this.roomCode);
+      
+      Net.onConnectSuccess = () => {
+        Net.send({ type:'join', player: { id:this.myId, name:this.getMyName() } });
+      };
+
+      Net.onError = (msg) => {
+        this.toast(msg);
+        document.getElementById('lobbyStatus').innerHTML = '⚠️ ' + msg;
+      };
+
       Net.onLobby = (players) => {
-        clearTimeout(this.joinTimeout);
         this.lobbyPlayers = players;
         this.renderLobby();
         document.getElementById('lobbyStatus').innerHTML = '✅ Đã kết nối · Nhấn mã để copy';
       };
-      Net.onStart = (state) => { Engine.state = state; this.enterGame(false); };
-      Net.onState = (state) => { Engine.state = state; this.render(); this.updateModals(); };
-      Net.onChat = (name, text) => this.addChatMsg(name, text);
-      Net.onHostLeft = () => {
-        this.toast('Host đã rời phòng');
-        setTimeout(() => this.leaveRoom(), 500);
+      
+      Net.onStart = (state) => { 
+        Engine.state = state; 
+        this.enterGame(false); 
       };
-      Net.onError = (msg) => this.toast('⚠️ ' + msg);
+      
+      Net.onState = (state) => { 
+        Engine.state = state; 
+        this.render(); 
+        this.updateModals(); 
+      };
+      
+      Net.onChat = (name, text) => this.addChatMsg(name, text);
+      
+      Net.onHostLeft = () => {
+        this.toast('Chủ phòng đã rời đi!');
+        setTimeout(() => this.leaveRoom(), 1000);
+      };
     }
   },
 
-  broadcastLobby(){ if(this.isHost) Net.send({ type:'lobby', players: this.lobbyPlayers }); },
+  broadcastLobby(){ 
+    if(this.isHost) {
+        // Xóa data conn trước khi gửi để tránh lỗi vòng lặp JSON
+        const safePlayers = this.lobbyPlayers.map(p => ({id:p.id, name:p.name, isBot:p.isBot, isHost:p.isHost}));
+        Net.send({ type:'lobby', players: safePlayers }); 
+    }
+  },
 
   renderLobby(){
     const box = document.getElementById('lobbyPlayers');
@@ -851,8 +975,8 @@ const UI = {
     box.innerHTML = this.lobbyPlayers.map(p => `
       <div class="pitem">
         <div class="av">${p.isBot?'🤖':'👤'}</div>
-        <div class="nm">${p.name}${p.id===this.myId?' (bạn)':''}</div>
-        <div class="st">${p.isHost?'Host':'Sẵn sàng'}</div>
+        <div class="nm">${this.escapeHtml(p.name)}${p.id===this.myId?' (bạn)':''}</div>
+        <div class="st">${p.isHost?'Host':(p.isBot?'Bot':'Sẵn sàng')}</div>
       </div>
     `).join('');
   },
@@ -861,16 +985,28 @@ const UI = {
     if(this.lobbyPlayers.length >= 6) return this.toast('Tối đa 6 người');
     this.lobbyPlayers.push({
       id:'bot_'+U.uid(),
-      name: U.pick(BOT_NAMES),
+      name: U.pick(BOT_NAMES) + ' ' + this.lobbyPlayers.length,
       isBot:true, isHost:false
     });
     this.broadcastLobby();
     this.renderLobby();
   },
 
-  /* ---------- START SOLO (2-6 players) ---------- */
+  removeBot(){
+    const botIdx = this.lobbyPlayers.findIndex(p => p.isBot);
+    if(botIdx > -1){
+        this.lobbyPlayers.splice(botIdx, 1);
+        this.broadcastLobby();
+        this.renderLobby();
+    } else {
+        this.toast('Không có Bot nào để xóa');
+    }
+  },
+
+  /* ---------- START GAME ---------- */
   startSolo(){
     this.isHost = true;
+    this.myId = 'p_' + U.uid(); // Reset ID cho solo
     const total = parseInt(document.getElementById('soloPlayerCount').value) || 3;
     const botMode = document.getElementById('botMode').value || 'smart';
     const players = [{ id:this.myId, name:this.getMyName(), isBot:false }];
@@ -889,8 +1025,13 @@ const UI = {
     if(this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
     const botMode = document.getElementById('lobbyBotMode')?.value || 'smart';
     const players = this.lobbyPlayers.map(p => ({ id:p.id, name:p.name, isBot:p.isBot }));
+    
+    // Tạo game ở phía Host
     Engine.createGame(players, this.myId, botMode);
+    
+    // Gửi state tới tất cả Client
     Net.send({ type:'start', state: U.clone(Engine.state) });
+    
     this.enterGame(true);
   },
 
@@ -904,10 +1045,8 @@ const UI = {
   },
 
   leaveRoom(){
-    clearTimeout(this.joinTimeout);
-    if(Net.ch){
+    if(Net.peer){
       if(this.isHost) Net.send({type:'host_left'});
-      else Net.send({type:'leave', playerId:this.myId});
       Net.close();
     }
     Engine.state = null;
@@ -924,8 +1063,14 @@ const UI = {
 
   /* ---------- ACTIONS ---------- */
   act(action, payload = {}){
-    if(this.isHost) this.hostAction(this.myId, action, payload);
-    else Net.send({ type:'action', playerId:this.myId, action, payload });
+    if(!Engine.state) return;
+    
+    // Chặn thao tác nếu không phải lượt hoặc đang bận
+    if(this.isHost) {
+        this.hostAction(this.myId, action, payload);
+    } else {
+        Net.send({ type:'action', playerId:this.myId, action, payload });
+    }
   },
 
   hostAction(playerId, action, payload){
@@ -940,18 +1085,22 @@ const UI = {
         case 'clearPeek': ok = Engine.clearPeek(playerId); break;
       }
     }catch(e){ console.error('[EK] Engine error:', e); }
+    
+    // Nếu action thất bại, đồng bộ lại state cho client
     if(!ok && this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
   },
 
   onEngineChange(){
-    /* FIX #3: clear cat selection khi tay đổi */
     const me = this.me();
     const sig = me ? me.hand.join('|') : '';
     if(sig !== this._handSig){
       this.selectedCatIndices = [];
       this._handSig = sig;
     }
+    
+    // Host gửi state mới đi
     if(this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
+    
     this.render();
     this.updateModals();
     this.renderVFX();
@@ -961,6 +1110,7 @@ const UI = {
   renderVFX(){
     const s = Engine.state; if(!s) return;
     const lastLog = s.logs[s.logs.length-1] || '';
+    
     if(lastLog.includes('MÈO NỔ')){
       const deck = document.getElementById('deckPile');
       if(deck){
@@ -968,9 +1118,24 @@ const UI = {
         setTimeout(() => VFX.explode(r.left + r.width/2, r.top + r.height/2), 100);
       }
     }
+    
+    // Hiệu ứng xáo bài
+    if(lastLog.includes('xáo bài')){
+        if(!this.isShuffling){
+            this.isShuffling = true;
+            const deck = document.getElementById('deckPile');
+            if(deck){
+                deck.classList.add('shuffling');
+                setTimeout(() => {
+                    deck.classList.remove('shuffling');
+                    this.isShuffling = false;
+                }, 800);
+            }
+        }
+    }
   },
 
-  /* ---------- BOT ---------- */
+  /* ---------- BOT LOGIC ---------- */
   processBots(){
     if(!this.isHost || this.botScheduled) return;
     const s = Engine.state;
@@ -1092,7 +1257,7 @@ const UI = {
 
     const cur = s.players[s.turnIdx];
     const modeInfo = s.botMode ? ` · ${BOT_MODES[s.botMode].icon}` : '';
-    document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${cur.name}${modeInfo}`;
+    document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${this.escapeHtml(cur.name)}${modeInfo}`;
 
     const turnsEl = document.getElementById('uiTurnsLeft');
     if(s.turnsLeft > 1){ turnsEl.style.display = 'inline-block'; turnsEl.innerText = `×${s.turnsLeft}`; }
@@ -1102,7 +1267,7 @@ const UI = {
       .map(p => `
         <div class="glass opp ${cur.id===p.id?'turn':''} ${!p.alive?'dead':''}">
           <div class="av">${p.isBot?'🤖':'👤'}</div>
-          <div class="nm">${p.name}</div>
+          <div class="nm">${this.escapeHtml(p.name)}</div>
           <div class="cnt">🂠 ${p.hand.length}</div>
         </div>
       `).join('');
@@ -1143,7 +1308,7 @@ const UI = {
     }).join('');
 
     this.renderHandActionBar();
-    document.getElementById('gameLog').innerHTML = s.logs.slice(-4).map(l => `• ${l}`).join('<br>');
+    document.getElementById('gameLog').innerHTML = s.logs.slice(-4).map(l => `• ${this.escapeHtml(l)}`).join('<br>');
     this.updateNopeButton();
   },
 
@@ -1159,7 +1324,7 @@ const UI = {
     bar.innerHTML = `
       <span>Đã chọn <b>${n}</b> lá ${CARDS[card].icon} ${CARDS[card].name}</span>
       <button class="btn-p" onclick="UI.confirmCatSelection()">Chơi ${n} lá</button>
-      ${n===2 && totalOfType>=3 ? '<span style="font-size:10px;color:#666">(click thêm 1 lá cùng loại để chơi 3)</span>' : ''}
+      ${n===2 && totalOfType>=3 ? '<span style="font-size:10px;color:#666">(click thêm 1 lá để chơi 3)</span>' : ''}
       <button class="btn-o" onclick="UI.cancelCatSelection()">Huỷ</button>
     `;
   },
@@ -1229,7 +1394,7 @@ const UI = {
     const s = Engine.state;
     const requester = s.players.find(p => p.id === s.awaitingChoice.fromId);
     this.openModal('favor', `
-      <h2>🫴 ${requester?.name||'Ai đó'} xin bài!</h2>
+      <h2>🫴 ${this.escapeHtml(requester?.name||'Ai đó')} xin bài!</h2>
       <p>Chọn 1 lá để đưa:</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
         ${me.hand.map((c,i) => `
@@ -1265,14 +1430,14 @@ const UI = {
     const w = s.winner;
     const rows = [...s.players].sort((a,b) => (a.alive===b.alive)?0:(a.alive?-1:1)).map(p => `
       <div class="stat-row">
-        <span>${p.alive?'🏆':'💀'} ${p.name}</span>
-        <span>${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá · ${p.stats.defuses} gỡ bom</span>
+        <span>${p.alive?'🏆':'💀'} ${this.escapeHtml(p.name)}</span>
+        <span>${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá</span>
       </div>
     `).join('');
     this.openModal('win', `
       <h1 style="color:var(--red);font-size:36px;">🎉 CHIẾN THẮNG!</h1>
       <div style="font-size:70px;margin:10px 0;">🏆</div>
-      <h2>${w?.name||'Không ai'}</h2>
+      <h2>${this.escapeHtml(w?.name||'Không ai')}</h2>
       <div style="text-align:left;margin:15px 0;">${rows}</div>
       <button class="btn-p" onclick="UI.leaveRoom()">Về Trang Chủ</button>
     `);
@@ -1289,7 +1454,6 @@ const UI = {
 
     if(CATS.includes(card)) return this.toggleCatSelection(card, idx);
 
-    /* Non-cat: clear selection rồi xử lý */
     this.selectedCatIndices = [];
 
     if(card === 'FAVOR'){
@@ -1298,7 +1462,7 @@ const UI = {
       this.openModal('target', `
         <h2>🫴 Xin bài từ ai?</h2>
         <div class="mcol">
-          ${targets.map(t => `<button onclick="UI.act('play',{cards:['FAVOR'],targetId:'${t.id}'}); UI.closeModal();">${t.name} (${t.hand.length} lá)</button>`).join('')}
+          ${targets.map(t => `<button onclick="UI.act('play',{cards:['FAVOR'],targetId:'${t.id}'}); UI.closeModal();">${this.escapeHtml(t.name)} (${t.hand.length} lá)</button>`).join('')}
         </div>
         <button class="btn-o" onclick="UI.closeModal()">Hủy</button>
       `);
@@ -1311,10 +1475,8 @@ const UI = {
     this.toast('Không thể đánh lá này trực tiếp');
   },
 
-  /* FIX #3: MANUAL cat selection - click từng lá để toggle */
   toggleCatSelection(card, idx){
     const me = this.me();
-    /* Nếu đã chọn lá khác loại → reset và chọn lá mới */
     if(this.selectedCatIndices.length > 0){
       const firstType = me.hand[this.selectedCatIndices[0]];
       if(firstType !== card){
@@ -1323,13 +1485,11 @@ const UI = {
         return;
       }
     }
-    /* Đã chọn rồi → bỏ chọn */
     if(this.selectedCatIndices.includes(idx)){
       this.selectedCatIndices = this.selectedCatIndices.filter(i => i !== idx);
       this.render();
       return;
     }
-    /* Giới hạn 3 lá */
     if(this.selectedCatIndices.length >= 3) return;
     this.selectedCatIndices.push(idx);
     this.selectedCatIndices.sort((a,b) => a-b);
@@ -1347,7 +1507,6 @@ const UI = {
     if(!me || this.selectedCatIndices.length < 2) return;
     const card = me.hand[this.selectedCatIndices[0]];
     const count = this.selectedCatIndices.length;
-    /* Validate: tất cả phải cùng loại */
     if(!this.selectedCatIndices.every(i => me.hand[i] === card)){
       this.toast('Các lá phải cùng loại!');
       this.cancelCatSelection();
@@ -1367,7 +1526,7 @@ const UI = {
       <h2>${CARDS[card].icon} ${CARDS[card].name} ×${count}</h2>
       <p>Chọn mục tiêu:</p>
       <div class="mcol">
-        ${targets.map(t => `<button onclick="UI.chooseCatTarget('${t.id}')">${t.name} (${t.hand.length} lá)</button>`).join('')}
+        ${targets.map(t => `<button onclick="UI.chooseCatTarget('${t.id}')">${this.escapeHtml(t.name)} (${t.hand.length} lá)</button>`).join('')}
       </div>
       <button class="btn-o" onclick="UI.closeModal(); UI.cancelCatSelection();">Hủy</button>
     `);
@@ -1427,7 +1586,7 @@ const UI = {
     inp.value = '';
     const name = this.getMyName();
     this.addChatMsg(name, txt);
-    if(Net.ch) Net.send({ type:'chat', name, text:txt });
+    if(Net.peer) Net.send({ type:'chat', name, text:txt });
   },
   addChatMsg(name, text){
     const box = document.getElementById('chatMsgs');
