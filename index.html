@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens - Liquid Glass</title>
+<title>Exploding Kittens - Liquid Glass V2</title>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script>
   if (typeof Peer === 'undefined') {
@@ -13,84 +13,91 @@
 <style>
   :root{
     --red:#ff3b30;--red-2:#d93828;--red-dark:#b52a1c;
-    --gold:#ffcc00;
-    --bg-1:#4a1a12;--bg-2:#1a0f0d;--bg-3:#0a0505;
-    --glass:rgba(255,255,255,0.08);
-    --glass-2:rgba(255,255,255,0.14);
-    --stroke:rgba(255,255,255,0.18);
+    --gold:#ffcc00;--gold-2:#ff8a00;
+    --cyan:#00d4ff;
     --text:#fff;--text-2:#e6d5d0;--text-3:#a89690;
-    --cut:18px;
+    --cut:20px;
   }
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%;overflow:hidden}
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro","Segoe UI",Roboto,sans-serif;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
     background:
-      radial-gradient(circle at 15% 20%, rgba(255,90,60,0.25) 0%, transparent 45%),
-      radial-gradient(circle at 85% 80%, rgba(255,200,50,0.15) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, #4a1a12 0%, #1a0f0d 55%, #0a0505 100%);
+      radial-gradient(circle at 10% 10%, rgba(255,90,60,0.4) 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(255,200,50,0.25) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, #5c1a10 0%, #1a0808 60%, #050202 100%);
     color:var(--text);-webkit-font-smoothing:antialiased;user-select:none;
+    min-height:100vh;
   }
   /* Floating orbs */
-  body::before, body::after {
-    content:'';position:fixed;border-radius:50%;pointer-events:none;z-index:-1;
-    filter:blur(60px);animation:orbFloat 12s ease-in-out infinite;
-  }
-  body::before{width:380px;height:380px;top:-100px;left:-100px;background:rgba(255,90,60,0.35)}
-  body::after{width:420px;height:420px;bottom:-150px;right:-150px;background:rgba(255,200,50,0.25);animation-delay:-6s}
+  .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(70px);opacity:0.6}
+  .orb-1{width:400px;height:400px;top:-120px;left:-120px;background:rgba(255,90,60,0.5);animation:orbFloat 14s ease-in-out infinite}
+  .orb-2{width:450px;height:450px;bottom:-180px;right:-180px;background:rgba(255,200,50,0.35);animation:orbFloat 16s ease-in-out infinite reverse}
+  .orb-3{width:300px;height:300px;top:40%;right:10%;background:rgba(0,212,255,0.2);animation:orbFloat 12s ease-in-out infinite;animation-delay:-4s}
   @keyframes orbFloat{
     0%,100%{transform:translate(0,0) scale(1)}
-    50%{transform:translate(40px,30px) scale(1.1)}
+    50%{transform:translate(50px,40px) scale(1.15)}
   }
+  .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.03;
+    background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);
+    background-size:40px 40px}
   
-  /* Liquid Glass */
+  /* Glass base */
   .glass{
     position:relative;
-    background:linear-gradient(135deg, rgba(255,255,255,0.13), rgba(255,255,255,0.04));
+    background:linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
     backdrop-filter:blur(30px) saturate(180%);
     -webkit-backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid var(--stroke);
+    border:1px solid rgba(255,255,255,0.18);
     box-shadow:
-      0 8px 32px rgba(0,0,0,0.35),
-      inset 0 1px 0 rgba(255,255,255,0.25),
-      inset 0 -1px 0 rgba(0,0,0,0.1);
+      0 10px 40px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.3),
+      inset 0 -1px 0 rgba(0,0,0,0.15);
+    z-index:1;
   }
   .bevel{
     clip-path:polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
   }
-  .bevel-sm{
-    clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-  }
   
   /* Buttons */
   button{
-    font-family:inherit;font-weight:700;font-size:15px;padding:12px 20px;
-    border:1px solid var(--stroke);border-radius:10px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:14px;padding:12px 20px;
+    border:1px solid rgba(255,255,255,0.2);border-radius:12px;cursor:pointer;
     transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
-    background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    background:linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));
     color:var(--text);
-    box-shadow:0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);
+    box-shadow:0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.35);
     backdrop-filter:blur(20px);
+    position:relative;overflow:hidden;
   }
-  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4)}
+  button::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 0%, rgba(255,255,255,0.2), transparent 70%);
+    opacity:0;transition:opacity .3s;pointer-events:none;
+  }
+  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5)}
+  button:hover:not(:disabled)::before{opacity:1}
   button:active:not(:disabled){transform:translateY(1px) scale(0.98)}
   button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(1)}
+  
   .btn-p{
-    background:linear-gradient(180deg, #ff6b5b, var(--red));
-    border-color:rgba(255,255,255,0.4);color:#fff;
-    box-shadow:0 6px 20px rgba(255,59,48,0.5), inset 0 1px 0 rgba(255,255,255,0.5);
+    background:linear-gradient(180deg, #ff6b5b 0%, var(--red) 100%);
+    border-color:rgba(255,255,255,0.4);
+    box-shadow:0 6px 24px rgba(255,59,48,0.55), inset 0 1px 0 rgba(255,255,255,0.5);
   }
-  .btn-p:hover:not(:disabled){box-shadow:0 10px 30px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.6)}
+  .btn-p:hover:not(:disabled){box-shadow:0 10px 36px rgba(255,59,48,0.75), inset 0 1px 0 rgba(255,255,255,0.6)}
   .btn-o{background:rgba(255,255,255,0.06)}
   .btn-danger{background:linear-gradient(180deg, #ff6666, #cc2200);color:#fff}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.2)}
   
   input, select{
-    width:100%;padding:13px 16px;border-radius:10px;
-    border:1px solid var(--stroke);
+    width:100%;padding:13px 16px;border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
     background:rgba(255,255,255,0.08);
     backdrop-filter:blur(20px);
     font-family:inherit;font-size:15px;color:var(--text);outline:none;
-    transition:all .2s;
+    transition:all .25s;
   }
   input::placeholder{color:var(--text-3)}
   input:focus, select:focus{
@@ -103,149 +110,172 @@
   /* Screens */
   .screen{
     display:none;position:fixed;inset:0;flex-direction:column;
-    padding:12px;overflow:hidden;
+    padding:12px;overflow:hidden;z-index:1;
   }
   .screen.on{display:flex}
   
   /* === AUTH === */
   #sc-auth{justify-content:center;align-items:center;padding:20px;overflow-y:auto}
   .auth-box{
-    width:100%;max-width:400px;padding:32px 26px;
+    width:100%;max-width:420px;padding:34px 28px;
     display:flex;flex-direction:column;gap:14px;text-align:center;
-    --cut:24px;
+    --cut:26px;
     animation:slideUp .6s cubic-bezier(0.34,1.56,0.64,1);
   }
   @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
   .auth-logo{
-    font-size:52px;margin-bottom:4px;
-    filter:drop-shadow(0 4px 15px rgba(255,59,48,0.6));
+    font-size:56px;margin-bottom:4px;
+    filter:drop-shadow(0 6px 20px rgba(255,59,48,0.7));
     animation:pulseLogo 2.5s ease-in-out infinite;
   }
-  @keyframes pulseLogo{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  @keyframes pulseLogo{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.08) rotate(3deg)}}
   .auth-title{
-    font-size:32px;font-weight:900;letter-spacing:2px;
-    background:linear-gradient(135deg, #ff6b5b, #ffcc00);
+    font-size:36px;font-weight:900;letter-spacing:3px;
+    background:linear-gradient(135deg, #ff6b5b 0%, #ffcc00 100%);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 2px 10px rgba(255,90,60,0.4));
   }
-  .auth-sub{font-size:12px;color:var(--text-3);margin-bottom:8px}
-  .auth-tabs{display:flex;gap:6px;padding:4px;background:rgba(0,0,0,0.25);border-radius:10px;margin-bottom:6px}
-  .auth-tab{flex:1;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none}
-  .auth-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff;box-shadow:0 4px 12px rgba(255,59,48,0.4)}
+  .auth-sub{font-size:12px;color:var(--text-3);margin-bottom:8px;letter-spacing:1px}
+  .auth-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:6px}
+  .auth-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none;letter-spacing:0.5px}
+  .auth-tab::before{display:none}
+  .auth-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff;box-shadow:0 4px 14px rgba(255,59,48,0.5)}
   .auth-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
-  .auth-msg{font-size:12px;min-height:18px;padding:4px;border-radius:6px}
+  .auth-msg{font-size:12px;min-height:18px;padding:6px;border-radius:8px;transition:all .3s}
   .auth-msg.err{color:#ff8a7a;background:rgba(255,59,48,0.15)}
   .auth-msg.ok{color:#8affa8;background:rgba(80,200,100,0.15)}
+  .guest-link{
+    background:transparent;border:none;color:var(--text-3);font-size:12px;
+    text-decoration:underline;cursor:pointer;padding:8px;
+    box-shadow:none;
+  }
+  .guest-link:hover{color:var(--text);transform:none;box-shadow:none}
+  .guest-link::before{display:none}
   
   /* === MENU === */
-  #sc-menu{padding:0}
+  #sc-menu{padding:0;overflow-y:auto}
   .topbar{
     display:flex;justify-content:space-between;align-items:center;
-    padding:14px 20px;margin:12px;
-    --cut:14px;
+    padding:14px 20px;margin:12px 12px 0;
+    --cut:16px;
     animation:slideDown .5s ease-out;
   }
   @keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
-  .topbar-info{display:flex;flex-direction:column;gap:4px}
-  .topbar-name{font-size:16px;font-weight:800;letter-spacing:.3px}
-  .topbar-stats{font-size:11px;color:var(--text-3);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .topbar-stats b{color:var(--text-2);font-weight:700}
+  .topbar-info{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+  .topbar-name{font-size:16px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:6px}
+  .topbar-stats{font-size:11px;color:var(--text-3);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .topbar-stats b{color:var(--text-2);font-weight:800}
   .admin-badge{
     background:linear-gradient(135deg,#ffcc00,#ff8a00);
-    color:#1a0f0d;font-weight:900;font-size:10px;
-    padding:2px 8px;border-radius:6px;letter-spacing:.5px;
-    box-shadow:0 2px 8px rgba(255,204,0,0.5);
+    color:#1a0f0d;font-weight:900;font-size:9px;
+    padding:2px 7px;border-radius:6px;letter-spacing:.8px;
+    box-shadow:0 2px 10px rgba(255,204,0,0.6);
     animation:shine 2s ease-in-out infinite;
   }
-  @keyframes shine{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+  @keyframes shine{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
   .topbar-avatar{
-    width:56px;height:56px;border-radius:50%;
-    background:linear-gradient(135deg,#ff6b5b,#ffcc00);
-    display:flex;align-items:center;justify-content:center;font-size:28px;
-    cursor:pointer;transition:all .25s;
-    border:2px solid rgba(255,255,255,0.5);
-    box-shadow:0 4px 16px rgba(255,59,48,0.4), inset 0 2px 0 rgba(255,255,255,0.4);
+    width:60px;height:60px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg, #ff6b5b, #ffcc00);
+    display:flex;align-items:center;justify-content:center;font-size:30px;
+    cursor:pointer;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);
+    border:2px solid rgba(255,255,255,0.6);
+    box-shadow:0 6px 20px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.5);
   }
-  .topbar-avatar:hover{transform:scale(1.08) rotate(5deg);box-shadow:0 8px 24px rgba(255,59,48,0.7)}
+  .topbar-avatar:hover{transform:scale(1.1) rotate(8deg);box-shadow:0 10px 32px rgba(255,59,48,0.8)}
   
   .menu-body{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:20px;gap:22px;overflow-y:auto;
+    padding:24px 20px 40px;gap:24px;
   }
-  .btn-mega{
-    padding:22px 60px;font-size:24px;font-weight:900;letter-spacing:2px;
+  
+  .btn-main{
+    padding:24px 70px;font-size:26px;font-weight:900;letter-spacing:3px;
     background:linear-gradient(135deg, #ff6b5b 0%, #ff3b30 50%, #b52a1c 100%);
-    border:2px solid rgba(255,255,255,0.4);
-    border-radius:16px;color:#fff;cursor:pointer;
+    border:2px solid rgba(255,255,255,0.5);
+    border-radius:20px;color:#fff;cursor:pointer;
     text-transform:uppercase;
-    box-shadow:0 12px 40px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.5);
-    animation:megaPulse 2s ease-in-out infinite;
-    transition:all .25s;
-    --cut:16px;
-    clip-path:polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
-    max-width:90vw;
+    box-shadow:0 15px 50px rgba(255,59,48,0.6), inset 0 2px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.2);
+    animation:mainPulse 2.5s ease-in-out infinite;
+    transition:all .3s cubic-bezier(0.34,1.56,0.64,1);
+    max-width:92vw;
+    display:flex;align-items:center;gap:14px;
   }
-  .btn-mega:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 16px 50px rgba(255,59,48,0.8), inset 0 2px 0 rgba(255,255,255,0.6)}
-  @keyframes megaPulse{
-    0%,100%{box-shadow:0 12px 40px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.5)}
-    50%{box-shadow:0 12px 60px rgba(255,59,48,0.85), inset 0 2px 0 rgba(255,255,255,0.6)}
+  .btn-main:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 20px 60px rgba(255,59,48,0.85), inset 0 2px 0 rgba(255,255,255,0.7)}
+  .btn-main:active{transform:translateY(-1px) scale(1)}
+  @keyframes mainPulse{
+    0%,100%{box-shadow:0 15px 50px rgba(255,59,48,0.6), inset 0 2px 0 rgba(255,255,255,0.6)}
+    50%{box-shadow:0 15px 70px rgba(255,59,48,0.9), inset 0 2px 0 rgba(255,255,255,0.7)}
   }
   
   .menu-grid{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
-    width:100%;max-width:680px;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+    width:100%;max-width:700px;
   }
   .menu-card{
-    aspect-ratio:1/1;
+    aspect-ratio:1/1.05;
     padding:16px 10px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:8px;cursor:pointer;
-    background:linear-gradient(135deg, rgba(255,255,255,0.13), rgba(255,255,255,0.04));
+    background:linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
     backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid var(--stroke);border-radius:14px;
-    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow:0 6px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    border:1px solid rgba(255,255,255,0.18);border-radius:18px;
+    transition:all .3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow:0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
     position:relative;overflow:hidden;
   }
   .menu-card::before{
-    content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-    background:radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 40%);
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 0%, rgba(255,255,255,0.25) 0%, transparent 60%);
     opacity:0;transition:opacity .4s;pointer-events:none;
   }
-  .menu-card:hover{transform:translateY(-6px) scale(1.03);border-color:rgba(255,255,255,0.4);box-shadow:0 14px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4)}
+  .menu-card:hover{transform:translateY(-8px) scale(1.03);border-color:rgba(255,255,255,0.4);box-shadow:0 18px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4)}
   .menu-card:hover::before{opacity:1}
-  .menu-card:active{transform:translateY(-2px) scale(0.99)}
-  .menu-card-icon{font-size:34px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.4))}
+  .menu-card:active{transform:translateY(-3px) scale(0.99)}
+  .menu-card-icon{font-size:38px;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.4))}
   .menu-card-title{font-size:13px;font-weight:800;text-align:center;letter-spacing:.3px}
   .menu-card-sub{font-size:9px;color:var(--text-3);text-align:center}
-  .menu-card.admin-card{border-color:rgba(255,204,0,0.5);background:linear-gradient(135deg, rgba(255,204,0,0.2), rgba(255,140,0,0.08))}
+  .menu-card.locked{opacity:0.55;position:relative}
+  .menu-card.locked::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:14px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))}
+  .menu-card.admin-card{border-color:rgba(255,204,0,0.6);background:linear-gradient(135deg, rgba(255,204,0,0.22), rgba(255,140,0,0.08))}
+  .menu-card-badge{
+    position:absolute;top:6px;right:6px;min-width:20px;height:20px;padding:0 6px;
+    background:var(--red);border-radius:10px;font-size:11px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 8px rgba(255,59,48,0.6);
+    animation:badgePulse 1.5s ease-in-out infinite;
+  }
+  @keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
   
   @media (max-width:600px){
-    .menu-grid{grid-template-columns:repeat(2,1fr);max-width:420px}
-    .btn-mega{padding:18px 40px;font-size:20px}
-    .topbar-avatar{width:48px;height:48px;font-size:24px}
+    .menu-grid{grid-template-columns:repeat(2,1fr);max-width:400px;gap:12px}
+    .btn-main{padding:20px 44px;font-size:20px;letter-spacing:2px}
+    .topbar-avatar{width:52px;height:52px;font-size:26px}
   }
   
   /* === LOBBY === */
-  #sc-lobby{justify-content:center;align-items:center;overflow-y:auto}
-  .lobby-box{width:100%;max-width:500px;padding:28px;display:flex;flex-direction:column;gap:14px;--cut:22px}
+  #sc-lobby{justify-content:center;align-items:center;overflow-y:auto;padding:20px}
+  .lobby-box{width:100%;max-width:500px;padding:28px;display:flex;flex-direction:column;gap:14px;--cut:24px}
   .room-code{
-    font-size:40px;font-weight:900;letter-spacing:10px;
-    text-align:center;cursor:pointer;padding:16px;
-    background:linear-gradient(135deg, rgba(255,59,48,0.25), rgba(255,204,0,0.15));
-    border:2px dashed rgba(255,255,255,0.4);
-    border-radius:12px;font-family:'SF Mono',monospace;color:#fff;
-    text-shadow:0 0 20px rgba(255,59,48,0.6);
-    transition:all .2s;
+    font-size:42px;font-weight:900;letter-spacing:12px;
+    text-align:center;cursor:pointer;padding:18px;
+    background:linear-gradient(135deg, rgba(255,59,48,0.3), rgba(255,204,0,0.2));
+    border:2px dashed rgba(255,255,255,0.5);
+    border-radius:14px;font-family:'SF Mono','Consolas',monospace;color:#fff;
+    text-shadow:0 0 25px rgba(255,59,48,0.8);
+    transition:all .25s;
   }
-  .room-code:hover{transform:scale(1.02);box-shadow:0 0 30px rgba(255,59,48,0.4)}
-  .plist{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;min-height:60px}
+  .room-code:hover{transform:scale(1.03);box-shadow:0 0 40px rgba(255,59,48,0.5);border-color:rgba(255,255,255,0.8)}
+  .plist{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;min-height:60px}
   .pitem{
-    display:flex;align-items:center;gap:12px;padding:10px 14px;
-    background:rgba(255,255,255,0.06);border-radius:10px;
-    border:1px solid rgba(255,255,255,0.1);
+    display:flex;align-items:center;gap:12px;padding:11px 14px;
+    background:rgba(255,255,255,0.07);border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    animation:itemIn .3s ease-out;
   }
-  .pitem .av{font-size:22px}.pitem .nm{flex:1;font-weight:bold}
-  .pitem .st{font-size:10px;font-weight:bold;color:var(--red);text-transform:uppercase;padding:3px 8px;background:rgba(255,59,48,0.2);border-radius:6px}
+  @keyframes itemIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+  .pitem .av{font-size:22px}
+  .pitem .nm{flex:1;font-weight:700}
+  .pitem .st{font-size:10px;font-weight:800;color:var(--red);text-transform:uppercase;padding:3px 9px;background:rgba(255,59,48,0.2);border-radius:6px;letter-spacing:0.5px}
   .plist-empty{text-align:center;padding:24px;color:var(--text-3);font-size:13px;font-style:italic}
   .connecting{display:inline-block;width:14px;height:14px;border:2px solid var(--red);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -258,31 +288,28 @@
     --cut:12px;
   }
   .badge{
-    background:rgba(255,255,255,0.1);padding:5px 12px;border-radius:20px;
+    background:rgba(255,255,255,0.1);padding:6px 13px;border-radius:20px;
     border:1px solid rgba(255,255,255,0.15);
     font-size:11px;display:inline-flex;align-items:center;gap:4px;
   }
   .badge.hot{background:linear-gradient(135deg, #ff6b5b, var(--red));color:#fff;border-color:rgba(255,255,255,0.4);animation:pulseBadge 1.5s infinite}
-  .badge.timer{background:#333;color:#fff;font-family:monospace;display:none}
-  .badge.timer.warn{background:#ff9800;animation:pulseBadge .8s infinite}
-  .badge.timer.danger{background:#f44336;animation:pulseBadge .4s infinite}
   @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
   .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
   .opp{
     display:flex;flex-direction:column;align-items:center;padding:10px 14px;
-    min-width:80px;transition:.3s;position:relative;
+    min-width:82px;transition:.3s;position:relative;
     background:linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
-    border:1px solid rgba(255,255,255,0.15);border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.2);
+    border:1px solid rgba(255,255,255,0.15);border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
   }
   .opp.turn{
-    box-shadow:0 0 0 2px var(--red), 0 0 25px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+    box-shadow:0 0 0 2px var(--red), 0 0 28px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
     transform:scale(1.06);
   }
   .opp.dead{opacity:.35;filter:grayscale(1)}
   .opp.dead::after{content:'💀';position:absolute;font-size:36px;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2}
   .opp .av{font-size:28px;margin-bottom:2px}
-  .opp .nm{font-size:11px;font-weight:bold;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+  .opp .nm{font-size:11px;font-weight:bold;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
   .opp .cnt{font-size:11px;color:var(--text-2);font-weight:bold}
   
   .board{flex:1;display:flex;justify-content:center;align-items:center;gap:30px;position:relative;min-height:0}
@@ -324,7 +351,7 @@
   }
   .glog{
     position:absolute;top:5px;left:5px;font-size:11px;
-    background:rgba(0,0,0,0.6);color:#fff;padding:8px 10px;border-radius:10px;
+    background:rgba(0,0,0,0.65);color:#fff;padding:8px 10px;border-radius:10px;
     pointer-events:none;max-width:220px;backdrop-filter:blur(10px);line-height:1.4;
     border:1px solid rgba(255,255,255,0.1);
   }
@@ -347,7 +374,7 @@
     display:flex;flex-direction:column;align-items:center;justify-content:space-between;
     padding:6px 4px;cursor:pointer;position:relative;
     background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.25);
-    border:2px solid rgba(255,255,255,0.9);transition:all .2s;overflow:hidden;
+    border:2px solid rgba(255,255,255,0.9);transition:all .25s;overflow:hidden;
   }
   .card:hover:not(.dis):not(.selected){
     transform:translateY(-12px) scale(1.06);z-index:10;
@@ -372,7 +399,6 @@
     border-color:#00ff88!important;
     box-shadow:0 0 0 3px #00cc66, 0 0 25px #00ff88, 0 0 50px rgba(0,255,136,0.5), 0 4px 12px rgba(0,0,0,0.2)!important;
     z-index:8!important;
-    /* NO transform - only ring, not lifted */
   }
   .card.selected::before{
     content:'✓';position:absolute;top:-8px;right:-8px;background:#00cc66;color:#fff;
@@ -390,17 +416,13 @@
     60%{transform:translateX(10px) scale(1.15) rotate(3deg);opacity:1}
     100%{transform:translateX(0) scale(1) rotate(0);opacity:1}
   }
-  
-  /* Deal-in animation */
-  .card.deal-in{
-    animation:dealIn .55s cubic-bezier(0.34,1.56,0.64,1) backwards;
-  }
+  .card.deal-in{animation:dealIn .55s cubic-bezier(0.34,1.56,0.64,1) backwards}
   @keyframes dealIn{
     from{transform:translate(-200px, -300px) rotate(-60deg) scale(0.3);opacity:0}
     to{transform:translate(0,0) rotate(0) scale(1);opacity:1}
   }
   
-  /* NOPE buttons */
+  /* NOPE */
   .nope-container{
     position:fixed;bottom:38%;left:50%;transform:translate(-50%,50%);z-index:200;
     display:flex;gap:10px;align-items:center;
@@ -455,7 +477,6 @@
   .opp-action-name{font-size:11px;opacity:.85;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase}
   .opp-action-card{font-size:20px;font-weight:900}
   
-  /* Floating card anim */
   .anim-card{
     position:fixed;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -502,33 +523,159 @@
   }
   .ov.on{opacity:1;pointer-events:auto}
   .modal{
-    width:100%;max-width:500px;padding:26px;
+    width:100%;max-width:520px;padding:26px;
     display:flex;flex-direction:column;gap:14px;text-align:center;
     transform:scale(.9);transition:.3s;
     max-height:90vh;overflow-y:auto;
-    --cut:24px;
+    --cut:26px;
   }
   .ov.on .modal{transform:scale(1)}
-  .modal h2{font-size:22px;color:#fff}
-  .modal p{font-size:14px;color:var(--text-2)}
+  .modal h2{font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+  .modal p{font-size:13px;color:var(--text-2)}
   .mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
   .mcol{display:flex;flex-direction:column;gap:8px}
   
-  .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;gap:10px}
+  .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;gap:10px;align-items:center}
   .stat-row:last-child{border:none}
   .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:var(--red);border:1.5px solid var(--red);border-radius:8px;cursor:pointer;font-weight:bold}
+  
+  /* Profile */
+  .profile-hero{
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    padding:12px 0 16px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:8px;
+  }
+  .profile-avatar-big{
+    width:90px;height:90px;border-radius:50%;
+    background:linear-gradient(135deg, #ff6b5b, #ffcc00);
+    display:flex;align-items:center;justify-content:center;font-size:46px;
+    border:3px solid rgba(255,255,255,0.6);
+    box-shadow:0 10px 30px rgba(255,59,48,0.6), inset 0 3px 0 rgba(255,255,255,0.5);
+  }
+  .profile-name{font-size:20px;font-weight:900}
+  .profile-stats-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;
+  }
+  .stat-card{
+    padding:14px 8px;border-radius:12px;text-align:center;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+  }
+  .stat-card-icon{font-size:20px;margin-bottom:4px}
+  .stat-card-value{font-size:20px;font-weight:900;color:#ffcc00}
+  .stat-card-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
   
   .avatar-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0}
   .avatar-opt{
     aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-    font-size:28px;background:rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;
+    font-size:26px;background:rgba(255,255,255,0.08);border-radius:12px;cursor:pointer;
     border:2px solid transparent;transition:all .2s;
   }
   .avatar-opt:hover{background:rgba(255,255,255,0.2);transform:scale(1.1)}
   .avatar-opt.selected{border-color:#00ff88;background:rgba(0,255,136,0.2);box-shadow:0 0 15px rgba(0,255,136,0.5)}
   
-  /* Particle */
-  .particle{position:absolute;border-radius:50%;pointer-events:none;z-index:1000}
+  /* Custom keypad */
+  .keypad-modal{
+    display:flex;flex-direction:column;gap:20px;align-items:center;
+    max-width:400px;
+  }
+  .keypad-display{
+    display:flex;gap:8px;justify-content:center;
+    margin:10px 0 16px;
+  }
+  .code-slot{
+    width:48px;height:60px;border-radius:12px;
+    background:rgba(255,255,255,0.1);
+    border:2px solid rgba(255,255,255,0.2);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;font-weight:900;color:#fff;
+    transition:all .2s;
+  }
+  .code-slot.filled{
+    background:linear-gradient(135deg, rgba(255,59,48,0.4), rgba(255,204,0,0.3));
+    border-color:rgba(255,255,255,0.5);
+    box-shadow:0 4px 14px rgba(255,59,48,0.4);
+  }
+  .code-slot.active{
+    border-color:var(--red);
+    animation:slotPulse 1s ease-in-out infinite;
+  }
+  @keyframes slotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.5)}50%{box-shadow:0 0 0 6px rgba(255,59,48,0)}}
+  .keypad-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+    width:100%;max-width:320px;
+  }
+  .keypad-key{
+    aspect-ratio:1.15;font-size:22px;font-weight:900;
+    border-radius:14px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+    border:1px solid rgba(255,255,255,0.2);
+    color:#fff;cursor:pointer;
+    transition:all .15s;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .keypad-key:hover{transform:translateY(-2px);background:linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.1))}
+  .keypad-key:active{transform:scale(0.94)}
+  .keypad-key.del{background:linear-gradient(180deg, rgba(255,59,48,0.4), rgba(180,30,20,0.3));font-size:20px}
+  .keypad-key.confirm{background:linear-gradient(180deg, #ff6b5b, var(--red));font-size:20px;box-shadow:0 6px 20px rgba(255,59,48,0.5), inset 0 1px 0 rgba(255,255,255,0.5)}
+  
+  /* Friends system */
+  .friend-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:10px}
+  .friend-tab{flex:1;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none}
+  .friend-tab::before{display:none}
+  .friend-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff}
+  .friend-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
+  
+  .friend-item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;
+    background:rgba(255,255,255,0.06);border-radius:10px;
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  .friend-item .av{font-size:24px}
+  .friend-item .nm{flex:1;font-weight:700;font-size:13px;text-align:left}
+  .friend-item .actions{display:flex;gap:6px}
+  .friend-item button{padding:6px 12px;font-size:11px;border-radius:8px}
+  
+  .empty-state{
+    text-align:center;padding:32px 16px;color:var(--text-3);
+  }
+  .empty-state-icon{font-size:42px;margin-bottom:8px;opacity:0.5}
+  .empty-state-text{font-size:13px;font-style:italic}
+  
+  /* How to play / Card list */
+  .info-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:10px}
+  .info-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none}
+  .info-tab::before{display:none}
+  .info-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff}
+  .info-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
+  
+  .rules-section{
+    text-align:left;font-size:13px;line-height:1.6;color:var(--text-2);
+    max-height:50vh;overflow-y:auto;padding:6px;
+  }
+  .rules-section h3{color:#fff;margin:14px 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+  .rules-section h3:first-child{margin-top:0}
+  .rules-section p{margin-bottom:8px}
+  .rules-section ul{margin-left:18px;margin-bottom:8px}
+  .rules-section li{margin-bottom:4px}
+  .rules-section b{color:#ffcc00}
+  
+  .card-list-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+    text-align:left;max-height:55vh;overflow-y:auto;padding:4px;
+  }
+  .card-list-item{
+    display:flex;gap:10px;padding:10px;
+    background:rgba(255,255,255,0.06);border-radius:10px;
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  .card-list-icon{
+    font-size:32px;flex-shrink:0;
+    width:48px;height:56px;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.1);border-radius:8px;
+  }
+  .card-list-body{flex:1;min-width:0}
+  .card-list-name{font-size:12px;font-weight:900;color:#ffcc00;margin-bottom:3px}
+  .card-list-desc{font-size:10.5px;color:var(--text-2);line-height:1.35}
   
   @media (max-width:600px){
     .card{width:70px;height:104px;padding:5px 3px}
@@ -540,19 +687,29 @@
     .glog{max-width:140px;font-size:10px}
     .room-code{font-size:28px;letter-spacing:6px}
     .nope-btn{padding:12px 24px;font-size:18px}
-    .btn-mega{padding:16px 32px;font-size:18px}
+    .btn-main{padding:16px 32px;font-size:16px;letter-spacing:1.5px}
     .avatar-picker{grid-template-columns:repeat(4,1fr)}
+    .card-list-grid{grid-template-columns:1fr}
+    .code-slot{width:38px;height:48px;font-size:22px}
+    .keypad-key{font-size:18px}
+    .profile-avatar-big{width:72px;height:72px;font-size:36px}
   }
 </style>
 </head>
 <body>
+
+<!-- Background -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="bg-grid"></div>
 
 <!-- AUTH -->
 <div id="sc-auth" class="screen on">
   <div class="glass bevel auth-box">
     <div class="auth-logo">💥</div>
     <h1 class="auth-title">MÈO NỔ</h1>
-    <p class="auth-sub">Exploding Kittens · Online</p>
+    <p class="auth-sub">EXPLODING KITTENS · ONLINE</p>
     
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login" onclick="UI.switchAuthTab('login')">Đăng Nhập</button>
@@ -563,7 +720,7 @@
       <input type="text" id="loginUser" placeholder="Tên đăng nhập" maxlength="20" autocomplete="username">
       <input type="password" id="loginPass" placeholder="Mật khẩu" autocomplete="current-password"
         onkeypress="if(event.key==='Enter')UI.doLogin()">
-      <button class="btn-p" onclick="UI.doLogin()" style="margin-top:6px">Đăng Nhập</button>
+      <button class="btn-p" onclick="UI.doLogin()" style="margin-top:4px">Đăng Nhập</button>
     </div>
     
     <div id="authRegisterForm" style="display:none;flex-direction:column;gap:10px">
@@ -571,10 +728,11 @@
       <input type="password" id="regPass" placeholder="Mật khẩu (≥4 ký tự)" autocomplete="new-password">
       <input type="password" id="regPass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password"
         onkeypress="if(event.key==='Enter')UI.doRegister()">
-      <button class="btn-p" onclick="UI.doRegister()" style="margin-top:6px">Tạo Tài Khoản</button>
+      <button class="btn-p" onclick="UI.doRegister()" style="margin-top:4px">Tạo Tài Khoản</button>
     </div>
     
     <div id="authMsg" class="auth-msg"></div>
+    <button class="guest-link" onclick="UI.playAsGuest()">Chơi với tư cách Khách →</button>
   </div>
 </div>
 
@@ -582,41 +740,53 @@
 <div id="sc-menu" class="screen">
   <div class="glass bevel topbar">
     <div class="topbar-info">
-      <div class="topbar-name" id="topbarName">-</div>
+      <div class="topbar-name">
+        <span id="topbarName">-</span>
+        <span id="topbarAdminBadge" class="admin-badge" style="display:none">ADMIN</span>
+        <span id="topbarGuestBadge" class="admin-badge" style="display:none;background:linear-gradient(135deg,#888,#555);color:#fff">GUEST</span>
+      </div>
       <div class="topbar-stats">
         <span>🎮 <b id="topbarGames">0</b> trận</span>
         <span>🏆 <b id="topbarWins">0</b> thắng</span>
-        <span id="topbarAdminBadge" style="display:none" class="admin-badge">ADMIN</span>
+        <span>👥 <b id="topbarFriends">0</b> bạn</span>
       </div>
     </div>
     <div class="topbar-avatar" id="topbarAvatar" onclick="UI.openProfile()">🐱</div>
   </div>
   
   <div class="menu-body">
-    <button class="btn-mega" onclick="UI.quickPlay()">▶ Bắt Đầu Chơi</button>
+    <button class="btn-main" onclick="UI.createRoom()">
+      <span>🎯</span> TẠO PHÒNG
+    </button>
     
     <div class="menu-grid">
       <div class="menu-card" onclick="UI.openSoloModal()">
-        <div class="menu-card-icon">🎮</div>
+        <div class="menu-card-icon">🤖</div>
         <div class="menu-card-title">Solo</div>
         <div class="menu-card-sub">Chơi với Bot</div>
-      </div>
-      <div class="menu-card" onclick="UI.openCreateRoomModal()">
-        <div class="menu-card-icon">➕</div>
-        <div class="menu-card-title">Tạo Phòng</div>
-        <div class="menu-card-sub">Host game</div>
       </div>
       <div class="menu-card" onclick="UI.openJoinRoomModal()">
         <div class="menu-card-icon">🔗</div>
         <div class="menu-card-title">Vào Phòng</div>
         <div class="menu-card-sub">Nhập mã</div>
       </div>
-      <div class="menu-card" id="adminCard" style="display:none" onclick="UI.openAdminPanel()">
+      <div class="menu-card" onclick="UI.openHowToPlay()">
+        <div class="menu-card-icon">📖</div>
+        <div class="menu-card-title">Hướng Dẫn</div>
+        <div class="menu-card-sub">Luật & Lá bài</div>
+      </div>
+      <div class="menu-card" id="friendsCard" onclick="UI.openFriends()">
+        <div class="menu-card-icon">👥</div>
+        <div class="menu-card-title">Bạn Bè</div>
+        <div class="menu-card-sub">Kết bạn & Đội</div>
+        <div class="menu-card-badge" id="friendsBadge" style="display:none">0</div>
+      </div>
+      <div class="menu-card admin-card" id="adminCard" style="display:none" onclick="UI.openAdminPanel()">
         <div class="menu-card-icon">👑</div>
         <div class="menu-card-title">Admin</div>
         <div class="menu-card-sub">Quản trị</div>
       </div>
-      <div class="menu-card" id="profileCard" onclick="UI.openProfile()">
+      <div class="menu-card" onclick="UI.openProfile()">
         <div class="menu-card-icon">👤</div>
         <div class="menu-card-title">Hồ Sơ</div>
         <div class="menu-card-sub">Tài khoản</div>
@@ -635,16 +805,17 @@
     <div class="plist" id="lobbyPlayers"></div>
     
     <div id="hostControls" style="display:none;flex-direction:column;gap:8px">
-      <label style="font-size:12px;font-weight:bold;color:var(--text-2)">Chế độ Bot:</label>
+      <label style="font-size:12px;font-weight:bold;color:var(--text-2);text-align:left">Chế độ Bot:</label>
       <select id="lobbyBotMode">
         <option value="normal">😴 Bình thường</option>
         <option value="smart" selected>🧠 Thông minh</option>
         <option value="ultimate">👑 Tối thượng</option>
       </select>
       <div style="display:flex;gap:8px">
-        <button class="btn-o" style="flex:1" onclick="UI.addBot()">+ Thêm Bot</button>
-        <button class="btn-o" style="flex:1" onclick="UI.removeBot()">- Xóa Bot</button>
+        <button class="btn-o" style="flex:1" onclick="UI.addBot()">+ Bot</button>
+        <button class="btn-o" style="flex:1" onclick="UI.removeBot()">- Bot</button>
       </div>
+      <button class="btn-o" id="inviteFriendsBtn" style="display:none" onclick="UI.openInviteFriends()">👥 Mời Bạn Bè</button>
     </div>
     
     <div style="display:flex;gap:8px;flex-direction:column">
@@ -659,7 +830,6 @@
   <div class="glass bevel ghead">
     <div class="badge">Sống: <b id="uiAlive">0</b></div>
     <div class="badge hot" id="uiTurn">Lượt: ...</div>
-    <div class="badge timer" id="uiTimer">⏱️ 10s</div>
     <div class="badge">Bài: <b id="uiDeck">0</b></div>
     <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--red);color:#fff">×1</div>
     <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:rgba(255,59,48,0.3);border:1px solid var(--red)">Thoát</button>
@@ -718,10 +888,39 @@ const CARDS = {
   CAT_POTATO:{name:'Mèo Khoai',icon:'🥔',class:'CAT',desc:'Combo 2+ cùng loại'},
   CAT_HAIRY:{name:'Mèo Lông',icon:'🐈',class:'CAT',desc:'Combo 2+ cùng loại'}
 };
+
+const CARD_INFO = [
+  { id:'EK', name:'Mèo Nổ', icon:'💥', desc:'Rút trúng = THUA (nếu không có Gỡ Bom)',
+    how:'Khi bốc phải lá này, bạn PHẢI có lá Gỡ Bom trong tay để tự cứu. Nếu không có Gỡ Bom, bạn bị loại khỏi trận ngay lập tức.' },
+  { id:'DEFUSE', name:'Gỡ Bom', icon:'🧯', desc:'Cứu mạng khi rút trúng Mèo Nổ',
+    how:'Dùng khi bốc phải Mèo Nổ. Sau khi dùng, bạn được phép đặt Mèo Nổ vào bất kỳ vị trí nào trong bộ bài (trên cùng, giữa, hoặc dưới cùng).' },
+  { id:'NOPE', name:'Nope', icon:'🙅', desc:'Chặn hành động của người khác',
+    how:'Khi bất kỳ ai dùng lá bài (trừ Mèo Nổ và Gỡ Bom), bạn có thể NOPE để hủy hành động đó. Có thể NOPE lại một NOPE khác (nope^2 = có hiệu lực).' },
+  { id:'ATTACK', name:'Tấn Công', icon:'⚔️', desc:'Ép người sau bốc 2 lượt',
+    how:'Không bốc bài ở lượt này. Người kế tiếp phải bốc bài 2 lần thay vì 1 lần. Nếu người đó dùng ATTACK tiếp, số lượt tiếp tục tăng.' },
+  { id:'SKIP', name:'Bỏ Lượt', icon:'⏭️', desc:'Bỏ lượt không cần rút bài',
+    how:'Kết thúc lượt hiện tại mà KHÔNG cần bốc bài. Rất hữu ích khi bạn sợ rút trúng Mèo Nổ hoặc muốn dồn lượt cho đối thủ.' },
+  { id:'SEE_FUTURE', name:'Nhìn Trước', icon:'🔮', desc:'Xem 3 lá trên cùng bộ bài',
+    how:'Xem 3 lá bài trên cùng của bộ bài (không đổi thứ tự). Giúp bạn biết có nên bốc hay không, hoặc phải né lá nào.' },
+  { id:'SHUFFLE', name:'Xáo Bài', icon:'🔀', desc:'Xáo trộn toàn bộ bộ bài',
+    how:'Xáo lại toàn bộ bộ bài chưa rút. KHÔNG thay đổi bài trên tay người chơi. Dùng để tránh rút lá xấu đã biết.' },
+  { id:'FAVOR', name:'Xin Bài', icon:'🫴', desc:'Xin 1 lá từ đối thủ',
+    how:'Chọn 1 đối thủ, họ phải đưa cho bạn 1 lá NGẪU NHIÊN trong tay (bạn không chọn được). Đối thủ có thể NOPE để chặn.' },
+  { id:'CAT_TACO', name:'Mèo Taco', icon:'🌮', desc:'Combo 2+ cùng loại để cướp bài',
+    how:'Đánh 2 lá cùng loại: cướp ngẫu nhiên 1 lá từ đối thủ.\nĐánh 3 lá: gọi tên 1 lá cụ thể, nếu đối thủ có thì lấy lá đó.' },
+  { id:'CAT_RAINBOW', name:'Mèo Cầu Vồng', icon:'🌈', desc:'Combo 2+ cùng loại',
+    how:'Đánh 2 lá: cướp 1 lá ngẫu nhiên. Đánh 3 lá: gọi tên lá cụ thể.' },
+  { id:'CAT_BEARD', name:'Mèo Râu', icon:'🧔', desc:'Combo 2+ cùng loại',
+    how:'Đánh 2 lá: cướp 1 lá ngẫu nhiên. Đánh 3 lá: gọi tên lá cụ thể.' },
+  { id:'CAT_POTATO', name:'Mèo Khoai', icon:'🥔', desc:'Combo 2+ cùng loại',
+    how:'Đánh 2 lá: cướp 1 lá ngẫu nhiên. Đánh 3 lá: gọi tên lá cụ thể.' },
+  { id:'CAT_HAIRY', name:'Mèo Lông', icon:'🐈', desc:'Combo 2+ cùng loại',
+    how:'Đánh 2 lá: cướp 1 lá ngẫu nhiên. Đánh 3 lá: gọi tên lá cụ thể.' }
+];
+
 const CATS = ['CAT_TACO','CAT_RAINBOW','CAT_BEARD','CAT_POTATO','CAT_HAIRY'];
 const NOPE_WINDOW = 3500;
 const NOPE_WINDOW_FAVOR = 2000;
-const TURN_TIME_MS = 10000; // 10s auto-draw
 
 const BOT_MODES = {
   normal:{label:'Bình thường',icon:'😴',playProb:0.55,nopeProb:0.05,catProb:0.4,skipProb:0.45,attackProb:0.55,smartTarget:false},
@@ -762,13 +961,12 @@ const Sound = {
 };
 
 const VFX = {
-  shake(){document.body.classList.add('shake');setTimeout(()=>document.body.classList.remove('shake'),500)},
   explode(x,y){
     Sound.play('boom');
     for(let i=0;i<35;i++){
       const p=document.createElement('div');p.className='particle';
       const s=Math.random()*18+8;
-      p.style.cssText=`width:${s}px;height:${s}px;left:${x}px;top:${y}px;background:hsl(${Math.random()*40},100%,55%);z-index:9000`;
+      p.style.cssText=`width:${s}px;height:${s}px;left:${x}px;top:${y}px;background:hsl(${Math.random()*40},100%,55%);z-index:9000;position:fixed;border-radius:50%;pointer-events:none`;
       document.body.appendChild(p);
       const a=Math.random()*Math.PI*2,v=Math.random()*160+50;
       p.animate([{transform:'translate(0,0) scale(1)',opacity:1},
@@ -780,8 +978,9 @@ const VFX = {
 
 /* ========== AUTH ========== */
 const Auth = {
-  KEY:'ek_accounts_v2',
+  KEY:'ek_accounts_v3',
   USER_KEY:'ek_current_user',
+  GUEST_KEY:'ek_guest',
   ADMIN:{username:'vanbacazerst.vn2908', password:'aBc@2908vanbac0809'},
   
   init(){
@@ -824,7 +1023,24 @@ const Auth = {
     if(!u) return null;
     const acc = this.all()[u];
     if(!acc) return null;
-    return {username:u, ...acc};
+    return {username:u, ...acc, isGuest:false};
+  },
+  
+  guest(){
+    let data;
+    try{ data = JSON.parse(localStorage.getItem(this.GUEST_KEY)||'null'); } catch { data = null; }
+    if(!data){
+      data = {name:'Khách_' + Math.floor(Math.random()*9000+1000), avatar:'🎭'};
+      localStorage.setItem(this.GUEST_KEY, JSON.stringify(data));
+    }
+    return {...data, username:data.name, isGuest:true, isAdmin:false};
+  },
+  
+  setGuestName(name){
+    if(!name) return;
+    const data = this.guest();
+    data.name = name;
+    localStorage.setItem(this.GUEST_KEY, JSON.stringify(data));
   },
   
   updateStats(won){
@@ -849,9 +1065,117 @@ const Auth = {
   logout(){localStorage.removeItem(this.USER_KEY)}
 };
 
+/* ========== SOCIAL (Friends & Team Invites) ========== */
+const Social = {
+  KEY_REQ:'ek_requests',
+  KEY_FRIENDS:'ek_friends',
+  KEY_INVITES:'ek_team_invites',
+  
+  allRequests(){
+    try{return JSON.parse(localStorage.getItem(this.KEY_REQ)||'[]')}catch{return []}
+  },
+  _saveReqs(r){localStorage.setItem(this.KEY_REQ, JSON.stringify(r))},
+  
+  allFriends(){
+    try{return JSON.parse(localStorage.getItem(this.KEY_FRIENDS)||'{}')}catch{return {}}
+  },
+  _saveFriends(f){localStorage.setItem(this.KEY_FRIENDS, JSON.stringify(f))},
+  
+  allInvites(){
+    try{return JSON.parse(localStorage.getItem(this.KEY_INVITES)||'[]')}catch{return []}
+  },
+  _saveInvites(i){localStorage.setItem(this.KEY_INVITES, JSON.stringify(i))},
+  
+  sendRequest(from, to){
+    if(from === to) return {ok:false, msg:'Không thể tự kết bạn'};
+    const accs = Auth.all();
+    if(!accs[to]) return {ok:false, msg:'Không tìm thấy user'};
+    const friends = this.getFriends(from);
+    if(friends.includes(to)) return {ok:false, msg:'Đã là bạn bè'};
+    const reqs = this.allRequests();
+    if(reqs.some(r => r.from===from && r.to===to && r.status==='pending')) 
+      return {ok:false, msg:'Đã gửi yêu cầu rồi'};
+    if(reqs.some(r => r.from===to && r.to===from && r.status==='pending'))
+      return {ok:false, msg:'Người đó đã gửi cho bạn. Kiểm tra hộp thư!'};
+    reqs.push({from, to, status:'pending', ts:Date.now()});
+    this._saveReqs(reqs);
+    return {ok:true};
+  },
+  
+  incoming(username){
+    return this.allRequests().filter(r => r.to === username && r.status === 'pending');
+  },
+  outgoing(username){
+    return this.allRequests().filter(r => r.from === username && r.status === 'pending');
+  },
+  
+  accept(reqTs){
+    const reqs = this.allRequests();
+    const req = reqs.find(r => r.ts === reqTs);
+    if(!req) return;
+    req.status = 'accepted';
+    this._saveReqs(reqs);
+    this._addFriend(req.from, req.to);
+  },
+  
+  reject(reqTs){
+    const reqs = this.allRequests();
+    const req = reqs.find(r => r.ts === reqTs);
+    if(!req) return;
+    req.status = 'rejected';
+    this._saveReqs(reqs);
+  },
+  
+  getFriends(username){
+    const all = this.allFriends();
+    return all[username] || [];
+  },
+  
+  _addFriend(a, b){
+    const all = this.allFriends();
+    if(!all[a]) all[a] = [];
+    if(!all[b]) all[b] = [];
+    if(!all[a].includes(b)) all[a].push(b);
+    if(!all[b].includes(a)) all[b].push(a);
+    this._saveFriends(all);
+  },
+  
+  removeFriend(a, b){
+    const all = this.allFriends();
+    if(all[a]) all[a] = all[a].filter(x => x !== b);
+    if(all[b]) all[b] = all[b].filter(x => x !== a);
+    this._saveFriends(all);
+  },
+  
+  // Team invites
+  sendInvite(from, to, roomCode){
+    const invites = this.allInvites();
+    invites.push({from, to, roomCode, status:'pending', ts:Date.now()});
+    this._saveInvites(invites);
+  },
+  incomingInvites(username){
+    return this.allInvites().filter(i => i.to === username && i.status === 'pending');
+  },
+  acceptInvite(ts){
+    const invites = this.allInvites();
+    const inv = invites.find(i => i.ts === ts);
+    if(!inv) return null;
+    inv.status = 'accepted';
+    this._saveInvites(invites);
+    return inv;
+  },
+  rejectInvite(ts){
+    const invites = this.allInvites();
+    const inv = invites.find(i => i.ts === ts);
+    if(!inv) return;
+    inv.status = 'rejected';
+    this._saveInvites(invites);
+  }
+};
+
 /* ========== ENGINE ========== */
 const Engine = {
-  state:null, hostId:null, pendingTimer:null, turnTimerId:null, onChange:null,
+  state:null, hostId:null, pendingTimer:null, onChange:null,
 
   createGame(players, hostId, botMode='smart'){
     this.hostId = hostId;
@@ -870,31 +1194,26 @@ const Engine = {
     this.state.turnIdx = Math.floor(Math.random() * players.length);
     this.state.players[this.state.turnIdx].stats.turns = 1;
     this.log(`🎲 ${this.state.players[this.state.turnIdx].name} đi trước!`);
-    this.startTurnTimer();
     this.notify();
   },
 
   setupDeck(){
     const n = this.state.players.length;
     const deck = this.state.deck;
-    // Ít lá trùng hơn - phân bố hợp lý
     for(let i=0;i<4;i++) deck.push('ATTACK');
     for(let i=0;i<4;i++) deck.push('SKIP');
     for(let i=0;i<4;i++) deck.push('FAVOR');
     for(let i=0;i<3;i++) deck.push('SHUFFLE');
     for(let i=0;i<4;i++) deck.push('SEE_FUTURE');
     for(let i=0;i<5;i++) deck.push('NOPE');
-    for(const c of CATS) for(let i=0;i<3;i++) deck.push(c); // 15 cats
+    for(const c of CATS) for(let i=0;i<3;i++) deck.push(c);
     
-    // Defuse trong deck
     for(let i=0;i<5;i++) deck.push('DEFUSE');
     
     U.shuffle(deck);
-    // 5 lá từ deck + 1 defuse cho mỗi người
     for(let i=0;i<5;i++) for(const p of this.state.players) p.hand.push(deck.pop());
     for(const p of this.state.players) p.hand.push('DEFUSE');
     
-    // EK
     for(let i=0;i<n-1;i++) deck.push('EK');
     U.shuffle(deck);
   },
@@ -905,32 +1224,6 @@ const Engine = {
   log(msg){this.state.logs.push(msg);if(this.state.logs.length>30)this.state.logs.shift()},
   notify(meta){if(this.onChange)this.onChange(meta)},
 
-  startTurnTimer(){
-    clearTimeout(this.turnTimerId);
-    const s = this.state;
-    if(!s || s.phase !== 'playing') return;
-    const expectedTurnIdx = s.turnIdx;
-    const expectedPlayerId = this.cur()?.id;
-    if(!expectedPlayerId) return;
-    this._scheduleAutoDraw(expectedTurnIdx, expectedPlayerId, TURN_TIME_MS);
-  },
-
-  _scheduleAutoDraw(turnIdx, playerId, delayMs){
-    this.turnTimerId = setTimeout(() => {
-      const st = this.state;
-      if(!st || st.phase !== 'playing') return;
-      if(st.turnIdx !== turnIdx) return;
-      if(this.cur()?.id !== playerId) return;
-      if(st.pending || st.awaitingChoice){
-        this._scheduleAutoDraw(turnIdx, playerId, 2000);
-        return;
-      }
-      const pl = this.byId(playerId);
-      this.log(`⏱️ Hết 10s! ${pl?.name||''} tự động bốc bài.`);
-      try { this.drawCard(playerId); } catch(e){ console.error('[AutoDraw]', e); }
-    }, delayMs);
-  },
-
   endTurn(){
     this.state.pending=null;this.state.peekFor=null;clearTimeout(this.pendingTimer);
     let idx=this.state.turnIdx;
@@ -938,7 +1231,6 @@ const Engine = {
     this.state.turnIdx=idx;this.state.turnsLeft=1;
     this.cur().stats.turns++;
     this.log(`→ Lượt của ${this.cur().name}`);
-    this.startTurnTimer();
     this.notify({type:'turn'});
   },
 
@@ -949,7 +1241,6 @@ const Engine = {
     this.state.turnIdx=idx;this.state.turnsLeft=turns;
     this.cur().stats.turns++;
     this.log(`→ Lượt của ${this.cur().name} (${turns} lượt)`);
-    this.startTurnTimer();
     this.notify({type:'turn'});
   },
 
@@ -1099,7 +1390,6 @@ const Engine = {
         this.log(`🐱 ${t.name} không có ${CARDS[wanted].name}.`);
       }
     }
-    // Animation trigger
     if(stolen){
       this.state.lastSteal = {thiefId:p.id, victimId:t.id, card:stolen, id:Math.random()};
     }
@@ -1109,7 +1399,6 @@ const Engine = {
     if(!this.canAct(playerId,'draw')) return false;
     const p = this.byId(playerId);
 
-    // Xáo lại discard khi deck hết
     if(this.state.deck.length===0){
       const reshufflable = this.state.discard.filter(c => c !== 'EK');
       if(reshufflable.length > 0){
@@ -1208,7 +1497,7 @@ const Engine = {
     p.hand = [];
     this.log(`🚪 ${p.name} đã thoát!`);
     if(this.checkWin()) return;
-    if(this.state.players[this.state.turnIdx].id === playerId){
+    if(this.state.players[this.state.turnIdx]?.id === playerId){
       this.endTurn();
     } else {
       this.notify();
@@ -1223,7 +1512,6 @@ const Engine = {
       this.state.awaitingChoice = null;
       this.state.pending = null;
       clearTimeout(this.pendingTimer);
-      clearTimeout(this.turnTimerId);
       if(alive[0]) this.log(`🏆 ${alive[0].name} CHIẾN THẮNG!`);
       Sound.play('win');
       this.notify({type:'win', winner:this.state.winner});
@@ -1398,21 +1686,78 @@ const UI = {
   currentModal:null, _animatedDrawId:null, _lastStealId:null,
   selectedCatIndices:[], pendingCatPlay:null, _handSig:'',
   isShuffling:false, nopeSkippedFor:null,
-  _lastTurnKey:null, _turnCountdownId:null,
-  _lastPendingTs:null, _dealing:false,
+  _lastPendingTs:null, _dealing:false, _statsRecorded:false,
+  _codeInput:'', _pollTimer:null, _shownInvites:new Set(),
+  _friendsTab:'list',
 
   init(){
     Auth.init();
     this.myId = 'p_'+U.uid();
     Engine.onChange = (meta) => this.onEngineChange(meta);
-    
-    // Auth tabs
     this.switchAuthTab('login');
     
-    // Check session
     const cur = Auth.current();
     if(cur){ this.enterMenu(cur); }
     else { this.showScreen('sc-auth'); }
+    
+    // Poll for friend requests & team invites
+    this._pollTimer = setInterval(() => this._pollSocial(), 2500);
+  },
+
+  _pollSocial(){
+    const acc = Auth.current();
+    if(!acc || acc.isGuest) return;
+    
+    // Incoming friend requests
+    const incoming = Social.incoming(acc.username);
+    const pendingCount = incoming.length;
+    
+    // Show badge on friends card
+    const badge = document.getElementById('friendsBadge');
+    if(badge){
+      if(pendingCount > 0){
+        badge.textContent = pendingCount;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+    
+    // Team invites
+    const invites = Social.incomingInvites(acc.username);
+    invites.forEach(inv => {
+      if(this._shownInvites.has(inv.ts)) return;
+      this._shownInvites.add(inv.ts);
+      this.showTeamInvite(inv);
+    });
+  },
+  
+  showTeamInvite(inv){
+    const el = document.createElement('div');
+    el.className = 'glass bevel';
+    el.style.cssText = `position:fixed;top:20px;right:20px;max-width:320px;padding:16px;z-index:9999;animation:slideDown .3s ease-out`;
+    el.innerHTML = `
+      <div style="font-weight:900;margin-bottom:6px">🎯 Lời mời vào đội</div>
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">
+        <b>${this.escapeHtml(inv.from)}</b> mời bạn vào phòng <b>${inv.roomCode}</b>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-p" style="flex:1;padding:8px;font-size:12px" onclick='UI.acceptTeamInvite(${inv.ts}, "${inv.roomCode}")'>Đồng ý</button>
+        <button class="btn-o" style="flex:1;padding:8px;font-size:12px" onclick='UI.rejectTeamInvite(${inv.ts})'>Từ chối</button>
+      </div>
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 15000);
+  },
+  
+  acceptTeamInvite(ts, roomCode){
+    Social.acceptInvite(ts);
+    this.toast('✅ Đã chấp nhận lời mời');
+    setTimeout(() => this.doJoinRoom(roomCode), 300);
+  },
+  rejectTeamInvite(ts){
+    Social.rejectInvite(ts);
+    this.toast('❌ Đã từ chối');
   },
 
   // === AUTH ===
@@ -1452,40 +1797,96 @@ const UI = {
     setTimeout(() => this.enterMenu(Auth.current()), 300);
   },
 
-  enterMenu(acc){
-    if(!acc){ this.showScreen('sc-auth'); return; }
+  playAsGuest(){
+    const g = Auth.guest();
+    this.enterMenu(g);
+  },
+
+  enterMenu(user){
+    if(!user){ this.showScreen('sc-auth'); return; }
     this.myId = 'p_'+U.uid();
-    document.getElementById('topbarName').textContent = '👤 ' + acc.username;
-    document.getElementById('topbarGames').textContent = acc.games || 0;
-    document.getElementById('topbarWins').textContent = acc.wins || 0;
-    document.getElementById('topbarAvatar').textContent = acc.avatar || '🐱';
-    document.getElementById('topbarAdminBadge').style.display = acc.isAdmin ? 'inline-block' : 'none';
-    document.getElementById('adminCard').style.display = acc.isAdmin ? 'flex' : 'none';
+    this._statsRecorded = false;
+    
+    document.getElementById('topbarName').textContent = user.username;
+    document.getElementById('topbarGames').textContent = user.games || 0;
+    document.getElementById('topbarWins').textContent = user.wins || 0;
+    document.getElementById('topbarAvatar').textContent = user.avatar || '🐱';
+    document.getElementById('topbarAdminBadge').style.display = user.isAdmin ? 'inline-block' : 'none';
+    document.getElementById('topbarGuestBadge').style.display = user.isGuest ? 'inline-block' : 'none';
+    document.getElementById('adminCard').style.display = user.isAdmin ? 'flex' : 'none';
+    
+    if(user.isGuest){
+      document.getElementById('topbarFriends').textContent = '—';
+      document.getElementById('friendsCard').classList.add('locked');
+    } else {
+      document.getElementById('topbarFriends').textContent = Social.getFriends(user.username).length;
+      document.getElementById('friendsCard').classList.remove('locked');
+    }
+    
     this.showScreen('sc-menu');
+    this._pollSocial();
   },
 
   // === PROFILE ===
   openProfile(){
-    const acc = Auth.current();
-    if(!acc) return;
-    const avatars = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','👑','😎'];
+    const user = this.currentUser();
+    if(!user) return;
+    const avatars = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','👑','🎭','😎','🤖','👻','🦄'];
+    const winRate = user.games ? Math.round((user.wins/user.games)*100) : 0;
+    
     this.openModal('profile', `
-      <h2>👤 Hồ Sơ</h2>
-      <p><b>${this.escapeHtml(acc.username)}</b>${acc.isAdmin?' <span class="admin-badge">ADMIN</span>':''}</p>
-      <div class="stat-row"><span>🎮 Số trận</span><b>${acc.games||0}</b></div>
-      <div class="stat-row"><span>🏆 Thắng</span><b>${acc.wins||0}</b></div>
-      <div class="stat-row"><span>📊 Tỷ lệ</span><b>${acc.games?Math.round((acc.wins/acc.games)*100):0}%</b></div>
-      <div style="text-align:left;margin-top:10px;font-size:12px;font-weight:bold">Chọn Avatar:</div>
-      <div class="avatar-picker">
-        ${avatars.map(a => `<div class="avatar-opt ${acc.avatar===a?'selected':''}" onclick="UI.pickAvatar('${a}')">${a}</div>`).join('')}
+      <div class="profile-hero">
+        <div class="profile-avatar-big">${user.avatar || '🐱'}</div>
+        <div class="profile-name">${this.escapeHtml(user.username)}</div>
+        ${user.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}
+        ${user.isGuest ? '<span class="admin-badge" style="background:linear-gradient(135deg,#888,#555)">GUEST</span>' : ''}
       </div>
-      <button class="btn-p" onclick="UI.closeModal()">Đóng</button>
-      <button class="btn-danger" onclick="UI.doLogout()">Đăng Xuất</button>
+      
+      ${user.isGuest ? 
+        `<div style="text-align:center;padding:12px;background:rgba(255,204,0,0.1);border-radius:10px;font-size:12px;color:var(--text-2);margin-bottom:8px">
+          💡 Đăng ký tài khoản để lưu trận, kết bạn và chơi đội!
+        </div>
+        <button class="btn-p" onclick="UI.closeModal(); UI.showScreen('sc-auth')">Đăng Ký Ngay</button>
+        ` :
+        `<div class="profile-stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon">🎮</div>
+            <div class="stat-card-value">${user.games || 0}</div>
+            <div class="stat-card-label">Trận</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">🏆</div>
+            <div class="stat-card-value">${user.wins || 0}</div>
+            <div class="stat-card-label">Thắng</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">📊</div>
+            <div class="stat-card-value">${winRate}%</div>
+            <div class="stat-card-label">Tỷ lệ</div>
+          </div>
+        </div>`
+      }
+      
+      <div style="text-align:left;font-size:12px;font-weight:bold;margin-top:8px">Chọn Avatar:</div>
+      <div class="avatar-picker">
+        ${avatars.map(a => `<div class="avatar-opt ${user.avatar===a?'selected':''}" onclick="UI.pickAvatar('${a}')">${a}</div>`).join('')}
+      </div>
+      
+      <button class="btn-o" onclick="UI.closeModal()">Đóng</button>
+      ${user.isGuest ? '' : '<button class="btn-danger" onclick="UI.doLogout()">Đăng Xuất</button>'}
     `);
   },
 
   pickAvatar(emoji){
-    Auth.setAvatar(emoji);
+    const user = this.currentUser();
+    if(!user) return;
+    if(user.isGuest){
+      const g = Auth.guest();
+      g.avatar = emoji;
+      localStorage.setItem(Auth.GUEST_KEY, JSON.stringify({name:g.name, avatar:emoji}));
+    } else {
+      Auth.setAvatar(emoji);
+    }
     document.getElementById('topbarAvatar').textContent = emoji;
     document.querySelectorAll('.avatar-opt').forEach(el => {
       el.classList.toggle('selected', el.textContent === emoji);
@@ -1501,8 +1902,8 @@ const UI = {
 
   // === ADMIN PANEL ===
   openAdminPanel(){
-    const acc = Auth.current();
-    if(!acc || !acc.isAdmin) return;
+    const user = this.currentUser();
+    if(!user || !user.isAdmin) return;
     const accounts = Auth.all();
     const rows = Object.entries(accounts).map(([name, a]) => `
       <div class="stat-row">
@@ -1512,8 +1913,7 @@ const UI = {
     `).join('');
     this.openModal('admin', `
       <h2>👑 Admin Panel</h2>
-      <p style="font-size:12px">Quản lý tài khoản</p>
-      <div style="max-height:300px;overflow-y:auto;text-align:left;padding:8px 0">
+      <div style="max-height:340px;overflow-y:auto;text-align:left;padding:8px 0">
         ${rows}
       </div>
       <button class="btn-o" onclick="UI.adminResetStats()">🔄 Reset tất cả stats</button>
@@ -1534,15 +1934,10 @@ const UI = {
     this.openAdminPanel();
   },
 
-  // === MENU ACTIONS ===
-  quickPlay(){
-    // Instant solo 3 players smart bots
-    this.startSoloGame(3, 'smart');
-  },
-
+  // === SOLO MODAL ===
   openSoloModal(){
     this.openModal('solo', `
-      <h2>🎮 Chơi với Bot</h2>
+      <h2>🤖 Chơi với Bot</h2>
       <p>Chọn số người & độ khó</p>
       <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--text-2)">Số người:</label>
       <select id="soloCount" style="margin-bottom:8px">
@@ -1571,11 +1966,11 @@ const UI = {
   },
 
   startSoloGame(total, botMode){
-    const acc = Auth.current();
-    if(!acc) return;
+    const user = this.currentUser();
+    if(!user) return;
     this.isHost = true;
     this.myId = 'p_'+U.uid();
-    const players = [{id:this.myId, name:acc.username, isBot:false}];
+    const players = [{id:this.myId, name:user.username, isBot:false}];
     const used = [];
     for(let i = 1; i < total; i++){
       let name = BOT_NAMES[i % BOT_NAMES.length];
@@ -1587,43 +1982,78 @@ const UI = {
     this.enterGame(true);
   },
 
-  openCreateRoomModal(){
-    this.createRoom();
-  },
-
+  // === CUSTOM KEYPAD ===
   openJoinRoomModal(){
+    this._codeInput = '';
     this.openModal('join', `
-      <h2>🔗 Vào Phòng</h2>
-      <p>Nhập mã 6 số từ bạn bè</p>
-      <input type="tel" id="joinCodeInput" placeholder="------" maxlength="6" inputmode="numeric"
-        style="text-align:center;font-family:monospace;font-size:22px;letter-spacing:8px;font-weight:bold">
-      <button class="btn-p" onclick="UI.doJoinFromModal()">Vào Phòng</button>
-      <button class="btn-o" onclick="UI.closeModal()">Hủy</button>
+      <div class="keypad-modal">
+        <h2>🔗 Vào Phòng</h2>
+        <p>Nhập mã 6 số từ bạn bè</p>
+        <div class="keypad-display" id="keypadDisplay">
+          ${[0,1,2,3,4,5].map(i => `<div class="code-slot" data-idx="${i}"></div>`).join('')}
+        </div>
+        <div class="keypad-grid">
+          ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="keypad-key" onclick="UI.keypadPress('${n}')">${n}</button>`).join('')}
+          <button class="keypad-key del" onclick="UI.keypadBackspace()">⌫</button>
+          <button class="keypad-key" onclick="UI.keypadPress('0')">0</button>
+          <button class="keypad-key confirm" onclick="UI.keypadConfirm()">✓</button>
+        </div>
+        <button class="btn-o" onclick="UI.closeModal()" style="width:100%;margin-top:8px">Hủy</button>
+      </div>
     `);
-    setTimeout(() => document.getElementById('joinCodeInput')?.focus(), 100);
+    this._updateKeypadDisplay();
   },
 
-  doJoinFromModal(){
-    const raw = document.getElementById('joinCodeInput').value.trim();
-    if(!/^\d{6}$/.test(raw)) return this.toast('Mã phải là 6 chữ số');
+  _updateKeypadDisplay(){
+    const display = document.getElementById('keypadDisplay');
+    if(!display) return;
+    display.querySelectorAll('.code-slot').forEach((slot, i) => {
+      slot.textContent = this._codeInput[i] || '';
+      slot.classList.toggle('filled', i < this._codeInput.length);
+      slot.classList.toggle('active', i === this._codeInput.length);
+    });
+  },
+
+  keypadPress(digit){
+    if(this._codeInput.length >= 6) return;
+    this._codeInput += digit;
+    this._updateKeypadDisplay();
+  },
+
+  keypadBackspace(){
+    this._codeInput = this._codeInput.slice(0, -1);
+    this._updateKeypadDisplay();
+  },
+
+  keypadConfirm(){
+    if(this._codeInput.length !== 6) return this.toast('Nhập đủ 6 số!');
+    const code = this._codeInput;
+    this._codeInput = '';
     this.closeModal();
-    this.doJoinRoom(raw);
+    this.doJoinRoom(code);
   },
 
   // === CREATE / JOIN ROOM ===
   createRoom(){
-    const acc = Auth.current();
-    if(!acc) return;
+    const user = this.currentUser();
+    if(!user) return;
     if(Net.peer) Net.close();
     this.roomCode = U.code();
     this.isHost = true;
     this.myId = 'p_'+U.uid();
-    this.lobbyPlayers = [{id:this.myId, name:acc.username, isHost:true, isBot:false}];
+    this.lobbyPlayers = [{id:this.myId, name:user.username, isHost:true, isBot:false}];
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').textContent = this.roomCode;
     document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang khởi tạo phòng...';
     document.getElementById('hostControls').style.display = 'flex';
     document.getElementById('btnStart').style.display = 'block';
+    
+    const inviteBtn = document.getElementById('inviteFriendsBtn');
+    if(inviteBtn){
+      if(user.isGuest) inviteBtn.style.display = 'none';
+      else inviteBtn.style.display = 'block';
+    }
+    
     this.renderLobby();
     setTimeout(() => this.setupNet(true), 100);
   },
@@ -1676,7 +2106,6 @@ const UI = {
         this.renderLobby();
       };
       Net.onClientDisconnect = (conn, playerId) => {
-        // Handle in-game disconnect
         if(Engine.state && Engine.state.phase === 'playing' && playerId){
           const inGame = Engine.state.players.find(p => p.id === playerId);
           if(inGame && inGame.alive){
@@ -1698,8 +2127,8 @@ const UI = {
       Net.host(this.roomCode);
     } else {
       Net.onConnectSuccess = () => {
-        const acc = Auth.current();
-        Net.send({type:'join', player:{id:this.myId, name:acc.username}});
+        const user = this.currentUser();
+        Net.send({type:'join', player:{id:this.myId, name:user.username}});
       };
       Net.onError = (msg) => {
         this.toast(msg);
@@ -1722,12 +2151,10 @@ const UI = {
       };
       Net.onChat = (name, text) => this.addChatMsg(name, text);
       Net.onHostLeft = () => {
-        // Host left → if in game, I win
         if(Engine.state && Engine.state.phase === 'playing'){
           Engine.state.phase = 'ended';
           const me = Engine.state.players.find(p => p.id === this.myId);
           Engine.state.winner = me || null;
-          clearTimeout(Engine.turnTimerId);
           clearTimeout(Engine.pendingTimer);
           this.render();
           this.showWinModal('Chủ phòng đã thoát khỏi trận!');
@@ -1782,6 +2209,49 @@ const UI = {
     } else this.toast('Không có bot');
   },
 
+  openInviteFriends(){
+    const user = this.currentUser();
+    if(!user || user.isGuest) return this.toast('Cần đăng nhập');
+    const friends = Social.getFriends(user.username);
+    if(friends.length === 0){
+      this.openModal('invite', `
+        <h2>👥 Mời Bạn Bè</h2>
+        <div class="empty-state">
+          <div class="empty-state-icon">👥</div>
+          <div class="empty-state-text">Chưa có bạn bè. Kết bạn trước nhé!</div>
+        </div>
+        <button class="btn-p" onclick="UI.closeModal(); UI.openFriends()">Mở Bạn Bè</button>
+      `);
+      return;
+    }
+    this.openModal('invite', `
+      <h2>👥 Mời Bạn Bè</h2>
+      <p style="font-size:12px">Chọn bạn để mời vào phòng <b>${this.roomCode}</b></p>
+      <div style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;text-align:left">
+        ${friends.map(f => {
+          const accs = Auth.all();
+          const fAcc = accs[f];
+          const av = fAcc?.avatar || '🐱';
+          return `
+            <div class="friend-item">
+              <div class="av">${av}</div>
+              <div class="nm">${this.escapeHtml(f)}</div>
+              <button class="btn-p" onclick="UI.sendTeamInvite('${this.escapeHtml(f)}')">Mời</button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <button class="btn-o" onclick="UI.closeModal()">Đóng</button>
+    `);
+  },
+
+  sendTeamInvite(toUsername){
+    const user = this.currentUser();
+    if(!user || !this.roomCode) return;
+    Social.sendInvite(user.username, toUsername, this.roomCode);
+    this.toast(`✅ Đã gửi lời mời tới ${toUsername}`);
+  },
+
   startMultiplayerGame(){
     if(this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
     const botMode = document.getElementById('lobbyBotMode')?.value || 'smart';
@@ -1793,12 +2263,12 @@ const UI = {
 
   enterGame(asHost){
     this.isHost = asHost;
+    this._statsRecorded = false;
     this.showScreen('sc-game');
     document.getElementById('chatFab').classList.add('on');
     this._dealing = true;
     this.render();
     this.updateModals();
-    // Dealing animation
     setTimeout(() => {
       this._dealing = false;
       document.querySelectorAll('.card.deal-in').forEach(c => c.classList.remove('deal-in'));
@@ -1807,21 +2277,20 @@ const UI = {
   },
 
   leaveRoom(){
-    // If in game & still playing → record loss
-    const acc = Auth.current();
-    if(Engine.state && Engine.state.phase === 'playing' && acc){
-      Auth.updateStats(false);
+    const user = this.currentUser();
+    if(Engine.state && Engine.state.phase === 'playing' && user && !user.isGuest){
+      const meInGame = Engine.state.players.find(p => p.id === this.myId);
+      if(meInGame && meInGame.alive){
+        Auth.updateStats(false);
+      }
     }
     
     if(Net.peer){
       if(this.isHost) Net.send({type:'host_left'});
       Net.close();
     }
-    clearTimeout(Engine.turnTimerId);
     clearTimeout(Engine.pendingTimer);
-    Engine.turnTimerId = null;
     Engine.pendingTimer = null;
-    clearInterval(this._turnCountdownId);
     
     Engine.state = null;
     this.isHost = false;
@@ -1831,7 +2300,6 @@ const UI = {
     this.pendingCatPlay = null;
     this.botScheduled = false;
     this.nopeSkippedFor = null;
-    this._lastTurnKey = null;
     this._lastPendingTs = null;
     this._animatedDrawId = null;
     this._lastStealId = null;
@@ -1840,7 +2308,7 @@ const UI = {
     const nc = document.getElementById('nopeContainer');
     if(nc) nc.remove();
     
-    this.enterMenu(Auth.current());
+    this.enterMenu(this.currentUser());
   },
 
   act(action, payload={}){
@@ -1877,7 +2345,6 @@ const UI = {
     this.renderVFX();
     if(this.isHost) this.processBots();
     
-    // Opponent action notification
     const s = Engine.state;
     if(s?.pending && s.pending.playerId !== this.myId && s.pending.timestamp !== this._lastPendingTs){
       this._lastPendingTs = s.pending.timestamp;
@@ -1920,13 +2387,11 @@ const UI = {
       }
     }
     
-    // Draw animation
     if(s.lastDraw && s.lastDraw.playerId === this.myId && s.lastDraw.id !== this._animatedDrawId){
       this._animatedDrawId = s.lastDraw.id;
       this.animateDraw(s.lastDraw.card);
     }
     
-    // Steal animation
     if(s.lastSteal && s.lastSteal.id !== this._lastStealId){
       this._lastStealId = s.lastSteal.id;
       this.animateSteal(s.lastSteal);
@@ -1945,7 +2410,6 @@ const UI = {
   animateSteal(steal){
     const s = Engine.state;
     const card = steal.card;
-    // Find positions
     let startEl, endEl;
     if(steal.victimId === this.myId){
       startEl = document.getElementById('handArea');
@@ -2130,11 +2594,6 @@ const UI = {
     if(s.turnsLeft > 1){ tEl.style.display='inline-block'; tEl.textContent = `×${s.turnsLeft}`; }
     else tEl.style.display = 'none';
 
-    if(s.turnIdx !== this._lastTurnKey){
-      this._lastTurnKey = s.turnIdx;
-      this._restartTurnCountdown();
-    }
-
     document.getElementById('opponentsArea').innerHTML = s.players.filter(p => p.id !== me.id)
       .map(p => `
         <div class="glass opp ${cur.id===p.id?'turn':''} ${!p.alive?'dead':''}">
@@ -2185,28 +2644,6 @@ const UI = {
     this.renderHandActionBar();
     document.getElementById('gameLog').innerHTML = s.logs.slice(-4).map(l => `• ${this.escapeHtml(l)}`).join('<br>');
     this.updateNopeButton();
-  },
-
-  _restartTurnCountdown(){
-    clearInterval(this._turnCountdownId);
-    const el = document.getElementById('uiTimer');
-    if(!el) return;
-    const s = Engine.state;
-    if(!s || s.phase !== 'playing'){ el.style.display = 'none'; return; }
-    const cur = s.players[s.turnIdx];
-    if(!cur || cur.isBot){ el.style.display = 'none'; return; }
-    
-    el.style.display = 'inline-block';
-    el.className = 'badge timer';
-    let remaining = Math.floor(TURN_TIME_MS/1000);
-    el.textContent = '⏱️ ' + remaining + 's';
-    this._turnCountdownId = setInterval(() => {
-      remaining--;
-      if(remaining <= 0){ clearInterval(this._turnCountdownId); el.textContent = '⏱️ 0s'; return; }
-      el.textContent = '⏱️ ' + remaining + 's';
-      if(remaining <= 3) el.className = 'badge timer danger';
-      else if(remaining <= 6) el.className = 'badge timer warn';
-    }, 1000);
   },
 
   renderHandActionBar(){
@@ -2343,9 +2780,9 @@ const UI = {
     if(!s) return;
     const w = s.winner;
     const isMeWinner = w && w.id === this.myId;
+    const user = this.currentUser();
     
-    // Record stats
-    if(w && s.phase === 'ended' && !this._statsRecorded){
+    if(w && s.phase === 'ended' && !this._statsRecorded && user && !user.isGuest){
       this._statsRecorded = true;
       Auth.updateStats(isMeWinner);
     }
@@ -2501,6 +2938,219 @@ const UI = {
     this.act('draw');
   },
 
+  // === HOW TO PLAY ===
+  openHowToPlay(){
+    this.openModal('howto', `
+      <h2>📖 Hướng Dẫn</h2>
+      <div class="info-tabs">
+        <button class="info-tab active" onclick="UI.switchInfoTab('rules')">Luật Chơi</button>
+        <button class="info-tab" onclick="UI.switchInfoTab('cards')">Các Lá Bài</button>
+      </div>
+      <div id="infoContent"></div>
+    `);
+    this.switchInfoTab('rules');
+  },
+
+  switchInfoTab(tab){
+    document.querySelectorAll('.info-tab').forEach(t => {
+      t.classList.toggle('active', t.textContent.toLowerCase().includes(tab === 'rules' ? 'luật' : 'bài'));
+    });
+    const content = document.getElementById('infoContent');
+    if(!content) return;
+    
+    if(tab === 'rules'){
+      content.innerHTML = `
+        <div class="rules-section">
+          <h3>🎯 Mục tiêu</h3>
+          <p>Là người <b>sống sót cuối cùng</b>. Ai bốc phải Mèo Nổ mà không có Gỡ Bom sẽ bị loại.</p>
+          
+          <h3>🎮 Cách chơi</h3>
+          <ul>
+            <li>Đến lượt bạn, bạn có thể <b>đánh lá bài</b> (không bắt buộc) hoặc <b>bốc 1 lá</b> từ bộ bài.</li>
+            <li>Sau khi bốc bài, lượt của bạn kết thúc (trừ khi bốc trúng lá có hiệu ứng).</li>
+            <li>Bạn có thể đánh <b>nhiều lá bài</b> trước khi bốc.</li>
+            <li>Nếu bốc phải <b>Mèo Nổ</b>, bạn phải có <b>Gỡ Bom</b> để tự cứu. Không có = bị loại.</li>
+            <li>Bạn có thể dùng <b>NOPE</b> để chặn hành động của đối thủ trong 3.5 giây.</li>
+          </ul>
+          
+          <h3>⚡ Combo Mèo</h3>
+          <p>Đánh <b>2 lá Mèo cùng loại</b>: cướp 1 lá ngẫu nhiên từ đối thủ.<br>
+          Đánh <b>3 lá Mèo cùng loại</b>: gọi tên 1 lá, nếu đối thủ có thì lấy.</p>
+          
+          <h3>🏆 Chiến thắng</h3>
+          <p>Người cuối cùng còn sống thắng. Hoặc nếu đối thủ thoát trận, bạn thắng ngay.</p>
+          
+          <h3>💡 Mẹo</h3>
+          <ul>
+            <li>Giữ <b>Gỡ Bom</b> cho lúc nguy cấp</li>
+            <li>Dùng <b>Nhìn Trước</b> để biết có nên bốc không</li>
+            <li><b>Tấn Công</b> khi đối thủ đang yếu (ít bài)</li>
+            <li>Đừng lãng phí <b>NOPE</b> vào lá yếu</li>
+          </ul>
+        </div>
+      `;
+    } else {
+      content.innerHTML = `
+        <div class="card-list-grid">
+          ${CARD_INFO.map(c => `
+            <div class="card-list-item">
+              <div class="card-list-icon">${c.icon}</div>
+              <div class="card-list-body">
+                <div class="card-list-name">${c.name}</div>
+                <div class="card-list-desc">${c.how.replace(/\n/g, '<br>')}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  },
+
+  // === FRIENDS ===
+  openFriends(){
+    const user = this.currentUser();
+    if(!user) return;
+    if(user.isGuest){
+      this.openModal('friends', `
+        <h2>👥 Bạn Bè</h2>
+        <div class="empty-state">
+          <div class="empty-state-icon">🔒</div>
+          <div class="empty-state-text">Cần đăng nhập để kết bạn và chơi đội!</div>
+        </div>
+        <button class="btn-p" onclick="UI.closeModal(); UI.showScreen('sc-auth')">Đăng Nhập / Đăng Ký</button>
+      `);
+      return;
+    }
+    
+    this._friendsTab = 'list';
+    this.openModal('friends', `
+      <h2>👥 Bạn Bè</h2>
+      <div class="friend-tabs">
+        <button class="friend-tab active" onclick="UI.switchFriendsTab('list')">Bạn bè</button>
+        <button class="friend-tab" onclick="UI.switchFriendsTab('requests')">Yêu cầu</button>
+        <button class="friend-tab" onclick="UI.switchFriendsTab('add')">Thêm</button>
+      </div>
+      <div id="friendsContent"></div>
+      <button class="btn-o" onclick="UI.closeModal()">Đóng</button>
+    `);
+    this.switchFriendsTab('list');
+  },
+
+  switchFriendsTab(tab){
+    this._friendsTab = tab;
+    document.querySelectorAll('.friend-tab').forEach(t => {
+      const txt = t.textContent.toLowerCase();
+      t.classList.toggle('active',
+        (tab === 'list' && txt.includes('bạn')) ||
+        (tab === 'requests' && txt.includes('yêu')) ||
+        (tab === 'add' && txt.includes('thêm'))
+      );
+    });
+    const content = document.getElementById('friendsContent');
+    if(!content) return;
+    const user = this.currentUser();
+    if(!user) return;
+    
+    if(tab === 'list'){
+      const friends = Social.getFriends(user.username);
+      if(friends.length === 0){
+        content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">Chưa có bạn bè. Thử tìm kiếm và kết bạn!</div></div>`;
+        return;
+      }
+      const accs = Auth.all();
+      content.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow-y:auto">
+        ${friends.map(f => {
+          const fAcc = accs[f];
+          return `
+            <div class="friend-item">
+              <div class="av">${fAcc?.avatar || '🐱'}</div>
+              <div class="nm">${this.escapeHtml(f)}</div>
+              <div class="actions">
+                <button class="btn-o" onclick="UI.removeFriend('${this.escapeHtml(f)}')" style="color:#ff8a7a">Xoá</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>`;
+    } else if(tab === 'requests'){
+      const incoming = Social.incoming(user.username);
+      const outgoing = Social.outgoing(user.username);
+      content.innerHTML = `
+        <div style="max-height:40vh;overflow-y:auto">
+          <div style="font-size:12px;font-weight:bold;color:var(--text-2);margin:8px 0">Yêu cầu đến:</div>
+          ${incoming.length === 0 ? '<div class="empty-state" style="padding:12px"><div class="empty-state-text" style="font-size:11px">Không có</div></div>' :
+            incoming.map(r => `
+              <div class="friend-item">
+                <div class="av">📩</div>
+                <div class="nm">${this.escapeHtml(r.from)}</div>
+                <div class="actions">
+                  <button class="btn-p" style="padding:6px 10px" onclick="UI.acceptFriendReq(${r.ts})">✓</button>
+                  <button class="btn-danger" style="padding:6px 10px" onclick="UI.rejectFriendReq(${r.ts})">✗</button>
+                </div>
+              </div>
+            `).join('')
+          }
+          <div style="font-size:12px;font-weight:bold;color:var(--text-2);margin:12px 0 8px">Yêu cầu đã gửi:</div>
+          ${outgoing.length === 0 ? '<div class="empty-state" style="padding:12px"><div class="empty-state-text" style="font-size:11px">Không có</div></div>' :
+            outgoing.map(r => `
+              <div class="friend-item">
+                <div class="av">⏳</div>
+                <div class="nm">${this.escapeHtml(r.to)}</div>
+                <div style="font-size:11px;color:var(--text-3)">Đang chờ...</div>
+              </div>
+            `).join('')
+          }
+        </div>
+      `;
+    } else {
+      content.innerHTML = `
+        <div style="padding:8px 0">
+          <input type="text" id="searchFriendInput" placeholder="Nhập username cần kết bạn..." maxlength="20">
+          <button class="btn-p" style="width:100%;margin-top:8px" onclick="UI.sendFriendReq()">➕ Gửi Yêu Cầu</button>
+        </div>
+      `;
+    }
+  },
+
+  sendFriendReq(){
+    const user = this.currentUser();
+    if(!user) return;
+    const input = document.getElementById('searchFriendInput');
+    const target = input.value.trim();
+    if(!target) return this.toast('Nhập username');
+    const res = Social.sendRequest(user.username, target);
+    if(!res.ok) return this.toast(res.msg);
+    this.toast(`✅ Đã gửi yêu cầu tới ${target}`);
+    input.value = '';
+    this.switchFriendsTab('requests');
+  },
+
+  acceptFriendReq(ts){
+    const user = this.currentUser();
+    if(!user) return;
+    Social.accept(ts);
+    this.toast('✅ Đã chấp nhận');
+    this._pollSocial();
+    this.switchFriendsTab('list');
+    this.enterMenu(this.currentUser());
+  },
+
+  rejectFriendReq(ts){
+    Social.reject(ts);
+    this.toast('❌ Đã từ chối');
+    this.switchFriendsTab('requests');
+  },
+
+  removeFriend(f){
+    const user = this.currentUser();
+    if(!user) return;
+    if(!confirm(`Xoá ${f} khỏi bạn bè?`)) return;
+    Social.removeFriend(user.username, f);
+    this.toast('Đã xoá bạn');
+    this.switchFriendsTab('list');
+    this.enterMenu(this.currentUser());
+  },
+
   // === CHAT ===
   toggleChat(){
     document.getElementById('chatPanel').classList.toggle('on');
@@ -2511,8 +3161,8 @@ const UI = {
     const txt = inp.value.trim();
     if(!txt) return;
     inp.value = '';
-    const acc = Auth.current();
-    const name = acc?.username || 'Player';
+    const user = this.currentUser();
+    const name = user?.username || 'Player';
     this.addChatMsg(name, txt);
     if(Net.peer) Net.send({type:'chat', name, text:txt});
   },
@@ -2525,6 +3175,12 @@ const UI = {
   },
 
   // === HELPERS ===
+  currentUser(){
+    const acc = Auth.current();
+    if(acc) return acc;
+    return Auth.guest();
+  },
+
   showScreen(id){
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
     document.getElementById(id).classList.add('on');
@@ -2541,12 +3197,9 @@ const UI = {
   },
   me(){return Engine.state?.players.find(p => p.id === this.myId)},
   escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 };
-
-// Fix VFX.shake (used in CSS class)
-document.head.insertAdjacentHTML('beforeend', '<style>@keyframes shake{10%,90%{transform:translate3d(-4px,0,0)}20%,80%{transform:translate3d(6px,0,0)}30%,50%,70%{transform:translate3d(-8px,0,0)}40%,60%{transform:translate3d(8px,0,0)}}.shake{animation:shake .5s cubic-bezier(.36,.07,.19,.97) both}</style>');
 
 document.addEventListener('DOMContentLoaded', () => UI.init());
 </script>
