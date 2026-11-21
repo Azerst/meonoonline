@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Exploding Kittens - Liquid Glass</title>
+
+<style>
+  /* ================= LIQUID GLASS THEME ================= */
+  :root{
+    --red:#d93828;
+    --red-dark:#b52a1c;
+    --bg-main:#eef2f6;
+    --grid-color:rgba(0,0,0,0.07);
+    --glass-bg:rgba(255, 255, 255, 0.45);
+    --glass-border:rgba(255, 255, 255, 0.8);
+    --text-main:#2c1b18;
+    --text-light:#5a4a48;
+    --cut:20px;
+  }
+
+  *,*::before,*::after{ margin:0; padding:0; box-sizing:border-box; }
+  
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    background-color:var(--bg-main);
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size:32px 32px;
+    background-position:center top;
+    color:var(--text-main);
+    height:100vh;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    user-select: none;
+  }
+
+  /* Glow Background */
+  .glow{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(255,122,92,0.4) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(217,56,40,0.4) 0%, transparent 50%);
+    filter:blur(50px);
+    animation:pulseGlow 6s ease-in-out infinite alternate;
+  }
+  @keyframes pulseGlow{ 0%{ transform:scale(0.95); opacity:0.6; } 100%{ transform:scale(1.05); opacity:1; } }
+
+  /* ================= GLASS COMPONENTS ================= */
+  .glass-panel {
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    clip-path: polygon(
+      var(--cut) 0, 100% 0,
+      100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%,
+      0 100%, 0 var(--cut)
+    );
+    box-shadow: 0 1.5px 0 rgba(255,255,255,0.9) inset, 0 0 30px -10px rgba(255,255,255,0.5) inset, 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.4);
+    transition: transform 0.3s ease;
+  }
+  .glass-panel::before {
+    content:""; position:absolute; top:0; left:5%; right:5%; height:2px;
+    background:linear-gradient(90deg, transparent, #fff, transparent);
+    z-index:10; pointer-events:none;
+  }
+
+  /* ================= UI ELEMENTS ================= */
+  button {
+    font-family: inherit; font-weight: 700; font-size: 16px;
+    padding: 12px 24px; border: none; border-radius: 8px;
+    cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+    color: var(--red-dark);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,1) inset;
+    position: relative; overflow: hidden;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+  button:active { transform: translateY(1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: grayscale(1); }
+  
+  .btn-primary { background: linear-gradient(180deg, #ff6b6b 0%, var(--red) 100%); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+  .btn-primary:hover { background: linear-gradient(180deg, #ff7b7b 0%, var(--red-dark) 100%); }
+  .btn-danger { background: linear-gradient(180deg, #ff9800 0%, #e65100 100%); color: #fff; }
+  
+  input {
+    width: 100%; padding: 14px 16px; border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.5);
+    font-family: inherit; font-size: 16px; color: var(--text-main);
+    outline: none; transition: all 0.2s;
+  }
+  input:focus { background: #fff; border-color: var(--red); box-shadow: 0 0 0 4px rgba(217,56,40,0.2); }
+
+  /* ================= SCREENS ================= */
+  .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* 1. Home Screen */
+  #screen-home { justify-content: center; align-items: center; padding: 20px; }
+  .home-box { width: 100%; max-width: 400px; padding: 40px 30px; display: flex; flex-direction: column; gap: 20px; text-align: center; }
+  .home-title { font-size: 36px; font-weight: 900; color: var(--red-dark); letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(255,255,255,0.8); }
+  .home-subtitle { font-size: 14px; color: var(--text-light); margin-top: -10px; margin-bottom: 10px; }
+  
+  /* 2. Lobby Screen */
+  #screen-lobby { justify-content: center; align-items: center; padding: 20px; }
+  .lobby-box { width: 100%; max-width: 500px; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+  .room-code { font-size: 32px; font-weight: 900; letter-spacing: 4px; color: var(--red); text-align: center; cursor: pointer; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.4); }
+  .player-list { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; }
+  .player-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; background: rgba(255,255,255,0.5); border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); }
+  .player-item .avatar { font-size: 24px; }
+  .player-item .name { flex: 1; font-weight: bold; }
+  .player-item .status { font-size: 12px; font-weight: bold; color: var(--red); }
+
+  /* 3. Game Screen */
+  #screen-game { display: none; flex-direction: column; height: 100%; padding: 10px; overflow: hidden; }
+  #screen-game.active { display: flex; }
+  
+  .game-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; margin-bottom: 10px; font-weight: bold; font-size: 14px; flex-shrink: 0; }
+  .header-badge { background: rgba(255,255,255,0.6); padding: 5px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  
+  .opponents-area { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; flex-shrink: 0; }
+  .opp-card { display: flex; flex-direction: column; align-items: center; padding: 10px 15px; min-width: 80px; transition: 0.3s; position: relative; }
+  .opp-card.active-turn { box-shadow: 0 0 20px var(--red); border: 2px solid var(--red); transform: scale(1.05); }
+  .opp-card.dead { opacity: 0.4; filter: grayscale(1); }
+  .opp-card.dead::after { content: '💀'; position: absolute; font-size: 40px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  .opp-avatar { font-size: 32px; margin-bottom: 5px; }
+  .opp-name { font-size: 12px; font-weight: bold; margin-bottom: 2px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .opp-cards { font-size: 12px; color: var(--red-dark); font-weight: bold; }
+
+  .board-center { flex: 1; display: flex; justify-content: center; align-items: center; gap: 30px; position: relative; min-height: 0; }
+  .pile { width: 100px; height: 140px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; flex-shrink: 0; }
+  .deck-pile { background: linear-gradient(135deg, var(--red), var(--red-dark)); cursor: pointer; box-shadow: 0 10px 20px rgba(217,56,40,0.4); border: 3px solid #fff; }
+  .deck-pile:hover { transform: translateY(-5px) scale(1.02); }
+  .deck-pile.glow { animation: deckPulse 1.5s infinite; }
+  @keyframes deckPulse { 0%,100% { box-shadow: 0 0 15px rgba(217,56,40,0.6); } 50% { box-shadow: 0 0 35px rgba(217,56,40,1); } }
+  .discard-pile { background: rgba(255,255,255,0.3); border: 2px dashed rgba(255,255,255,0.8); }
+  .badge { position: absolute; bottom: -10px; right: -10px; background: #fff; color: var(--red); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+  .game-log { position: absolute; top: 10px; left: 10px; font-size: 12px; background: rgba(0,0,0,0.5); color: #fff; padding: 10px; border-radius: 8px; pointer-events: none; max-width: 200px; backdrop-filter: blur(5px); }
+
+  .hand-area { padding: 15px; min-height: 170px; display: flex; flex-direction: column; flex-shrink: 0; }
+  .hand-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; align-items: center; scrollbar-width: thin; }
+  
+  /* Cards */
+  .card {
+    width: 90px; height: 130px; border-radius: 10px; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 8px 5px; cursor: pointer; position: relative;
+    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border: 2px solid #fff; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow: hidden;
+  }
+  .card:hover:not(.disabled) { transform: translateY(-15px) scale(1.05); z-index: 10; box-shadow: 0 15px 25px rgba(0,0,0,0.3); border-color: var(--red); }
+  .card.disabled { opacity: 0.4; filter: grayscale(0.8); cursor: not-allowed; }
+  .card-icon { font-size: 36px; margin-top: 5px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+  .card-title { font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1.1; color: #333; }
+  .card-desc { font-size: 8px; text-align: center; color: #666; line-height: 1.1; }
+  
+  /* Card Colors */
+  .c-EK { background: linear-gradient(135deg, #ffcccc, #ff9999); border-color: #ff4d4d; }
+  .c-DEFUSE { background: linear-gradient(135deg, #ccffcc, #99ff99); border-color: #4dff4d; }
+  .c-NOPE { background: linear-gradient(135deg, #ffe6cc, #ffcc99); border-color: #ff9933; }
+  .c-ATTACK { background: linear-gradient(135deg, #ffcccc, #ff6666); border-color: #cc0000; color: #fff; }
+  .c-ATTACK .card-title, .c-ATTACK .card-desc { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+  .c-SKIP { background: linear-gradient(135deg, #cce6ff, #99ccff); border-color: #3399ff; }
+  .c-SEE_FUTURE { background: linear-gradient(135deg, #e6ccff, #cc99ff); border-color: #9933ff; }
+  .c-SHUFFLE { background: linear-gradient(135deg, #ccffff, #99ffff); border-color: #33ffff; }
+  .c-FAVOR { background: linear-gradient(135deg, #ffccff, #ff99ff); border-color: #ff33ff; }
+  .c-CAT { background: linear-gradient(135deg, #fff2cc, #ffe699); border-color: #ffcc00; }
+
+  /* Chat System */
+  .chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: none; backdrop-filter: blur(2px); }
+  .chat-overlay.active { display: block; }
+  .chat-panel { position: fixed; right: 20px; top: 50%; transform: translateY(-50%) translateX(120%); width: 320px; height: 400px; display: flex; flex-direction: column; z-index: 201; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background: rgba(255, 255, 255, 0.85); }
+  .chat-panel.open { transform: translateY(-50%) translateX(0); }
+  .chat-header { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+  .chat-close { cursor: pointer; font-size: 20px; color: var(--red); font-weight: bold; padding: 0 5px; }
+  .chat-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+  .chat-msg .usr { color: var(--red); font-weight: bold; }
+  .chat-input-area { display: flex; padding: 15px; gap: 8px; border-top: 1px solid rgba(0,0,0,0.1); }
+  .chat-input-area input { padding: 8px; font-size: 14px; }
+  .chat-input-area button { padding: 8px 15px; font-size: 14px; }
+  .chat-fab { position: fixed; right: 20px; bottom: 200px; z-index: 100; padding: 10px 15px; border-radius: 20px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; font-weight: bold; }
+  .chat-fab:hover { transform: scale(1.05); }
+
+  /* ================= OVERLAYS & VFX ================= */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 999; opacity: 0; pointer-events: none; transition: 0.3s; }
+  .overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-box { width: 90%; max-width: 500px; padding: 30px; display: flex; flex-direction: column; gap: 20px; text-align: center; transform: scale(0.9); transition: 0.3s; }
+  .overlay.active .modal-box { transform: scale(1); }
+
+  .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes shake { 10%, 90% { transform: translate3d(-4px, 0, 0); } 20%, 80% { transform: translate3d(6px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
+  .flash-red { animation: flashRed 0.5s ease-out; }
+  @keyframes flashRed { 0% { box-shadow: inset 0 0 0 100vw rgba(255,0,0,0.8); } 100% { box-shadow: inset 0 0 0 100vw rgba(255,0,0,0); } }
+  .particle { position: absolute; border-radius: 50%; pointer-events: none; z-index: 1000; }
+  
+  .nope-btn { position: fixed; bottom: 50%; left: 50%; transform: translate(-50%, 50%); z-index: 200; padding: 15px 40px; font-size: 24px; background: linear-gradient(135deg, #ff0000, #ff6b6b); color: #fff; border-radius: 50px; box-shadow: 0 0 20px rgba(255,0,0,0.5); animation: pulseNope 0.5s infinite alternate; border: 3px solid #fff; cursor: pointer; }
+  @keyframes pulseNope { from { transform: translate(-50%, 50%) scale(1); } to { transform: translate(-50%, 50%) scale(1.1); } }
+
+  @media (max-width: 600px) {
+    .card { width: 70px; height: 105px; }
+    .card-icon { font-size: 28px; }
+    .card-title { font-size: 8px; }
+    .card-desc { display: none; }
+    .pile { width: 80px; height: 115px; font-size: 30px; }
+    .chat-panel { width: 100%; right: 0; height: 50vh; top: auto; bottom: 0; transform: translateY(100%); border-radius: 20px 20px 0 0; }
+    .chat-panel.open { transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<!-- SCREEN: HOME -->
+<div id="screen-home" class="screen active">
+  <div class="glass-panel home-box">
+    <h1 class="home-title">Mèo Nổ</h1>
+    <p class="home-subtitle">Exploding Kittens - Liquid Glass</p>
+    <input type="text" id="playerName" placeholder="Nhập tên của bạn..." maxlength="15" value="">
+    <button class="btn-primary" onclick="UI.createRoom()">Tạo Phòng (Online)</button>
+    <button onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia Phòng</button>
+    <div id="joinArea" style="display:none; flex-direction:column; gap:10px;">
+      <input type="text" id="joinCode" placeholder="Mã phòng (6 ký tự)" maxlength="6" style="text-transform:uppercase">
+      <button onclick="UI.joinRoom()">Vào</button>
+    </div>
+    <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:10px 0;">
+    <button onclick="UI.startSolo()">Chơi với Bot AI</button>
+  </div>
+</div>
+
+<!-- SCREEN: LOBBY -->
+<div id="screen-lobby" class="screen">
+  <div class="glass-panel lobby-box">
+    <h2 style="text-align:center; color:var(--red-dark)">Phòng Chờ</h2>
+    <div class="room-code" id="lobbyCode" onclick="navigator.clipboard.writeText(this.innerText); alert('Đã copy mã phòng!')">------</div>
+    <div style="text-align:center; font-size:12px; color:#666; margin-top:-10px">Nhấn vào mã để copy</div>
+    <div class="player-list" id="lobbyPlayers"></div>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button id="btnAddBot" style="display:none" onclick="UI.addBot()">+ Thêm Bot</button>
+      <button class="btn-primary" id="btnStart" style="display:none" onclick="UI.startMultiplayerGame()">Bắt Đầu</button>
+      <button class="btn-danger" onclick="UI.leaveLobby()">Rời Phòng</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: GAME -->
+<div id="screen-game" class="screen">
+  <div class="glass-panel game-header" style="--cut:15px">
+    <div class="header-badge">Sống: <span id="uiAlive">0</span></div>
+    <div class="header-badge" id="uiTurn" style="color:var(--red); font-weight:900;">Lượt: ...</div>
+    <div class="header-badge">Bài: <span id="uiDeck">0</span></div>
+    <button onclick="UI.leaveLobby()" style="padding: 5px 15px; font-size: 12px; background: transparent; border: 1px solid var(--red); color: var(--red);">Thoát</button>
+  </div>
+
+  <div class="opponents-area" id="opponentsArea"></div>
+
+  <div class="board-center">
+    <div class="game-log" id="gameLog"></div>
+    <div class="pile discard-pile" id="discardPile"></div>
+    <div class="pile deck-pile" id="deckPile" onclick="Game.drawCard()">
+      🂠 <div class="badge" id="deckBadge">0</div>
+    </div>
+  </div>
+
+  <div class="glass-panel hand-area" style="--cut:15px">
+    <div style="font-size:12px; font-weight:bold; color:var(--text-light); margin-bottom:5px;">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
+    <div class="hand-scroll" id="handArea"></div>
+  </div>
+</div>
+
+<!-- CHAT SYSTEM -->
+<div class="chat-overlay" id="chatOverlay" onclick="UI.toggleChat()"></div>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <span>💬 Trò Chuyện</span>
+    <span class="chat-close" onclick="UI.toggleChat()">✖</span>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-input-area">
+    <input type="text" id="chatInput" onkeypress="if(event.key==='Enter')UI.sendChat()">
+    <button onclick="UI.sendChat()">Gửi</button>
+  </div>
+</div>
+<div class="chat-fab" id="chatFab" onclick="UI.toggleChat()" style="display: none;">💬 Chat</div>
+
+<!-- MODALS -->
+<div class="overlay" id="overlayModal">
+  <div class="glass-panel modal-box" id="modalContent"></div>
+</div>
+
+<script>
+/* ================= GAME DATA ================= */
+const CARD_TYPES = {
+  EK: { name: 'Mèo Nổ', icon: '💥', desc: 'Rút trúng là nổ!', class: 'EK' },
+  DEFUSE: { name: 'Gỡ Bom', icon: '🧯', desc: 'Cứu mạng khi trúng bom', class: 'DEFUSE' },
+  NOPE: { name: 'Không', icon: '🙅', desc: 'Hủy hành động đối thủ', class: 'NOPE' },
+  ATTACK: { name: 'Tấn Công', icon: '⚔️', desc: 'Bắt người sau đi 2 lượt', class: 'ATTACK' },
+  SKIP: { name: 'Bỏ Lượt', icon: '⏭️', desc: 'Kết thúc lượt không rút', class: 'SKIP' },
+  SEE_FUTURE: { name: 'Nhìn Trước', icon: '🔮', desc: 'Xem 3 lá trên cùng', class: 'SEE_FUTURE' },
+  SHUFFLE: { name: 'Xáo Bài', icon: '🔀', desc: 'Xáo trộn bộ bài', class: 'SHUFFLE' },
+  FAVOR: { name: 'Xin Bài', icon: '🫴', desc: 'Lấy 1 bài ngẫu nhiên', class: 'FAVOR' },
+  CAT_TACO: { name: 'Mèo Taco', icon: '🌮', desc: 'Combo', class: 'CAT' },
+  CAT_RAINBOW: { name: 'Mèo Cầu Vồng', icon: '🌈', desc: 'Combo', class: 'CAT' },
+  CAT_BEARD: { name: 'Mèo Râu', icon: '🧔', desc: 'Combo', class: 'CAT' },
+  CAT_POTATO: { name: 'Mèo Khoai', icon: '🥔', desc: 'Combo', class: 'CAT' },
+  CAT_HAIRY: { name: 'Mèo Lông', icon: '🐈', desc: 'Combo', class: 'CAT' }
+};
+const CATS = ['CAT_TACO', 'CAT_RAINBOW', 'CAT_BEARD', 'CAT_POTATO', 'CAT_HAIRY'];
+
+const Utils = {
+  uid: () => Math.random().toString(36).substring(2, 9),
+  shuffle: (a) => { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; },
+  code: () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
+};
+
+/* ================= SOUND ENGINE ================= */
+const Sound = {
+  ctx: null, muted: false,
+  init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  play(type) {
+    if(this.muted) return;
+    try {
+      this.init();
+      if(this.ctx.state === 'suspended') this.ctx.resume();
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.connect(g); g.connect(this.ctx.destination);
+      
+      const now = this.ctx.currentTime;
+      if(type === 'draw') { o.type='sine'; o.frequency.setValueAtTime(400, now); o.frequency.exponentialRampToValueAtTime(600, now+0.1); g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.1); o.start(now); o.stop(now+0.1); }
+      else if(type === 'play') { o.type='triangle'; o.frequency.setValueAtTime(300, now); o.frequency.exponentialRampToValueAtTime(100, now+0.2); g.gain.setValueAtTime(0.2, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.2); o.start(now); o.stop(now+0.2); }
+      else if(type === 'boom') { o.type='sawtooth'; o.frequency.setValueAtTime(100, now); o.frequency.exponentialRampToValueAtTime(20, now+0.5); g.gain.setValueAtTime(0.4, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.5); o.start(now); o.stop(now+0.5); }
+      else if(type === 'defuse') { o.type='sine'; o.frequency.setValueAtTime(800, now); o.frequency.linearRampToValueAtTime(1200, now+0.2); g.gain.setValueAtTime(0.2, now); g.gain.linearRampToValueAtTime(0, now+0.2); o.start(now); o.stop(now+0.2); }
+      else if(type === 'nope') { o.type='square'; o.frequency.setValueAtTime(200, now); o.frequency.linearRampToValueAtTime(150, now+0.15); g.gain.setValueAtTime(0.15, now); g.gain.linearRampToValueAtTime(0, now+0.15); o.start(now); o.stop(now+0.15); }
+    } catch(e) {}
+  }
+};
+
+/* ================= VFX ENGINE ================= */
+const VFX = {
+  shake() {
+    const el = document.body;
+    el.classList.add('shake');
+    setTimeout(() => el.classList.remove('shake'), 500);
+  },
+  flash() {
+    const el = document.getElementById('screen-game');
+    el.classList.add('flash-red');
+    setTimeout(() => el.classList.remove('flash-red'), 500);
+  },
+  explode(x, y) {
+    this.shake();
+    this.flash();
+    Sound.play('boom');
+    for(let i=0; i<30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 20 + 10;
+      p.style.width = size + 'px'; p.style.height = size + 'px';
+      p.style.left = x + 'px'; p.style.top = y + 'px';
+      p.style.background = `hsl(${Math.random()*40}, 100%, 50%)`;
+      document.body.appendChild(p);
+      
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = Math.random() * 150 + 50;
+      const tx = Math.cos(angle) * velocity;
+      const ty = Math.sin(angle) * velocity;
+      
+      p.animate([
+        { transform: `translate(0, 0) scale(1)`, opacity: 1 },
+        { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+      ], { duration: 600 + Math.random()*400, easing: 'cubic-bezier(0, .9, .57, 1)' }).onfinish = () => p.remove();
+    }
+  }
+};
+
+/* ================= GAME LOGIC ENGINE ================= */
+const Game = {
+  state: null,
+  isHost: false,
+  myId: null,
+  botTimer: null,
+
+  init(players, isHost = true) {
+    this.isHost = isHost;
+    this.myId = UI.myId; // Gắn ID người chơi hiện tại
+    this.state = {
+      players: players.map((p, i) => ({ ...p, hand: [], alive: true, index: i })),
+      deck: [], discard: [], logs: [],
+      turnIdx: 0, turnsLeft: 1, phase: 'playing',
+      pending: null, peekData: null, winner: null
+    };
+    this.buildDeck();
+    this.deal();
+    this.log(`Trận đấu bắt đầu! Đến lượt ${this.currentPlayer.name}`);
+  },
+
+  get players() { return this.state.players; },
+  get currentPlayer() { return this.state.players[this.state.turnIdx]; },
+  get myPlayer() { return this.state.players.find(p => p.id === this.myId); },
+
+  buildDeck() {
+    const d = [];
+    const n = this.players.length;
+    for(let i=0; i<n+2; i++) d.push('DEFUSE');
+    for(let i=0; i<4; i++) d.push('ATTACK');
+    for(let i=0; i<4; i++) d.push('SKIP');
+    for(let i=0; i<4; i++) d.push('FAVOR');
+    for(let i=0; i<4; i++) d.push('SHUFFLE');
+    for(let i=0; i<5; i++) d.push('SEE_FUTURE');
+    for(let i=0; i<5; i++) d.push('NOPE');
+    for(let c of CATS) { for(let i=0; i<4; i++) d.push(c); }
+    this.state.deck = Utils.shuffle(d);
+  },
+
+  deal() {
+    for(let p of this.players) {
+      const idx = this.state.deck.indexOf('DEFUSE');
+      if(idx > -1) { this.state.deck.splice(idx, 1); p.hand.push('DEFUSE'); }
+    }
+    for(let i=0; i<7; i++) {
+      for(let p of this.players) {
+        if(this.state.deck.length) p.hand.push(this.state.deck.pop());
+      }
+    }
+    for(let i=0; i<this.players.length-1; i++) this.state.deck.push('EK');
+    this.state.deck = Utils.shuffle(this.state.deck);
+    
+    // Đảm bảo 3 lá đầu không phải EK
+    for(let k=0; k<3; k++) {
+      let idx = this.state.deck.length - 1 - k;
+      if(this.state.deck[idx] === 'EK') {
+        let swapIdx = Math.floor(Math.random() * (this.state.deck.length/2));
+        if(this.state.deck[swapIdx] !== 'EK') {
+          [this.state.deck[idx], this.state.deck[swapIdx]] = [this.state.deck[swapIdx], this.state.deck[idx]];
+        }
+      }
+    }
+    this.state.turnIdx = Math.floor(Math.random() * this.players.length);
+  },
+
+  log(msg) {
+    if(!this.state) return;
+    this.state.logs.push(msg);
+    if(this.state.logs.length > 20) this.state.logs.shift();
+    UI.renderLog();
+  },
+
+  nextTurn() {
+    this.state.pending = null;
+    this.state.peekData = null;
+    UI.closeModal();
+    
+    do {
+      this.state.turnIdx = (this.state.turnIdx + 1) % this.players.length;
+    } while(!this.currentPlayer.alive);
+    this.state.turnsLeft = 1;
+    this.log(`Đến lượt ${this.currentPlayer.name}`);
+    
+    UI.renderGame();
+    if(this.isHost) UI.syncState();
+    this.checkBots();
+  },
+
+  checkWin() {
+    const alive = this.players.filter(p => p.alive);
+    if(alive.length <= 1) {
+      this.state.phase = 'ended';
+      this.state.winner = alive[0];
+      this.log(`🏆 ${alive[0]?.name} CHIẾN THẮNG!`);
+      UI.showWin(alive[0]);
+      if(this.isHost) UI.syncState();
+      return true;
+    }
+    return false;
+  },
+
+  playCard(cardType, targetId = null) {
+    if(this.state.pending) return;
+    const me = this.myPlayer;
+    if(!me || me.id !== this.currentPlayer.id) return;
+
+    const idx = me.hand.indexOf(cardType);
+    if(idx === -1) return;
+    
+    if(CATS.includes(cardType)) {
+      const idx2 = me.hand.indexOf(cardType, idx + 1);
+      if(idx2 === -1) return alert('Cần 2 lá mèo giống nhau!');
+      me.hand.splice(idx2, 1);
+    }
+    
+    me.hand.splice(idx, 1);
+    this.state.discard.push(cardType);
+    
+    this.state.pending = { playerId: me.id, cardType, targetId, nopes: 0 };
+    Sound.play('play');
+    this.log(`${me.name} đánh ${CARD_TYPES[cardType].name}`);
+    
+    UI.renderGame();
+    if(this.isHost) UI.syncState();
+
+    setTimeout(() => {
+      if(this.state.pending) {
+        this.resolvePending();
+        if(this.isHost) UI.syncState();
+      }
+    }, 2500);
+  },
+
+  useNope(playerId) {
+    if(!this.state.pending) return;
+    const p = this.players.find(x => x.id === playerId);
+    if(!p || !p.hand.includes('NOPE')) return;
+
+    p.hand.splice(p.hand.indexOf('NOPE'), 1);
+    this.state.discard.push('NOPE');
+    this.state.pending.nopes++;
+    Sound.play('nope');
+    this.log(`${p.name} dùng NOPE!`);
+    
+    UI.renderGame();
+    if(this.isHost) UI.syncState();
+  },
+
+  resolvePending() {
+    const { playerId, cardType, targetId, nopes } = this.state.pending;
+    this.state.pending = null;
+    const p = this.players.find(x => x.id === playerId);
+
+    if(nopes % 2 !== 0) {
+      this.log(`Hành động của ${p.name} bị hủy bởi NOPE!`);
+      UI.renderGame();
+      return;
+    }
+
+    switch(cardType) {
+      case 'ATTACK':
+        this.state.turnsLeft += 1;
+        this.log(`${p.name} dùng ATTACK!`);
+        this.nextTurn();
+        break;
+      case 'SKIP':
+        this.state.turnsLeft--;
+        this.log(`${p.name} dùng SKIP.`);
+        if(this.state.turnsLeft <= 0) this.nextTurn();
+        else UI.renderGame();
+        break;
+      case 'SHUFFLE':
+        this.state.deck = Utils.shuffle(this.state.deck);
+        this.log(`${p.name} xáo bài.`);
+        UI.renderGame();
+        break;
+      case 'SEE_FUTURE':
+        this.log(`${p.name} xem tương lai.`);
+        if(this.myId === p.id) {
+          UI.showPeekModal(this.state.deck.slice(-3).reverse());
+        } else {
+          UI.renderGame();
+        }
+        break;
+      case 'FAVOR':
+        const t = this.players.find(x => x.id === targetId);
+        if(t && t.hand.length) {
+          this.log(`${p.name} xin bài từ ${t.name}.`);
+          if(t.isBot) {
+            const stolen = t.hand.splice(Math.floor(Math.random()*t.hand.length), 1)[0];
+            p.hand.push(stolen);
+            UI.renderGame();
+          } else if(this.myId === t.id) {
+            UI.showFavorModal(p, t);
+          } else {
+            UI.renderGame();
+          }
+        }
+        break;
+      default:
+        if(CATS.includes(cardType)) {
+          const t = this.players.find(x => x.id === targetId);
+          if(t && t.hand.length) {
+            const stolen = t.hand.splice(Math.floor(Math.random()*t.hand.length), 1)[0];
+            p.hand.push(stolen);
+            this.log(`${p.name} cướp bài từ ${t.name}.`);
+            Sound.play('draw');
+          }
+        }
+        UI.renderGame();
+    }
+  },
+
+  drawCard() {
+    if(this.state.pending) return;
+    const me = this.myPlayer;
+    if(!me || me.id !== this.currentPlayer.id) return;
+
+    Sound.play('draw');
+    const card = this.state.deck.pop();
+    
+    if(card === 'EK') {
+      this.log(`${me.name} rút trúng MÈO NỔ!`);
+      const el = document.getElementById('deckPile');
+      if(el) {
+        const rect = el.getBoundingClientRect();
+        VFX.explode(rect.left + rect.width/2, rect.top + rect.height/2);
+      }
+      
+      if(me.hand.includes('DEFUSE')) {
+        Sound.play('defuse');
+        me.hand.splice(me.hand.indexOf('DEFUSE'), 1);
+        this.log(`${me.name} dùng DEFUSE để cứu mạng!`);
+        if(this.myId === me.id) {
+          UI.showDefuseModal();
+        } else {
+          setTimeout(() => {
+            this.resolveDefuse('random');
+            if(this.isHost) UI.syncState();
+          }, 1000);
+        }
+      } else {
+        me.alive = false;
+        this.log(`💥 ${me.name} đã bị nổ!`);
+        this.state.discard.push('EK');
+        if(this.checkWin()) return;
+        setTimeout(() => this.nextTurn(), 1500);
+        UI.renderGame();
+        if(this.isHost) UI.syncState();
+      }
+    } else {
+      me.hand.push(card);
+      this.state.turnsLeft--;
+      if(this.state.turnsLeft <= 0) {
+        this.nextTurn();
+      } else {
+        UI.renderGame();
+        if(this.isHost) UI.syncState();
+      }
+    }
+  },
+
+  resolveDefuse(pos) {
+    let idx = pos === 'top' ? this.state.deck.length : (pos === 'bottom' ? 0 : Math.floor(Math.random() * this.state.deck.length));
+    this.state.deck.splice(idx, 0, 'EK');
+    this.log(`${this.myPlayer.name} giấu Mèo Nổ vào bộ bài.`);
+    UI.closeModal();
+    this.nextTurn();
+  },
+
+  resolveFavor(cardIdx) {
+    const from = this.state.pending?.playerId || this.currentPlayer.id;
+    const f = this.players.find(x => x.id === from);
+    const t = this.myPlayer;
+    
+    if(t && f && cardIdx >= 0 && cardIdx < t.hand.length) {
+      const stolen = t.hand.splice(cardIdx, 1)[0];
+      f.hand.push(stolen);
+      this.log(`${t.name} đưa 1 lá cho ${f.name}.`);
+    }
+    UI.closeModal();
+    UI.renderGame();
+    if(this.isHost) UI.syncState();
+  },
+
+  // BOT LOGIC
+  checkBots() {
+    if(!this.isHost) return;
+    clearTimeout(this.botTimer);
+    if(!this.currentPlayer || !this.currentPlayer.isBot || this.state.phase === 'ended') return;
+
+    this.botTimer = setTimeout(() => {
+      if(this.currentPlayer.id !== this.players[this.state.turnIdx].id) return;
+      this.runBotTurn();
+    }, 1500);
+  },
+
+  runBotTurn() {
+    const bot = this.currentPlayer;
+    const has = c => bot.hand.includes(c);
+
+    if(has('ATTACK') && Math.random() < 0.7) {
+      this.state.pending = { playerId: bot.id, cardType: 'ATTACK', nopes: 0 };
+      bot.hand.splice(bot.hand.indexOf('ATTACK'), 1);
+      this.state.discard.push('ATTACK');
+      this.log(`${bot.name} đánh ATTACK`);
+      UI.renderGame();
+      if(this.isHost) UI.syncState();
+      setTimeout(() => {
+        if(this.state.pending) {
+          this.resolvePending();
+          if(this.isHost) UI.syncState();
+        }
+      }, 2000);
+    } 
+    else if(has('SKIP') && Math.random() < 0.6) {
+      this.state.pending = { playerId: bot.id, cardType: 'SKIP', nopes: 0 };
+      bot.hand.splice(bot.hand.indexOf('SKIP'), 1);
+      this.state.discard.push('SKIP');
+      this.log(`${bot.name} đánh SKIP`);
+      UI.renderGame();
+      if(this.isHost) UI.syncState();
+      setTimeout(() => {
+        if(this.state.pending) {
+          this.resolvePending();
+          if(this.isHost) UI.syncState();
+        }
+      }, 2000);
+    }
+    else {
+      for(let c of CATS) {
+        if(bot.hand.filter(x => x === c).length >= 2) {
+          const targets = this.players.filter(p => p.alive && p.id !== bot.id);
+          if(targets.length) {
+            this.state.pending = { playerId: bot.id, cardType: c, targetId: targets[0].id, nopes: 0 };
+            bot.hand.splice(bot.hand.indexOf(c), 1);
+            bot.hand.splice(bot.hand.indexOf(c), 1);
+            this.state.discard.push(c);
+            this.log(`${bot.name} dùng combo mèo`);
+            UI.renderGame();
+            if(this.isHost) UI.syncState();
+            setTimeout(() => {
+              if(this.state.pending) {
+                this.resolvePending();
+                if(this.isHost) UI.syncState();
+              }
+            }, 2000);
+            return;
+          }
+        }
+      }
+      
+      // Rút bài
+      const card = this.state.deck.pop();
+      if(card === 'EK') {
+        this.log(`${bot.name} rút trúng MÈO NỔ!`);
+        if(bot.hand.includes('DEFUSE')) {
+          bot.hand.splice(bot.hand.indexOf('DEFUSE'), 1);
+          this.log(`${bot.name} dùng DEFUSE!`);
+          this.state.deck.splice(Math.floor(Math.random() * this.state.deck.length), 0, 'EK');
+          this.nextTurn();
+        } else {
+          bot.alive = false;
+          this.log(`💥 ${bot.name} đã bị nổ!`);
+          if(!this.checkWin()) this.nextTurn();
+        }
+      } else {
+        bot.hand.push(card);
+        this.state.turnsLeft--;
+        if(this.state.turnsLeft <= 0) this.nextTurn();
+        else {
+          UI.renderGame();
+          if(this.isHost) UI.syncState();
+          this.checkBots();
+        }
+      }
+    }
+  }
+};
+
+/* ================= UI CONTROLLER ================= */
+const UI = {
+  myId: Utils.uid(),
+  roomCode: null,
+  isHost: false,
+  lobbyData: [],
+  net: null,
+
+  init() {
+    document.getElementById('playerName').value = 'Player_' + Math.floor(Math.random()*1000);
+  },
+
+  showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  },
+
+  getPlayerName() {
+    return document.getElementById('playerName').value.trim() || 'Player_' + Math.floor(Math.random()*100);
+  },
+
+  toggleChat() {
+    const panel = document.getElementById('chatPanel');
+    const overlay = document.getElementById('chatOverlay');
+    panel.classList.toggle('open');
+    overlay.classList.toggle('active');
+  },
+
+  createRoom() {
+    this.roomCode = Utils.code();
+    this.isHost = true;
+    this.lobbyData = [{ id: this.myId, name: this.getPlayerName(), isHost: true, isBot: false }];
+    
+    this.setupNet();
+    this.showScreen('screen-lobby');
+    document.getElementById('lobbyCode').innerText = this.roomCode;
+    document.getElementById('btnAddBot').style.display = 'block';
+    document.getElementById('btnStart').style.display = 'block';
+    this.renderLobby();
+  },
+
+  joinRoom() {
+    const code = document.getElementById('joinCode').value.toUpperCase().trim();
+    if(code.length !== 6) return alert('Mã phòng phải 6 ký tự');
+    
+    this.roomCode = code;
+    this.isHost = false;
+    this.setupNet();
+    this.net.postMessage({ type: 'join', player: { id: this.myId, name: this.getPlayerName() } });
+    
+    this.showScreen('screen-lobby');
+    document.getElementById('lobbyCode').innerText = this.roomCode;
+    document.getElementById('btnAddBot').style.display = 'none';
+    document.getElementById('btnStart').style.display = 'none';
+  },
+
+  startSolo() {
+    this.isHost = true;
+    const players = [
+      { id: this.myId, name: this.getPlayerName(), isBot: false },
+      { id: 'bot1', name: 'Mèo Béo', isBot: true },
+      { id: 'bot2', name: 'Mèo Ngáo', isBot: true }
+    ];
+    Game.init(players, true);
+    this.enterGame();
+  },
+
+  leaveLobby() {
+    if(this.net) {
+      if(this.isHost) this.net.postMessage({ type: 'host_left' });
+      this.net.close();
+      this.net = null;
+    }
+    Game.state = null;
+    Game.isHost = false;
+    Game.myId = null;
+    this.roomCode = null;
+    this.isHost = false;
+    this.lobbyData = [];
+    document.getElementById('chatFab').style.display = 'none';
+    this.showScreen('screen-home');
+  },
+
+  addBot() {
+    if(this.lobbyData.length >= 5) return;
+    this.lobbyData.push({
+      id: 'bot_' + Utils.uid(),
+      name: ['Mèo Béo', 'Mèo Ngáo', 'Mèo Điên', 'Mèo Lười'][Math.floor(Math.random()*4)],
+      isBot: true, isHost: false
+    });
+    this.broadcastLobby();
+    this.renderLobby();
+  },
+
+  startMultiplayerGame() {
+    if(this.lobbyData.length < 2) return alert('Cần ít nhất 2 người chơi!');
+    const players = this.lobbyData.map(p => ({ id: p.id, name: p.name, isBot: p.isBot }));
+    Game.init(players, true);
+    Game.myId = this.myId; // Đảm bảo Host cũng có ID
+    this.net.postMessage({ type: 'start', state: JSON.parse(JSON.stringify(Game.state)) });
+    this.enterGame();
+  },
+
+  enterGame() {
+    this.showScreen('screen-game');
+    document.getElementById('chatFab').style.display = 'block';
+    this.renderGame();
+    Game.checkBots();
+  },
+
+  renderLobby() {
+    document.getElementById('lobbyPlayers').innerHTML = this.lobbyData.map(p => `
+      <div class="player-item">
+        <div class="avatar">${p.isBot ? '🤖' : '👤'}</div>
+        <div class="name">${p.name}</div>
+        <div class="status">${p.isHost ? 'Chủ phòng' : 'Sẵn sàng'}</div>
+      </div>
+    `).join('');
+  },
+
+  setupNet() {
+    this.net = new BroadcastChannel('ek_room_' + this.roomCode);
+    this.net.onmessage = (e) => {
+      const msg = e.data;
+      
+      if(this.isHost) {
+        if(msg.type === 'join') {
+          if(!this.lobbyData.find(p => p.id === msg.player.id)) {
+            this.lobbyData.push(msg.player);
+            this.broadcastLobby();
+            this.renderLobby();
+          }
+        }
+        else if(msg.type === 'action') {
+          if(msg.action === 'play') Game.playCard(msg.card, msg.target);
+          if(msg.action === 'draw') Game.drawCard();
+          if(msg.action === 'nope') Game.useNope(msg.pid);
+          if(msg.action === 'defuse') Game.resolveDefuse(msg.pos);
+          if(msg.action === 'favor') Game.resolveFavor(msg.idx);
+          this.syncState();
+        }
+        else if(msg.type === 'chat') {
+          this.addChatMsg(msg.name, msg.text);
+          this.net.postMessage({ type: 'chat', name: msg.name, text: msg.text });
+        }
+      }
+      else {
+        if(msg.type === 'lobby') {
+          this.lobbyData = msg.data;
+          this.renderLobby();
+        }
+        else if(msg.type === 'start') {
+          Game.state = msg.state;
+          Game.isHost = false;
+          Game.myId = this.myId; // Fix lỗi Client không có ID
+          this.enterGame();
+        }
+        else if(msg.type === 'state') {
+          Game.state = msg.state;
+          this.renderGame();
+        }
+        else if(msg.type === 'chat') {
+          this.addChatMsg(msg.name, msg.text);
+        }
+        else if(msg.type === 'host_left') {
+          alert('Chủ phòng đã thoát!');
+          this.leaveLobby();
+        }
+      }
+    };
+  },
+
+  broadcastLobby() { if(this.isHost && this.net) this.net.postMessage({ type: 'lobby', data: this.lobbyData }); },
+
+  syncState() {
+    if(!Game.state) return;
+    if(this.isHost) {
+      this.net?.postMessage({ type: 'state', state: JSON.parse(JSON.stringify(Game.state)) });
+    }
+    this.renderGame();
+  },
+
+  sendAction(action, card, target) {
+    if(this.isHost) {
+      if(action === 'play') Game.playCard(card, target);
+      if(action === 'draw') Game.drawCard();
+      if(action === 'nope') Game.useNope(this.myId);
+      if(action === 'defuse') Game.resolveDefuse(target);
+      if(action === 'favor') Game.resolveFavor(target);
+      this.syncState();
+    } else {
+      this.net.postMessage({ type: 'action', pid: this.myId, action, card, target });
+    }
+  },
+
+  renderGame() {
+    const g = Game.state;
+    if(!g) return;
+    const me = g.players.find(p => p.id === Game.myId);
+    if(!me) return; // Nếu không tìm thấy bản thân, bỏ qua render để tránh crash
+
+    document.getElementById('uiAlive').innerText = g.players.filter(p=>p.alive).length;
+    document.getElementById('uiDeck').innerText = g.deck.length;
+    document.getElementById('deckBadge').innerText = g.deck.length;
+    document.getElementById('uiTurn').innerText = g.phase === 'ended' ? 'Kết thúc' : `Lượt: ${g.players[g.turnIdx].name}`;
+    document.getElementById('uiHandCount').innerText = me.hand.length;
+    
+    document.getElementById('opponentsArea').innerHTML = g.players.filter(p => p.id !== me.id).map(p => `
+      <div class="glass-panel opp-card ${g.players[g.turnIdx].id === p.id ? 'active-turn' : ''} ${!p.alive ? 'dead' : ''}" style="--cut:12px">
+        <div class="opp-avatar">${p.isBot ? '🤖' : '👤'}</div>
+        <div class="opp-name">${p.name}</div>
+        <div class="opp-cards">🂠 ${p.hand.length}</div>
+      </div>
+    `).join('');
+
+    const disc = document.getElementById('discardPile');
+    if(g.discard.length > 0) {
+      const top = g.discard[g.discard.length-1];
+      disc.innerHTML = `<div style="font-size:40px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.2))">${CARD_TYPES[top].icon}</div>`;
+    } else disc.innerHTML = '🗑️';
+
+    const handArea = document.getElementById('handArea');
+    const myTurn = g.players[g.turnIdx].id === me.id && g.phase === 'playing';
+    me.hand.sort();
+    
+    handArea.innerHTML = me.hand.map((c) => {
+      const isPlayable = myTurn && !g.pending && c !== 'EK' && c !== 'DEFUSE' && c !== 'NOPE';
+      const canPlayCat = CATS.includes(c) ? (me.hand.filter(x => x === c).length >= 2) : true;
+      const finalPlayable = isPlayable && canPlayCat;
+      
+      return `
+        <div class="card c-${CARD_TYPES[c].class} ${finalPlayable ? '' : 'disabled'}" onclick="UI.clickCard('${c}')">
+          <div class="card-icon">${CARD_TYPES[c].icon}</div>
+          <div class="card-title">${CARD_TYPES[c].name}</div>
+          <div class="card-desc">${CARD_TYPES[c].desc}</div>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('deckPile').classList.toggle('glow', myTurn && !g.pending);
+
+    let nopeBtn = document.getElementById('nopeBtn');
+    if(g.pending && g.pending.playerId !== me.id && me.hand.includes('NOPE')) {
+      if(!nopeBtn) {
+        nopeBtn = document.createElement('button');
+        nopeBtn.id = 'nopeBtn';
+        nopeBtn.className = 'nope-btn';
+        nopeBtn.innerText = '🙅 NOPE!';
+        nopeBtn.onclick = () => this.sendAction('nope');
+        document.body.appendChild(nopeBtn);
+      }
+    } else if(nopeBtn) nopeBtn.remove();
+  },
+
+  renderLog() {
+    const el = document.getElementById('gameLog');
+    if(el && Game.state) {
+      el.innerHTML = Game.state.logs.slice(-4).map(l => `<div>• ${l}</div>`).join('');
+    }
+  },
+
+  clickCard(card) {
+    const g = Game.state;
+    const me = g.players.find(p => p.id === Game.myId);
+    if(g.players[g.turnIdx].id !== me.id || g.pending) return;
+    
+    if(CATS.includes(card) || card === 'FAVOR') this.showTargetModal(card);
+    else this.sendAction('play', card);
+  },
+
+  drawCard() {
+    const g = Game.state;
+    const me = g.players.find(p => p.id === Game.myId);
+    if(g.players[g.turnIdx].id !== me.id || g.pending || g.phase !== 'playing') return;
+    this.sendAction('draw');
+  },
+
+  /* ================= MODALS ================= */
+  openModal(html) {
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('overlayModal').classList.add('active');
+  },
+  closeModal() { document.getElementById('overlayModal').classList.remove('active'); },
+
+  showTargetModal(card) {
+    const targets = Game.state.players.filter(p => p.alive && p.id !== Game.myId);
+    this.openModal(`
+      <h2>Chọn mục tiêu</h2>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        ${targets.map(t => `<button onclick="UI.sendAction('play', '${card}', '${t.id}'); UI.closeModal()">${t.name} (${t.hand.length} bài)</button>`).join('')}
+      </div>
+      <button onclick="UI.closeModal()" style="background:transparent; border:1px solid #ccc; color:#666; margin-top:10px;">Hủy</button>
+    `);
+  },
+
+  showDefuseModal() {
+    this.openModal(`
+      <h2>Bạn đã dùng DEFUSE!</h2>
+      <p>Chọn vị trí đặt lại Mèo Nổ:</p>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+        <button class="btn-primary" onclick="UI.sendAction('defuse', null, 'top')">⬆️ Trên Cùng (Nguy hiểm)</button>
+        <button onclick="UI.sendAction('defuse', null, 'random')">🎲 Ngẫu Nhiên</button>
+        <button onclick="UI.sendAction('defuse', null, 'bottom')">⬇️ Dưới Cùng (An toàn)</button>
+      </div>
+    `);
+  },
+
+  showPeekModal(cards) {
+    this.openModal(`
+      <h2>🔮 Nhìn Tương Lai</h2>
+      <p>3 lá bài trên cùng (theo thứ tự rút):</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin:20px 0;">
+        ${cards.map(c => `<div class="card c-${CARD_TYPES[c].class}" style="width:80px; height:110px;"><div class="card-icon">${CARD_TYPES[c].icon}</div></div>`).join('')}
+      </div>
+      <button class="btn-primary" onclick="UI.closeModal(); Game.nextTurn(); if(UI.isHost) UI.syncState();">Đã Hiểu & Kết Thúc Lượt</button>
+    `);
+  },
+
+  showFavorModal(requester, target) {
+    this.openModal(`
+      <h2>${requester.name} xin bài</h2>
+      <p>Chọn 1 lá để đưa:</p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px;">
+        ${target.hand.map((c, i) => `<div class="card c-${CARD_TYPES[c].class}" onclick="UI.sendAction('favor', null, ${i})"><div class="card-icon">${CARD_TYPES[c].icon}</div></div>`).join('')}
+      </div>
+    `);
+  },
+
+  showWin(winner) {
+    this.openModal(`
+      <h1 style="color:var(--red); font-size:40px; margin-bottom:20px;">🎉 CHIẾN THẮNG!</h1>
+      <div style="font-size:80px; margin:20px 0;">🏆</div>
+      <h2>${winner ? winner.name : 'Không ai'} đã sống sót!</h2>
+      <button class="btn-primary" style="margin-top:20px;" onclick="UI.leaveLobby()">Về Trang Chủ</button>
+    `);
+  },
+
+  /* ================= CHAT ================= */
+  sendChat() {
+    const inp = document.getElementById('chatInput');
+    const txt = inp.value.trim();
+    if(!txt) return;
+    inp.value = '';
+    const name = this.getPlayerName();
+    
+    this.addChatMsg(name, txt);
+    if(this.net) this.net.postMessage({ type: 'chat', name, text: txt });
+  },
+
+  addChatMsg(name, text) {
+    const box = document.getElementById('chatMsgs');
+    box.innerHTML += `<div class="chat-msg"><span class="usr">${name}:</span> ${text}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+};
+
+// Khởi tạo
+document.addEventListener('DOMContentLoaded', () => UI.init());
+</script>
+</body>
+</html> 
