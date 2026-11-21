@@ -3,68 +3,98 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens V4</title>
+<title>Exploding Kittens V5</title>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
   :root{
-    /* Cool theme (lobby/auth/menu) */
-    --c-bg1:#0a0e27; --c-bg2:#1a1f3a; --c-bg3:#252c4f;
-    --c-accent:#4a9eff; --c-accent2:#a855f7; --c-cyan:#22d3ee;
-    --c-text:#fff; --c-text2:#c9d1e8; --c-text3:#8892b0;
-    /* Warm theme (game) */
-    --w-red:#ff3b30; --w-red2:#d93828; --w-gold:#ffcc00; --w-gold2:#ff8a00;
-    --cut:20px;
+    /* Cool theme with white as primary accent */
+    --bg1:#0a0e27; --bg2:#1a1f3a;
+    --white:#ffffff; --white-soft:#f5f7ff; --white-dim:#e2e8f7;
+    --accent:#6bb6ff; --accent2:#a855f7; --cyan:#22d3ee;
+    --text:#fff; --text2:#dde4f5; --text3:#9aa5c4;
+    /* Warm game theme */
+    --w-red:#ff4757; --w-red2:#e63946; --w-gold:#ffd60a; --w-gold2:#ff9e00;
+    --cut:26px;
   }
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%;overflow:hidden}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
     background:
-      radial-gradient(circle at 10% 10%, rgba(74,158,255,0.35) 0%, transparent 40%),
-      radial-gradient(circle at 90% 90%, rgba(168,85,247,0.25) 0%, transparent 45%),
+      radial-gradient(circle at 10% 10%, rgba(120,180,255,0.42) 0%, transparent 42%),
+      radial-gradient(circle at 90% 90%, rgba(200,140,255,0.32) 0%, transparent 46%),
       radial-gradient(circle at 50% 50%, #1a1f3a 0%, #0a0e27 60%, #050814 100%);
-    color:var(--c-text);-webkit-font-smoothing:antialiased;user-select:none;min-height:100vh;
+    color:var(--text);-webkit-font-smoothing:antialiased;user-select:none;min-height:100vh;
   }
-  .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);opacity:0.55}
-  .orb-1{width:420px;height:420px;top:-120px;left:-120px;background:rgba(74,158,255,0.6);animation:orbFloat 14s ease-in-out infinite}
-  .orb-2{width:460px;height:460px;bottom:-180px;right:-180px;background:rgba(168,85,247,0.5);animation:orbFloat 16s ease-in-out infinite reverse}
-  .orb-3{width:320px;height:320px;top:40%;right:10%;background:rgba(34,211,238,0.35);animation:orbFloat 12s ease-in-out infinite;animation-delay:-4s}
+  .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(90px);opacity:0.6}
+  .orb-1{width:440px;height:440px;top:-140px;left:-140px;background:rgba(120,180,255,0.7);animation:orbFloat 14s ease-in-out infinite}
+  .orb-2{width:480px;height:480px;bottom:-200px;right:-200px;background:rgba(200,140,255,0.55);animation:orbFloat 16s ease-in-out infinite reverse}
+  .orb-3{width:340px;height:340px;top:40%;right:8%;background:rgba(255,255,255,0.2);animation:orbFloat 12s ease-in-out infinite;animation-delay:-4s}
   @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.15)}}
-  .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.04;
-    background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);
-    background-size:44px 44px}
+  .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.045;
+    background-image:linear-gradient(rgba(255,255,255,0.9) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,0.9) 1px,transparent 1px);
+    background-size:48px 48px}
   
+  /* ===== BEVEL (all 4 corners cut) ===== */
+  .bevel, .topbar, .menu-card, .auth-box, .lobby-box, .ghead, .hand-area, .modal, .btn-main, .btn-p, .btn-p2, .btn-o, .btn-danger, .pitem, .stat-card, .friend-item {
+    --cut:26px;
+    clip-path:polygon(
+      var(--cut) 0,
+      calc(100% - var(--cut)) 0,
+      100% var(--cut),
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      var(--cut) 100%,
+      0 calc(100% - var(--cut)),
+      0 var(--cut)
+    );
+  }
+  .bevel-sm, .card, .pile, .opp, .badge, .room-code {
+    --cut:12px;
+    clip-path:polygon(
+      var(--cut) 0,
+      calc(100% - var(--cut)) 0,
+      100% var(--cut),
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      var(--cut) 100%,
+      0 calc(100% - var(--cut)),
+      0 var(--cut)
+    );
+  }
+  
+  /* ===== GLASS with WHITE emphasis ===== */
   .glass{
     position:relative;
-    background:linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-    backdrop-filter:blur(30px) saturate(180%);
-    -webkit-backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid rgba(255,255,255,0.15);
-    box-shadow:0 10px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+    background:linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.06));
+    backdrop-filter:blur(32px) saturate(180%);
+    -webkit-backdrop-filter:blur(32px) saturate(180%);
+    border:1.5px solid rgba(255,255,255,0.32);
+    box-shadow:0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.1);
     z-index:1;
   }
-  .bevel{clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
   
-  button{font-family:inherit;font-weight:700;font-size:14px;padding:12px 20px;
-    border:1px solid rgba(255,255,255,0.2);border-radius:12px;cursor:pointer;
+  button{font-family:inherit;font-weight:800;font-size:14px;padding:12px 22px;
+    border:1.5px solid rgba(255,255,255,0.28);border-radius:0;cursor:pointer;
     transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
-    background:linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.05));
-    color:var(--c-text);box-shadow:0 4px 14px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.3);
+    background:linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.06));
+    color:var(--text);box-shadow:0 4px 14px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.35);
     backdrop-filter:blur(20px);}
-  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.5)}
+  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.55)}
   button:active:not(:disabled){transform:translateY(1px) scale(0.98)}
   button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(1)}
-  .btn-p{background:linear-gradient(180deg,#6bb6ff 0%,#4a9eff 60%,#2563eb 100%);border-color:rgba(255,255,255,0.4);box-shadow:0 6px 24px rgba(74,158,255,0.55),inset 0 1px 0 rgba(255,255,255,0.5)}
-  .btn-p:hover:not(:disabled){box-shadow:0 10px 36px rgba(74,158,255,0.75)}
-  .btn-p2{background:linear-gradient(180deg,#c084fc,#a855f7 60%,#7c3aed);border-color:rgba(255,255,255,0.4);box-shadow:0 6px 24px rgba(168,85,247,0.55),inset 0 1px 0 rgba(255,255,255,0.5)}
-  .btn-o{background:rgba(255,255,255,0.05)}
+  
+  .btn-p{background:linear-gradient(180deg, #ffffff 0%, #e8ecf7 100%);color:#1a1f3a;border-color:rgba(255,255,255,0.6);box-shadow:0 6px 24px rgba(255,255,255,0.25),inset 0 1px 0 rgba(255,255,255,0.9)}
+  .btn-p:hover:not(:disabled){box-shadow:0 10px 36px rgba(255,255,255,0.35);transform:translateY(-2px) scale(1.01)}
+  .btn-p2{background:linear-gradient(180deg,#c084fc,#a855f7 60%,#7c3aed);color:#fff;border-color:rgba(255,255,255,0.4);box-shadow:0 6px 24px rgba(168,85,247,0.55),inset 0 1px 0 rgba(255,255,255,0.4)}
+  .btn-o{background:rgba(255,255,255,0.08)}
   .btn-danger{background:linear-gradient(180deg,#ff6666,#cc2200);color:#fff}
   .btn-icon{width:34px;height:34px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:16px;line-height:1}
   
-  input,select{width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);backdrop-filter:blur(20px);font-family:inherit;font-size:15px;color:var(--c-text);outline:none;transition:all .25s}
-  input::placeholder{color:var(--c-text3)}
-  input:focus,select:focus{background:rgba(255,255,255,0.12);border-color:rgba(74,158,255,0.7);box-shadow:0 0 0 4px rgba(74,158,255,0.2)}
+  input,select{width:100%;padding:13px 16px;border-radius:14px;border:1.5px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);font-family:inherit;font-size:15px;color:var(--text);outline:none;transition:all .25s}
+  input::placeholder{color:var(--text3)}
+  input:focus,select:focus{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.7);box-shadow:0 0 0 4px rgba(255,255,255,0.15)}
   select option{background:#1a1f3a;color:#fff}
   
   .screen{display:none;position:fixed;inset:0;flex-direction:column;padding:12px;overflow:hidden;z-index:1}
@@ -72,179 +102,191 @@
   
   /* ===== AUTH ===== */
   #sc-auth{justify-content:center;align-items:center;padding:20px;overflow-y:auto}
-  .auth-box{width:100%;max-width:440px;padding:34px 28px;display:flex;flex-direction:column;gap:14px;text-align:center;--cut:26px;animation:slideUp .6s cubic-bezier(0.34,1.56,0.64,1)}
+  .auth-box{width:100%;max-width:440px;padding:38px 32px;display:flex;flex-direction:column;gap:14px;text-align:center;animation:slideUp .6s cubic-bezier(0.34,1.56,0.64,1);
+    background:linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06));border:1.5px solid rgba(255,255,255,0.35)}
   @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-  .auth-title{font-size:42px;font-weight:900;letter-spacing:5px;background:linear-gradient(135deg,#4a9eff 0%,#22d3ee 50%,#a855f7 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 12px rgba(74,158,255,0.6))}
-  .auth-sub{font-size:11px;color:var(--c-text3);margin-bottom:8px;letter-spacing:2px;text-transform:uppercase}
-  .auth-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:6px}
-  .auth-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--c-text3);box-shadow:none;letter-spacing:0.5px}
-  .auth-tab.active{background:linear-gradient(180deg,#6bb6ff,#4a9eff);color:#fff;box-shadow:0 4px 14px rgba(74,158,255,0.5)}
-  .auth-tab:hover:not(.active){color:var(--c-text);transform:none;box-shadow:none}
-  .auth-msg{font-size:12px;min-height:18px;padding:6px;border-radius:8px;transition:all .3s}
+  .auth-title{font-size:44px;font-weight:900;letter-spacing:6px;background:linear-gradient(135deg,#fff 0%,#6bb6ff 50%,#c084fc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 14px rgba(255,255,255,0.5))}
+  .auth-sub{font-size:11px;color:var(--text3);margin-bottom:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
+  .auth-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.4);border-radius:12px;margin-bottom:6px}
+  .auth-tab{flex:1;padding:10px;border-radius:9px;cursor:pointer;font-weight:800;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--text3);box-shadow:none;letter-spacing:0.5px}
+  .auth-tab.active{background:#fff;color:#1a1f3a;box-shadow:0 4px 14px rgba(255,255,255,0.4)}
+  .auth-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
+  .auth-msg{font-size:12px;min-height:18px;padding:8px;border-radius:10px;transition:all .3s}
   .auth-msg.err{color:#ff8a7a;background:rgba(255,59,48,0.15)}
   .auth-msg.ok{color:#8affa8;background:rgba(80,200,100,0.15)}
-  .guest-link{background:transparent;border:none;color:var(--c-text3);font-size:12px;text-decoration:underline;cursor:pointer;padding:8px;box-shadow:none}
-  .guest-link:hover{color:var(--c-text);transform:none;box-shadow:none}
+  .guest-link{background:transparent;border:none;color:var(--text3);font-size:12px;text-decoration:underline;cursor:pointer;padding:8px;box-shadow:none}
+  .guest-link:hover{color:#fff;transform:none;box-shadow:none}
   
-  /* ===== MENU (Cool theme) ===== */
+  /* ===== MENU ===== */
   #sc-menu{padding:0;overflow-y:auto}
-  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;margin:14px 14px 0;--cut:16px;animation:slideDown .5s ease-out;
-    background:linear-gradient(135deg, rgba(74,158,255,0.16), rgba(168,85,247,0.08));border:1px solid rgba(120,160,255,0.28)}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;margin:14px 14px 0;animation:slideDown .5s ease-out;
+    background:linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08));border:1.5px solid rgba(255,255,255,0.4)}
   @keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
   .topbar-info{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
-  .topbar-name{font-size:16px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  .topbar-stats{font-size:11px;color:var(--c-text3);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  .topbar-stats b{color:var(--c-text2);font-weight:800}
-  .admin-badge{background:linear-gradient(135deg,#4a9eff,#a855f7);color:#fff;font-weight:900;font-size:9px;padding:2px 8px;border-radius:6px;letter-spacing:.8px;box-shadow:0 2px 10px rgba(74,158,255,0.6)}
-  .topbar-avatar{width:62px;height:62px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4a9eff,#a855f7);display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);border:2px solid rgba(255,255,255,0.5);box-shadow:0 6px 20px rgba(74,158,255,0.5);overflow:hidden}
-  .topbar-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-  .topbar-avatar:hover{transform:scale(1.08) rotate(6deg);box-shadow:0 10px 32px rgba(74,158,255,0.8)}
+  .topbar-name{font-size:17px;font-weight:900;letter-spacing:.3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:#fff}
+  .topbar-stats{font-size:11px;color:var(--white-dim);display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-weight:600}
+  .topbar-stats b{color:#fff;font-weight:900}
+  .admin-badge{background:linear-gradient(135deg,#fff,#c084fc);color:#1a1f3a;font-weight:900;font-size:9px;padding:3px 8px;border-radius:6px;letter-spacing:.8px;box-shadow:0 2px 10px rgba(255,255,255,0.5)}
+  .topbar-avatar{width:66px;height:66px;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);border:2px solid rgba(255,255,255,0.8);box-shadow:0 6px 24px rgba(255,255,255,0.4);overflow:hidden;--cut:14px;
+    clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)}
+  .topbar-avatar img{width:100%;height:100%;object-fit:cover}
+  .topbar-avatar:hover{transform:scale(1.08) rotate(4deg);box-shadow:0 10px 32px rgba(255,255,255,0.6)}
   
-  .menu-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 40px;gap:26px}
+  .menu-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 20px 40px;gap:28px}
   
-  .btn-main{padding:26px 76px;font-size:24px;font-weight:900;letter-spacing:5px;
-    background:linear-gradient(135deg,#4a9eff 0%,#22d3ee 50%,#a855f7 100%);
-    border:2px solid rgba(255,255,255,0.45);border-radius:20px;color:#fff;cursor:pointer;text-transform:uppercase;
-    box-shadow:0 15px 50px rgba(74,158,255,0.55),inset 0 2px 0 rgba(255,255,255,0.5);
+  .btn-main{padding:26px 80px;font-size:24px;font-weight:900;letter-spacing:6px;
+    background:linear-gradient(135deg,#ffffff 0%,#e8ecf7 100%);
+    color:#1a1f3a;border:2px solid rgba(255,255,255,0.7);cursor:pointer;text-transform:uppercase;
+    box-shadow:0 18px 50px rgba(255,255,255,0.3),inset 0 2px 0 rgba(255,255,255,0.9),inset 0 -2px 0 rgba(0,0,0,0.08);
     animation:mainPulse 2.5s ease-in-out infinite;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);max-width:92vw;position:relative;overflow:hidden}
-  .btn-main::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%);animation:shineSweep 3s infinite}
+  .btn-main::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent 30%,rgba(107,182,255,0.5) 50%,transparent 70%);animation:shineSweep 3s infinite}
   @keyframes shineSweep{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
-  .btn-main:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 20px 60px rgba(74,158,255,0.85),inset 0 2px 0 rgba(255,255,255,0.6)}
+  .btn-main:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 24px 60px rgba(255,255,255,0.45),inset 0 2px 0 #fff}
   .btn-main:active{transform:translateY(-1px) scale(1)}
-  @keyframes mainPulse{0%,100%{box-shadow:0 15px 50px rgba(74,158,255,0.55)}50%{box-shadow:0 15px 70px rgba(74,158,255,0.9)}}
+  @keyframes mainPulse{0%,100%{box-shadow:0 18px 50px rgba(255,255,255,0.3)}50%{box-shadow:0 18px 70px rgba(107,182,255,0.6)}}
   
-  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:640px}
+  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:660px}
   .menu-card{aspect-ratio:1.15/1;padding:20px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;
-    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.06));
+    background:linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06));
     backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid rgba(120,160,255,0.24);border-radius:18px;
+    border:1.5px solid rgba(255,255,255,0.35);
     transition:all .3s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow:0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow:0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.28);
     position:relative;overflow:hidden;text-align:center;}
-  .menu-card:hover{transform:translateY(-8px) scale(1.03);border-color:rgba(120,180,255,0.6);box-shadow:0 18px 40px rgba(0,0,0,0.5), 0 0 25px rgba(74,158,255,0.35), inset 0 1px 0 rgba(255,255,255,0.35)}
+  .menu-card:hover{transform:translateY(-8px) scale(1.03);border-color:rgba(255,255,255,0.8);box-shadow:0 18px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255,255,255,0.28), inset 0 1px 0 rgba(255,255,255,0.5)}
   .menu-card:active{transform:translateY(-3px) scale(0.99)}
-  .menu-card-icon{font-size:32px;line-height:1;margin-bottom:2px;filter:drop-shadow(0 3px 8px rgba(74,158,255,0.5))}
-  .menu-card-title{font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:linear-gradient(135deg,#6bb6ff,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .menu-card-sub{font-size:10px;color:var(--c-text3);letter-spacing:0.5px}
+  .menu-card-icon{font-size:34px;line-height:1;margin-bottom:4px;filter:drop-shadow(0 3px 10px rgba(255,255,255,0.4))}
+  .menu-card-title{font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,0.3)}
+  .menu-card-sub{font-size:10px;color:var(--white-dim);letter-spacing:0.5px;font-weight:600}
   .menu-card.locked{opacity:0.55}
   .menu-card.locked::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:14px}
-  .menu-card.admin-card{border-color:rgba(74,158,255,0.7);background:linear-gradient(135deg, rgba(74,158,255,0.28), rgba(168,85,247,0.12))}
-  .menu-card-badge{position:absolute;top:8px;right:8px;min-width:20px;height:20px;padding:0 6px;background:linear-gradient(135deg,#ff5a5a,#c03030);border-radius:10px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,90,90,0.6);animation:badgePulse 1.5s ease-in-out infinite}
+  .menu-card.admin-card{border-color:rgba(255,255,255,0.8);background:linear-gradient(135deg, rgba(255,255,255,0.35), rgba(200,140,255,0.15))}
+  .menu-card-badge{position:absolute;top:8px;right:8px;min-width:22px;height:22px;padding:0 6px;background:linear-gradient(135deg,#ff5a5a,#c03030);border-radius:11px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,90,90,0.6);animation:badgePulse 1.5s ease-in-out infinite}
   @keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
   
   @media (max-width:600px){
     .menu-grid{grid-template-columns:repeat(2,1fr);max-width:440px;gap:12px}
-    .btn-main{padding:22px 48px;font-size:20px;letter-spacing:3px}
-    .topbar-avatar{width:52px;height:52px;font-size:26px}
+    .btn-main{padding:22px 48px;font-size:20px;letter-spacing:4px}
+    .topbar-avatar{width:54px;height:54px;font-size:26px}
   }
   
   /* ===== LOBBY ===== */
   #sc-lobby{justify-content:center;align-items:center;overflow-y:auto;padding:20px}
-  .lobby-box{width:100%;max-width:520px;padding:28px;display:flex;flex-direction:column;gap:14px;--cut:24px;
-    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.06));border:1px solid rgba(120,160,255,0.28)}
-  .lobby-title{text-align:center;font-size:22px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#6bb6ff,#a855f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .room-code{font-size:42px;font-weight:900;letter-spacing:12px;text-align:center;cursor:pointer;padding:18px;
-    background:linear-gradient(135deg, rgba(74,158,255,0.3), rgba(168,85,247,0.2));
-    border:2px dashed rgba(120,180,255,0.6);border-radius:14px;
-    font-family:'SF Mono','Consolas',monospace;color:#fff;text-shadow:0 0 25px rgba(74,158,255,0.9);transition:all .25s}
-  .room-code:hover{transform:scale(1.03);box-shadow:0 0 40px rgba(74,158,255,0.6);border-color:rgba(120,180,255,0.9)}
-  .plist{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;min-height:60px}
-  .pitem{display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(74,158,255,0.08);border-radius:12px;border:1px solid rgba(120,160,255,0.2);animation:itemIn .3s ease-out}
+  .lobby-box{width:100%;max-width:520px;padding:30px;display:flex;flex-direction:column;gap:14px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06));border:1.5px solid rgba(255,255,255,0.35)}
+  .lobby-title{text-align:center;font-size:22px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 2px 10px rgba(255,255,255,0.3)}
+  .room-code{font-size:44px;font-weight:900;letter-spacing:14px;text-align:center;cursor:pointer;padding:20px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.15));
+    border:2.5px dashed rgba(255,255,255,0.7);
+    font-family:'SF Mono','Consolas',monospace;color:#fff;text-shadow:0 0 25px rgba(255,255,255,0.9);transition:all .25s}
+  .room-code:hover{transform:scale(1.03);box-shadow:0 0 40px rgba(255,255,255,0.6);border-color:#fff}
+  .plist{display:flex;flex-direction:column;gap:10px;max-height:280px;overflow-y:auto;min-height:60px}
+  .pitem{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.14);border:1.5px solid rgba(255,255,255,0.3);animation:itemIn .3s ease-out}
   @keyframes itemIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
-  .pitem .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#4a9eff,#a855f7);overflow:hidden;flex-shrink:0}
+  .pitem .av{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fff;overflow:hidden;flex-shrink:0;--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
   .pitem .av img{width:100%;height:100%;object-fit:cover}
-  .pitem .nm{flex:1;font-weight:700}
-  .pitem .st{font-size:10px;font-weight:800;color:#6bb6ff;text-transform:uppercase;padding:3px 9px;background:rgba(74,158,255,0.2);border-radius:6px;letter-spacing:0.5px}
-  .plist-empty{text-align:center;padding:24px;color:var(--c-text3);font-size:13px;font-style:italic}
-  .connecting{display:inline-block;width:14px;height:14px;border:2px solid var(--c-accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+  .pitem .nm{flex:1;font-weight:800;color:#fff}
+  .pitem .st{font-size:10px;font-weight:900;color:#1a1f3a;text-transform:uppercase;padding:3px 10px;background:#fff;border-radius:6px;letter-spacing:0.5px}
+  .plist-empty{text-align:center;padding:24px;color:var(--text3);font-size:13px;font-style:italic}
+  .connecting{display:inline-block;width:14px;height:14px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
   
-  /* ===== GAME (Warm theme) ===== */
+  /* ===== GAME ===== */
   #sc-game{padding:8px;gap:8px;
-    background:radial-gradient(circle at 10% 10%, rgba(255,90,60,0.28) 0%, transparent 40%),
-      radial-gradient(circle at 90% 90%, rgba(255,200,50,0.16) 0%, transparent 45%),
-      radial-gradient(circle at 50% 50%, #5c1a10 0%, #1a0808 60%, #050202 100%)}
-  .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:12px;flex-shrink:0;gap:6px;flex-wrap:wrap;--cut:12px;
-    background:linear-gradient(135deg, rgba(255,90,60,0.16), rgba(255,200,50,0.06));border:1px solid rgba(255,120,80,0.28)}
-  .badge{background:rgba(255,255,255,0.08);padding:6px 13px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);font-size:11px;display:inline-flex;align-items:center;gap:4px}
-  .badge.hot{background:linear-gradient(135deg,#ff6b5b,var(--w-red));color:#fff;border-color:rgba(255,255,255,0.4);animation:pulseBadge 1.5s infinite}
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255,120,90,0.35) 0%, transparent 42%),
+      radial-gradient(circle at 90% 90%, rgba(255,220,80,0.22) 0%, transparent 46%),
+      radial-gradient(circle at 50% 50%, #2a1510 0%, #140808 60%, #050202 100%)}
+  .ghead{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-weight:800;font-size:12px;flex-shrink:0;gap:6px;flex-wrap:wrap;
+    background:linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04));border:1.5px solid rgba(255,255,255,0.28)}
+  .badge{background:rgba(255,255,255,0.15);padding:7px 14px;border:1.5px solid rgba(255,255,255,0.28);font-size:11px;display:inline-flex;align-items:center;gap:4px;font-weight:800}
+  .badge b{color:#fff}
+  .badge.hot{background:#fff;color:#1a1f3a;border-color:#fff;animation:pulseBadge 1.5s infinite;font-weight:900}
+  .badge.hot b{color:#1a1f3a}
   @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
   .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
-  .opp{display:flex;flex-direction:column;align-items:center;padding:10px 14px;min-width:82px;transition:.3s;position:relative;
-    background:linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));border:1px solid rgba(255,255,255,0.15);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.25)}
-  .opp.turn{box-shadow:0 0 0 2px var(--w-red), 0 0 28px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.3);transform:scale(1.06)}
+  .opp{display:flex;flex-direction:column;align-items:center;padding:10px 16px;min-width:88px;transition:.3s;position:relative;
+    background:linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));border:1.5px solid rgba(255,255,255,0.28);box-shadow:0 4px 14px rgba(0,0,0,0.3)}
+  .opp.turn{box-shadow:0 0 0 2.5px #fff, 0 0 30px rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.4);transform:scale(1.06);border-color:#fff}
   .opp.dead{opacity:.35;filter:grayscale(1)}
-  .opp.dead::after{content:'OUT';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;font-weight:900;color:#fff;background:rgba(0,0,0,0.7);padding:4px 10px;border-radius:8px;z-index:2;letter-spacing:2px}
-  .opp .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#ff6b5b,#ffcc00);margin-bottom:4px;overflow:hidden}
+  .opp.dead::after{content:'OUT';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;font-weight:900;color:#fff;background:rgba(0,0,0,0.75);padding:4px 12px;border-radius:8px;z-index:2;letter-spacing:2px}
+  .opp .av{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fff;margin-bottom:4px;overflow:hidden;--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
   .opp .av img{width:100%;height:100%;object-fit:cover}
-  .opp .nm{font-size:11px;font-weight:bold;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
-  .opp .cnt{font-size:11px;color:#e6d5d0;font-weight:bold}
+  .opp .nm{font-size:11px;font-weight:800;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#fff}
+  .opp .cnt{font-size:11px;color:#fff;font-weight:800;opacity:0.85}
   
-  .board{flex:1;display:flex;justify-content:center;align-items:center;gap:30px;position:relative;min-height:0}
-  .pile{width:96px;height:134px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;flex-shrink:0;transition:transform .2s;overflow:hidden}
-  .deck{background:linear-gradient(135deg,#ff6b5b,var(--w-red2));cursor:pointer;border:3px solid rgba(255,255,255,0.6);
-    box-shadow:0 12px 30px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.3);
-    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px}
+  .board{flex:1;display:flex;justify-content:center;align-items:center;gap:40px;position:relative;min-height:0}
+  .pile{width:130px;height:180px;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;flex-shrink:0;transition:transform .2s;overflow:hidden}
+  .deck{background:linear-gradient(135deg,#ff6b5b,var(--w-red2));cursor:pointer;border:3px solid #fff;
+    box-shadow:0 14px 34px rgba(255,71,87,0.55), inset 0 2px 0 rgba(255,255,255,0.4);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:22px}
   .deck:hover{transform:translateY(-5px) scale(1.03)}
   .deck.can{animation:deckPulse 1.5s infinite}
-  @keyframes deckPulse{0%,100%{box-shadow:0 0 20px rgba(255,59,48,0.6), inset 0 2px 0 rgba(255,255,255,0.3)}50%{box-shadow:0 0 40px rgba(255,59,48,1), inset 0 2px 0 rgba(255,255,255,0.4)}}
+  @keyframes deckPulse{0%,100%{box-shadow:0 0 20px rgba(255,71,87,0.6), inset 0 2px 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 45px rgba(255,71,87,1), inset 0 2px 0 rgba(255,255,255,0.5)}}
   .deck.locked{opacity:.55;cursor:not-allowed;filter:grayscale(.6)}
   .deck.shuffling{animation:shuffleAnim .8s ease-in-out}
   @keyframes shuffleAnim{0%{transform:translateY(0) rotate(0)}25%{transform:translateY(-15px) rotate(-10deg) scale(1.05)}50%{transform:translateY(5px) rotate(10deg) scale(.95)}75%{transform:translateY(-5px) rotate(-5deg)}100%{transform:translateY(0) rotate(0)}}
-  .disc{background:rgba(255,255,255,0.08);border:2px dashed rgba(255,255,255,0.3);box-shadow:inset 0 2px 8px rgba(0,0,0,0.2);padding:0;overflow:hidden}
+  .disc{background:rgba(255,255,255,0.1);border:2.5px dashed rgba(255,255,255,0.4);box-shadow:inset 0 2px 8px rgba(0,0,0,0.25);padding:0;overflow:hidden}
   .disc img{width:100%;height:100%;object-fit:cover}
-  .badge-p{position:absolute;bottom:-8px;right:-8px;background:#fff;color:var(--w-red);min-width:28px;height:28px;padding:0 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:5}
-  .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,0.65);color:#fff;padding:8px 10px;border-radius:10px;pointer-events:none;max-width:220px;backdrop-filter:blur(10px);line-height:1.4;border:1px solid rgba(255,255,255,0.1)}
+  .badge-p{position:absolute;bottom:-10px;right:-10px;background:#fff;color:var(--w-red);min-width:32px;height:32px;padding:0 8px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;box-shadow:0 2px 12px rgba(0,0,0,0.4);z-index:5;border:2px solid var(--w-red)}
+  .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,0.72);color:#fff;padding:8px 12px;border-radius:12px;pointer-events:none;max-width:240px;backdrop-filter:blur(12px);line-height:1.5;border:1px solid rgba(255,255,255,0.15);font-weight:600}
   
-  /* ==== Played Card Showcase (TO ở giữa) ==== */
+  /* ===== PLAYED CARD SHOWCASE (BIG, on all devices) ===== */
   .played-showcase{
     position:fixed;top:46%;left:50%;transform:translate(-50%,-50%) scale(0);
-    z-index:4200;display:flex;flex-direction:column;align-items:center;gap:10px;
+    z-index:4200;display:flex;flex-direction:column;align-items:center;gap:12px;
     pointer-events:none;opacity:0;
-    transition:all .45s cubic-bezier(0.34,1.56,0.64,1);
+    transition:all .5s cubic-bezier(0.34,1.56,0.64,1);
   }
   .played-showcase.show{transform:translate(-50%,-50%) scale(1);opacity:1}
   .played-showcase .ps-card{
-    width:170px;height:245px;border-radius:16px;overflow:hidden;
-    border:3px solid gold;background:#1a0f0d;
-    box-shadow:0 25px 70px rgba(0,0,0,0.85), 0 0 50px rgba(255,204,0,0.7), 0 0 100px rgba(255,140,0,0.4);
+    width:220px;height:320px;overflow:hidden;
+    border:4px solid #fff;background:#1a0f0d;
+    box-shadow:0 30px 80px rgba(0,0,0,0.9), 0 0 60px rgba(255,255,255,0.5), 0 0 100px rgba(255,214,10,0.5);
     display:flex;align-items:center;justify-content:center;
     animation:psPulse 1.2s ease-in-out infinite;
+    --cut:18px;
+    clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px)
   }
-  @keyframes psPulse{0%,100%{box-shadow:0 25px 70px rgba(0,0,0,0.85), 0 0 50px rgba(255,204,0,0.7)}50%{box-shadow:0 25px 80px rgba(0,0,0,0.9), 0 0 80px rgba(255,204,0,1)}}
+  @keyframes psPulse{0%,100%{box-shadow:0 30px 80px rgba(0,0,0,0.9), 0 0 60px rgba(255,255,255,0.5), 0 0 100px rgba(255,214,10,0.5)}50%{box-shadow:0 30px 90px rgba(0,0,0,0.95), 0 0 90px rgba(255,255,255,0.8), 0 0 140px rgba(255,214,10,0.8)}}
   .played-showcase .ps-card img{width:100%;height:100%;object-fit:cover}
   .played-showcase .ps-name{
-    background:linear-gradient(135deg,#ff6b5b,#ff3b30);
-    color:#fff;font-weight:900;font-size:13px;padding:6px 18px;border-radius:20px;
+    background:#fff;color:#1a1f3a;font-weight:900;font-size:14px;padding:8px 22px;
     letter-spacing:1px;text-transform:uppercase;
-    box-shadow:0 6px 20px rgba(255,59,48,0.6);border:1px solid rgba(255,255,255,0.5);
-    white-space:nowrap;
+    box-shadow:0 6px 20px rgba(255,255,255,0.5);border:2px solid rgba(255,255,255,0.8);white-space:nowrap;
+    --cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)
   }
   .played-showcase .ps-action{
-    background:rgba(0,0,0,0.85);color:#ffcc00;font-weight:900;font-size:14px;
-    padding:6px 16px;border-radius:12px;letter-spacing:1px;
-    border:1px solid rgba(255,204,0,0.5);backdrop-filter:blur(10px);
+    background:rgba(0,0,0,0.85);color:#fff;font-weight:900;font-size:15px;
+    padding:8px 20px;letter-spacing:1.5px;border:2px solid rgba(255,255,255,0.5);backdrop-filter:blur(10px);
+    --cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)
   }
   
-  /* ==== Bottom action notification ==== */
+  /* ===== ACTION NOTIFICATION (bottom-center) ===== */
   .action-notification{
     position:fixed;bottom:22%;left:50%;transform:translateX(-50%);
     z-index:5500;pointer-events:none;
     background:linear-gradient(135deg, rgba(30,20,50,0.96), rgba(80,30,110,0.96));
-    border:2px solid rgba(255,255,255,0.4);
-    border-radius:18px;padding:16px 32px;min-width:280px;max-width:90vw;
-    box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(168,85,247,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    border:2px solid rgba(255,255,255,0.5);
+    padding:16px 34px;min-width:280px;max-width:90vw;
+    box-shadow:0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(255,255,255,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
     text-align:center;backdrop-filter:blur(20px);
     animation:actionNotify 2.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    --cut:14px;
+    clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)
   }
-  .action-notification.attack{background:linear-gradient(135deg, rgba(120,20,20,0.96), rgba(255,60,40,0.92));border-color:rgba(255,180,120,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(255,90,60,0.7)}
-  .action-notification.skip{background:linear-gradient(135deg, rgba(40,60,100,0.96), rgba(74,158,255,0.92));border-color:rgba(180,210,255,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(74,158,255,0.7)}
-  .action-notification.nope{background:linear-gradient(135deg, rgba(80,20,100,0.96), rgba(200,50,255,0.92));border-color:rgba(220,150,255,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(200,50,255,0.7)}
-  .action-notification.defuse{background:linear-gradient(135deg, rgba(20,80,40,0.96), rgba(50,200,100,0.92));border-color:rgba(150,255,180,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(50,200,100,0.7)}
-  .action-notification.boom{background:linear-gradient(135deg, rgba(100,0,0,0.96), rgba(255,50,20,0.96));border-color:rgba(255,180,100,0.8);box-shadow:0 20px 80px rgba(0,0,0,0.8), 0 0 60px rgba(255,90,30,0.9)}
-  .action-notification .an-title{font-size:11px;opacity:0.85;letter-spacing:2px;text-transform:uppercase;font-weight:800;margin-bottom:6px}
-  .action-notification .an-body{font-size:17px;font-weight:900;letter-spacing:0.5px;line-height:1.35}
-  .action-notification .an-card{font-size:14px;font-weight:800;color:#ffcc00;margin-top:4px;letter-spacing:1px}
+  .action-notification.attack{background:linear-gradient(135deg, rgba(180,30,30,0.96), rgba(255,60,40,0.94));border-color:rgba(255,220,180,0.8);box-shadow:0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(255,90,60,0.8)}
+  .action-notification.skip{background:linear-gradient(135deg, rgba(30,60,110,0.96), rgba(74,158,255,0.94));border-color:rgba(200,225,255,0.8);box-shadow:0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(74,158,255,0.8)}
+  .action-notification.nope{background:linear-gradient(135deg, rgba(90,20,120,0.96), rgba(200,50,255,0.94));border-color:rgba(230,180,255,0.8);box-shadow:0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(200,50,255,0.8)}
+  .action-notification.defuse{background:linear-gradient(135deg, rgba(20,90,50,0.96), rgba(50,210,110,0.94));border-color:rgba(180,255,200,0.8);box-shadow:0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(50,210,110,0.8)}
+  .action-notification.boom{background:linear-gradient(135deg, rgba(120,0,0,0.98), rgba(255,50,20,0.97));border-color:rgba(255,200,120,0.9);box-shadow:0 20px 80px rgba(0,0,0,0.85), 0 0 60px rgba(255,90,30,0.9)}
+  .action-notification .an-title{font-size:11px;opacity:0.9;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin-bottom:6px}
+  .action-notification .an-body{font-size:18px;font-weight:900;letter-spacing:0.5px;line-height:1.35;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.5)}
+  .action-notification .an-card{font-size:14px;font-weight:900;color:#ffd60a;margin-top:4px;letter-spacing:1px}
   @keyframes actionNotify{
     0%{opacity:0;transform:translate(-50%,20px) scale(0.7)}
     12%{opacity:1;transform:translate(-50%,0) scale(1.05)}
@@ -253,16 +295,22 @@
     100%{opacity:0;transform:translate(-50%,-15px) scale(0.92)}
   }
   
-  .hand-area{padding:12px;min-height:170px;display:flex;flex-direction:column;flex-shrink:0;--cut:14px;
-    background:linear-gradient(135deg, rgba(255,90,60,0.14), rgba(255,200,50,0.05));border:1px solid rgba(255,120,80,0.24)}
-  .hand-action-bar{display:none;margin-bottom:6px;padding:8px 12px;background:rgba(0,204,102,0.2);border:2px solid #00cc66;border-radius:10px;font-size:12px;font-weight:bold;align-items:center;gap:8px;flex-wrap:wrap}
+  .hand-area{padding:14px;min-height:180px;display:flex;flex-direction:column;flex-shrink:0;
+    background:linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04));border:1.5px solid rgba(255,255,255,0.28)}
+  .hand-action-bar{display:none;margin-bottom:8px;padding:10px 14px;background:rgba(0,204,102,0.24);border:2px solid #00cc66;font-size:12px;font-weight:800;align-items:center;gap:8px;flex-wrap:wrap;--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
   .hand-action-bar.on{display:flex}
   .hand-action-bar button{padding:6px 14px;font-size:12px}
-  .hand-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 0 12px;align-items:center;scrollbar-width:thin}
+  .hand-scroll{display:flex;gap:10px;overflow-x:auto;padding:10px 0 14px;align-items:center;scrollbar-width:thin}
   
-  .card{width:90px;height:130px;border-radius:12px;flex-shrink:0;cursor:pointer;position:relative;background:#1a0f0d;box-shadow:0 4px 14px rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.85);transition:all .25s;overflow:hidden;display:flex;align-items:center;justify-content:center}
-  .card:hover:not(.dis):not(.selected){transform:translateY(-14px) scale(1.06);z-index:10;box-shadow:0 15px 30px rgba(0,0,0,0.55);border-color:var(--w-gold)}
+  .card{width:94px;height:136px;flex-shrink:0;cursor:pointer;position:relative;background:#1a0f0d;box-shadow:0 4px 14px rgba(0,0,0,0.4);border:2.5px solid rgba(255,255,255,0.9);transition:all .25s;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .card:hover:not(.dis):not(.selected):not(.nope-active){transform:translateY(-14px) scale(1.06);z-index:10;box-shadow:0 15px 30px rgba(0,0,0,0.6);border-color:var(--w-gold)}
   .card.dis{opacity:.4;filter:grayscale(.8);cursor:not-allowed}
+  .card.nope-active{border-color:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,0.5), 0 0 25px rgba(255,255,255,0.9), 0 0 50px rgba(255,214,10,0.7)!important;animation:nopeCardPulse 1.2s ease-in-out infinite;cursor:pointer!important;z-index:9}
+  .card.nope-active:hover{transform:translateY(-14px) scale(1.06)}
+  @keyframes nopeCardPulse{0%,100%{box-shadow:0 0 0 3px rgba(255,255,255,0.5), 0 0 25px rgba(255,255,255,0.9), 0 0 50px rgba(255,214,10,0.7)}50%{box-shadow:0 0 0 4px rgba(255,255,255,0.7), 0 0 40px rgba(255,255,255,1), 0 0 70px rgba(255,214,10,1)}}
+  .card.nope-active::before{content:'NOPE!';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;color:#ff4757;font-size:10px;font-weight:900;padding:2px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);z-index:10;animation:nopeLabelPulse 0.8s ease-in-out infinite}
+  @keyframes nopeLabelPulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.1)}}
   .card-img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
   .card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:11px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff6b5b,#d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:0.5px}
   .card.no-img .card-img{display:none}
@@ -272,19 +320,14 @@
   .card.deal-in{animation:dealIn .55s cubic-bezier(0.34,1.56,0.64,1) backwards}
   @keyframes dealIn{from{transform:translate(-200px,-300px) rotate(-60deg) scale(0.3);opacity:0}to{transform:translate(0,0) rotate(0) scale(1);opacity:1}}
   
-  /* NOPE */
-  .nope-container{position:fixed;bottom:38%;left:50%;transform:translate(-50%,50%);z-index:5200;display:flex;gap:10px;align-items:center;animation:nopeIn .3s ease-out}
-  @keyframes nopeIn{from{opacity:0;transform:translate(-50%,calc(50% + 20px))}to{opacity:1;transform:translate(-50%,50%)}}
-  .nope-btn{padding:14px 32px;font-size:22px;font-weight:900;background:linear-gradient(135deg,#ff0000,#ff6b5b);color:#fff;border-radius:50px;border:3px solid rgba(255,255,255,0.7);box-shadow:0 0 25px rgba(255,0,0,0.8);cursor:pointer;animation:pulseNope .6s infinite alternate}
-  @keyframes pulseNope{from{transform:scale(1)}to{transform:scale(1.08)}}
-  .nope-skip-btn{padding:10px 20px;font-size:14px;font-weight:bold;background:rgba(255,255,255,0.95);color:#666;border:2px solid #ccc;border-radius:50px;box-shadow:0 4px 12px rgba(0,0,0,0.2);cursor:pointer}
-  .nope-skip-btn:hover{background:#fff;color:#222;transform:scale(1.05)}
-  
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(20,10,8,0.95);color:#fff;padding:12px 24px;border-radius:30px;font-weight:bold;z-index:10000;animation:toastIn .3s ease-out;font-size:14px;max-width:90%;text-align:center;border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(20px)}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.98);color:#1a1f3a;padding:14px 26px;font-weight:800;z-index:10000;animation:toastIn .3s ease-out;font-size:14px;max-width:90%;text-align:center;border:2px solid rgba(255,255,255,0.8);backdrop-filter:blur(20px);--cut:12px;
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);
+    box-shadow:0 12px 40px rgba(0,0,0,0.5)}
   @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
   
-  /* Flying card animation (slower) */
-  .anim-card{position:fixed;display:flex;align-items:center;justify-content:center;background:#1a0f0d;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(255,204,0,0.3);border:3px solid rgba(255,255,255,0.9);overflow:hidden;z-index:5000}
+  /* Flying card animation (SLOWER) */
+  .anim-card{position:fixed;display:flex;align-items:center;justify-content:center;background:#1a0f0d;box-shadow:0 20px 60px rgba(0,0,0,0.85), 0 0 30px rgba(255,255,255,0.4);border:3px solid rgba(255,255,255,0.9);overflow:hidden;z-index:5000;--cut:12px;
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px)}
   .anim-card-img{width:100%;height:100%;object-fit:cover;display:block}
   .anim-card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:12px;font-size:14px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff6b5b,#d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:1px}
   .anim-card.no-img .anim-card-img{display:none}
@@ -296,110 +339,120 @@
   .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;backdrop-filter:blur(4px)}
   .chat-ov.on{display:block}
   .chat-p{position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);width:320px;height:400px;display:flex;flex-direction:column;z-index:201;transition:transform .3s;
-    background:linear-gradient(135deg, rgba(20,20,40,0.95), rgba(10,10,25,0.95));border:1px solid rgba(120,160,255,0.3);border-radius:16px;backdrop-filter:blur(30px);overflow:hidden}
+    background:linear-gradient(135deg, rgba(40,40,80,0.97), rgba(20,20,45,0.97));border:1.5px solid rgba(255,255,255,0.28);backdrop-filter:blur(30px);overflow:hidden;--cut:16px;
+    clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px)}
   .chat-p.on{transform:translateY(-50%) translateX(0)}
-  .chat-h{padding:14px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;font-weight:bold}
+  .chat-h{padding:14px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;justify-content:space-between;align-items:center;font-weight:800;color:#fff}
   .chat-x{cursor:pointer;font-size:20px;color:#ff6b5b;padding:0 5px}
-  .chat-m{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px}
-  .chat-m .u{color:#6bb6ff;font-weight:bold}
-  .chat-i{display:flex;padding:12px;gap:8px;border-top:1px solid rgba(255,255,255,0.1)}
-  .chat-i input{padding:8px;font-size:14px}
-  .chat-i button{padding:8px 14px;font-size:14px}
-  .chat-f{position:fixed;right:20px;bottom:190px;z-index:100;padding:10px 14px;border-radius:20px;cursor:pointer;background:rgba(74,158,255,0.28);backdrop-filter:blur(20px);border:1px solid rgba(120,160,255,0.4);font-weight:bold;font-size:14px;display:none;color:#fff}
+  .chat-m{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:#fff}
+  .chat-m .u{color:#6bb6ff;font-weight:900}
+  .chat-i{display:flex;padding:12px;gap:8px;border-top:1px solid rgba(255,255,255,0.15)}
+  .chat-i input{padding:8px;font-size:14px;border-radius:8px}
+  .chat-i button{padding:8px 14px;font-size:14px;border-radius:8px}
+  .chat-f{position:fixed;right:20px;bottom:200px;z-index:100;padding:12px 16px;cursor:pointer;background:#fff;backdrop-filter:blur(20px);border:2px solid rgba(255,255,255,0.9);font-weight:900;font-size:14px;display:none;color:#1a1f3a;box-shadow:0 8px 24px rgba(255,255,255,0.4);--cut:12px;
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px)}
   .chat-f.on{display:block}
   
   /* Modal */
-  .ov{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(12px);display:flex;justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(14px);display:flex;justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px}
   .ov.on{opacity:1;pointer-events:auto}
-  .modal{width:100%;max-width:560px;padding:26px;display:flex;flex-direction:column;gap:14px;text-align:center;transform:scale(.9);transition:.3s;max-height:90vh;overflow-y:auto;--cut:26px;position:relative;
-    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.06));border:1px solid rgba(120,160,255,0.28)}
+  .modal{width:100%;max-width:580px;padding:30px;display:flex;flex-direction:column;gap:14px;text-align:center;transform:scale(.9);transition:.3s;max-height:90vh;overflow-y:auto;position:relative;
+    background:linear-gradient(135deg, rgba(255,255,255,0.24), rgba(255,255,255,0.06));border:1.5px solid rgba(255,255,255,0.4)}
   .ov.on .modal{transform:scale(1)}
-  .modal h2{font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:linear-gradient(135deg,#6bb6ff,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .modal p{font-size:13px;color:var(--c-text2)}
-  .modal-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,59,48,0.2);border:1px solid rgba(255,90,80,0.5);color:#ff8a7a;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;z-index:10;box-shadow:none;padding:0}
-  .modal-close:hover{background:rgba(255,59,48,0.4);color:#fff;transform:rotate(90deg) scale(1.1);box-shadow:0 0 20px rgba(255,59,48,0.6)}
+  .modal h2{font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;text-shadow:0 2px 10px rgba(255,255,255,0.3)}
+  .modal p{font-size:13px;color:var(--white-dim)}
+  .modal-close{position:absolute;top:14px;right:14px;width:38px;height:38px;background:#fff;border:2px solid rgba(255,255,255,0.9);color:#1a1f3a;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;z-index:10;box-shadow:0 4px 16px rgba(255,255,255,0.3);padding:0;--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
+  .modal-close:hover{background:#ff4757;color:#fff;transform:rotate(90deg) scale(1.1);box-shadow:0 0 25px rgba(255,71,87,0.7)}
   
-  .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;gap:10px;align-items:center}
+  .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:13px;gap:10px;align-items:center;color:#fff}
   .stat-row:last-child{border:none}
-  .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:var(--c-accent);border:1.5px solid var(--c-accent);border-radius:8px;cursor:pointer;font-weight:bold}
+  .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:#1a1f3a;border:2px solid #fff;cursor:pointer;font-weight:900;--cut:8px;
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
   
-  /* ===== NEW PROFILE ===== */
+  /* Profile */
   .profile-hero-new{
-    position:relative;padding:32px 20px 24px;margin:-26px -26px 20px;
-    background:linear-gradient(135deg, rgba(74,158,255,0.28), rgba(168,85,247,0.2), rgba(34,211,238,0.15));
-    border-bottom:1px solid rgba(120,160,255,0.3);
-    border-radius:0 0 30px 30px;overflow:hidden;
+    position:relative;padding:38px 20px 26px;margin:-30px -30px 20px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.28), rgba(200,140,255,0.18), rgba(107,182,255,0.15));
+    border-bottom:1.5px solid rgba(255,255,255,0.4);
+    overflow:hidden;
   }
   .profile-hero-new::before{
     content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-    background:radial-gradient(circle at 30% 40%, rgba(74,158,255,0.4), transparent 50%),
-      radial-gradient(circle at 70% 60%, rgba(168,85,247,0.4), transparent 50%);
+    background:radial-gradient(circle at 30% 40%, rgba(255,255,255,0.3), transparent 50%),
+      radial-gradient(circle at 70% 60%, rgba(200,140,255,0.3), transparent 50%);
     animation:heroFloat 10s ease-in-out infinite;
   }
   @keyframes heroFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-10px) scale(1.1)}}
   .profile-hero-new > *{position:relative;z-index:1}
-  .profile-avatar-big{width:104px;height:104px;border-radius:50%;margin:0 auto 12px;
-    background:linear-gradient(135deg,#4a9eff,#a855f7,#22d3ee);
-    display:flex;align-items:center;justify-content:center;font-size:52px;
-    border:3px solid rgba(255,255,255,0.7);
-    box-shadow:0 12px 40px rgba(74,158,255,0.6), 0 0 60px rgba(168,85,247,0.4), inset 0 3px 0 rgba(255,255,255,0.5);
-    overflow:hidden;cursor:pointer;transition:transform .3s}
-  .profile-avatar-big:hover{transform:scale(1.06) rotate(-5deg)}
+  .profile-avatar-big{width:110px;height:110px;margin:0 auto 14px;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:54px;
+    border:3px solid rgba(255,255,255,0.9);
+    box-shadow:0 14px 44px rgba(255,255,255,0.4), 0 0 60px rgba(200,140,255,0.4), inset 0 3px 0 rgba(255,255,255,0.8);
+    overflow:hidden;cursor:pointer;transition:transform .3s;--cut:20px;
+    clip-path:polygon(20px 0,calc(100% - 20px) 0,100% 20px,100% calc(100% - 20px),calc(100% - 20px) 100%,20px 100%,0 calc(100% - 20px),0 20px)}
+  .profile-avatar-big:hover{transform:scale(1.06) rotate(-4deg)}
   .profile-avatar-big img{width:100%;height:100%;object-fit:cover}
-  .profile-name-new{font-size:24px;font-weight:900;letter-spacing:1px;
-    background:linear-gradient(135deg,#fff,#6bb6ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 2px 8px rgba(74,158,255,0.5))}
-  .profile-tags{display:flex;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap}
-  .profile-tag{font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;letter-spacing:1px;text-transform:uppercase}
-  .profile-tag.admin{background:linear-gradient(135deg,#4a9eff,#a855f7);color:#fff;box-shadow:0 2px 10px rgba(74,158,255,0.5)}
-  .profile-tag.guest{background:linear-gradient(135deg,#889,#556);color:#fff}
-  .profile-tag.level{background:linear-gradient(135deg,#ffcc00,#ff8a00);color:#000}
+  .profile-name-new{font-size:26px;font-weight:900;letter-spacing:1px;color:#fff;text-shadow:0 2px 12px rgba(255,255,255,0.4)}
+  .profile-tags{display:flex;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .profile-tag{font-size:10px;font-weight:900;padding:4px 12px;letter-spacing:1px;text-transform:uppercase;--cut:8px;
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+  .profile-tag.admin{background:#fff;color:#1a1f3a;box-shadow:0 2px 10px rgba(255,255,255,0.5)}
+  .profile-tag.guest{background:linear-gradient(135deg,#888,#556);color:#fff}
+  .profile-tag.level{background:linear-gradient(135deg,#ffd60a,#ff9e00);color:#000}
   
   .profile-stats-new{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 16px}
-  .stat-card-new{padding:16px 8px;border-radius:16px;text-align:center;
-    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.08));
-    border:1px solid rgba(120,160,255,0.28);position:relative;overflow:hidden;transition:transform .25s}
-  .stat-card-new:hover{transform:translateY(-3px);border-color:rgba(120,180,255,0.5)}
-  .stat-card-new::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4a9eff,#a855f7,#22d3ee)}
-  .stat-card-value-new{font-size:22px;font-weight:900;background:linear-gradient(135deg,#6bb6ff,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .stat-card-label-new{font-size:10px;color:var(--c-text3);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:800}
+  .stat-card-new{padding:18px 8px;text-align:center;
+    background:linear-gradient(135deg, rgba(255,255,255,0.24), rgba(255,255,255,0.06));
+    border:1.5px solid rgba(255,255,255,0.35);position:relative;overflow:hidden;transition:transform .25s;--cut:14px;
+    clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)}
+  .stat-card-new:hover{transform:translateY(-3px);border-color:#fff}
+  .stat-card-new::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#fff}
+  .stat-card-value-new{font-size:24px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(255,255,255,0.4)}
+  .stat-card-label-new{font-size:10px;color:var(--white-dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:800}
   
   .avatar-picker-new{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
   @media(min-width:520px){.avatar-picker-new{grid-template-columns:repeat(6,1fr)}}
   .avatar-opt{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;
-    background:rgba(255,255,255,0.06);border-radius:14px;cursor:pointer;border:2px solid transparent;
-    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;position:relative}
-  .avatar-opt img{width:100%;height:100%;object-fit:cover;border-radius:12px}
-  .avatar-opt:hover{background:rgba(74,158,255,0.2);transform:scale(1.08);border-color:rgba(120,180,255,0.5)}
-  .avatar-opt.selected{border-color:#22d3ee;background:rgba(34,211,238,0.2);box-shadow:0 0 20px rgba(34,211,238,0.6),inset 0 0 20px rgba(34,211,238,0.2)}
-  .avatar-opt.selected::after{content:'✓';position:absolute;top:2px;right:2px;width:18px;height:18px;background:#22d3ee;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+    background:rgba(255,255,255,0.1);cursor:pointer;border:2.5px solid transparent;
+    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;position:relative;--cut:12px;
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px)}
+  .avatar-opt img{width:100%;height:100%;object-fit:cover}
+  .avatar-opt:hover{background:rgba(255,255,255,0.25);transform:scale(1.08);border-color:rgba(255,255,255,0.6)}
+  .avatar-opt.selected{border-color:#fff;background:rgba(255,255,255,0.3);box-shadow:0 0 20px rgba(255,255,255,0.7)}
+  .avatar-opt.selected::after{content:'✓';position:absolute;top:2px;right:2px;width:20px;height:20px;background:#fff;color:#1a1f3a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
   
-  /* Custom keypad */
+  /* Keypad */
   .keypad-modal{display:flex;flex-direction:column;gap:20px;align-items:center;max-width:400px;margin:0 auto}
   .keypad-display{display:flex;gap:8px;justify-content:center;margin:10px 0 16px}
-  .code-slot{width:48px;height:60px;border-radius:12px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;transition:all .2s}
-  .code-slot.filled{background:linear-gradient(135deg, rgba(74,158,255,0.4), rgba(168,85,247,0.3));border-color:rgba(120,180,255,0.6);box-shadow:0 4px 14px rgba(74,158,255,0.4)}
-  .code-slot.active{border-color:var(--c-accent);animation:slotPulse 1s ease-in-out infinite}
-  @keyframes slotPulse{0%,100%{box-shadow:0 0 0 0 rgba(74,158,255,0.5)}50%{box-shadow:0 0 0 6px rgba(74,158,255,0)}}
+  .code-slot{width:52px;height:66px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;transition:all .2s;--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
+  .code-slot.filled{background:#fff;color:#1a1f3a;border-color:#fff;box-shadow:0 4px 14px rgba(255,255,255,0.4)}
+  .code-slot.active{border-color:#fff;animation:slotPulse 1s ease-in-out infinite}
+  @keyframes slotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.5)}50%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
   .keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:320px}
-  .keypad-key{aspect-ratio:1.15;font-size:22px;font-weight:900;border-radius:14px;background:linear-gradient(180deg,rgba(74,158,255,0.2),rgba(74,158,255,0.08));border:1px solid rgba(120,160,255,0.3);color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);font-family:inherit}
-  .keypad-key:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(74,158,255,0.3),rgba(74,158,255,0.15))}
+  .keypad-key{aspect-ratio:1.15;font-size:22px;font-weight:900;background:linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.08));border:1.5px solid rgba(255,255,255,0.3);color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);font-family:inherit;--cut:12px;
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px)}
+  .keypad-key:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(255,255,255,0.32),rgba(255,255,255,0.12))}
   .keypad-key:active{transform:scale(0.94)}
-  .keypad-key.del{background:linear-gradient(180deg,rgba(255,59,48,0.4),rgba(180,30,20,0.3));font-size:20px}
-  .keypad-key.confirm{background:linear-gradient(180deg,#6bb6ff,#4a9eff);font-size:20px;box-shadow:0 6px 20px rgba(74,158,255,0.5), inset 0 1px 0 rgba(255,255,255,0.5)}
+  .keypad-key.del{background:linear-gradient(180deg,rgba(255,71,87,0.5),rgba(180,30,20,0.4));font-size:20px}
+  .keypad-key.confirm{background:#fff;color:#1a1f3a;font-size:20px;box-shadow:0 6px 20px rgba(255,255,255,0.4)}
   
   /* Friends */
-  .friend-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:10px}
-  .friend-tab{flex:1;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;transition:all .2s;border:none;background:transparent;color:var(--c-text3);box-shadow:none}
-  .friend-tab.active{background:linear-gradient(180deg,#6bb6ff,#4a9eff);color:#fff}
-  .friend-tab:hover:not(.active){color:var(--c-text);transform:none;box-shadow:none}
-  .friend-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid rgba(255,255,255,0.1)}
-  .friend-item .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#4a9eff,#a855f7);overflow:hidden;flex-shrink:0}
+  .friend-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.4);border-radius:12px;margin-bottom:10px}
+  .friend-tab{flex:1;padding:9px;border-radius:8px;cursor:pointer;font-weight:800;font-size:11px;transition:all .2s;border:none;background:transparent;color:var(--text3);box-shadow:none}
+  .friend-tab.active{background:#fff;color:#1a1f3a}
+  .friend-tab:hover:not(.active){color:#fff;transform:none;box-shadow:none}
+  .friend-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.28)}
+  .friend-item .av{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fff;overflow:hidden;flex-shrink:0;--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
   .friend-item .av img{width:100%;height:100%;object-fit:cover}
-  .friend-item .nm{flex:1;font-weight:700;font-size:13px;text-align:left}
+  .friend-item .nm{flex:1;font-weight:800;font-size:13px;text-align:left;color:#fff}
   .friend-item .actions{display:flex;gap:6px}
-  .friend-item button{padding:6px 12px;font-size:11px;border-radius:8px}
-  .empty-state{text-align:center;padding:32px 16px;color:var(--c-text3)}
+  .friend-item button{padding:6px 12px;font-size:11px;--cut:8px;
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+  .empty-state{text-align:center;padding:32px 16px;color:var(--text3)}
   .empty-state-icon{font-size:42px;margin-bottom:8px;opacity:0.5}
   .empty-state-text{font-size:13px;font-style:italic}
   .search-row{display:flex;gap:8px;margin-bottom:8px}
@@ -407,50 +460,53 @@
   .search-row button{flex-shrink:0}
   
   /* Info tabs */
-  .info-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:10px}
-  .info-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--c-text3);box-shadow:none}
-  .info-tab.active{background:linear-gradient(180deg,#6bb6ff,#4a9eff);color:#fff}
-  .info-tab:hover:not(.active){color:var(--c-text);transform:none;box-shadow:none}
+  .info-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.4);border-radius:12px;margin-bottom:10px}
+  .info-tab{flex:1;padding:9px;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--text3);box-shadow:none}
+  .info-tab.active{background:#fff;color:#1a1f3a}
+  .info-tab:hover:not(.active){color:#fff;transform:none;box-shadow:none}
   
-  .rules-section{text-align:left;font-size:13px;line-height:1.65;color:var(--c-text2);max-height:55vh;overflow-y:auto;padding:6px}
+  .rules-section{text-align:left;font-size:13px;line-height:1.7;color:var(--white-dim);max-height:55vh;overflow-y:auto;padding:6px}
   .rules-section h3{color:#fff;margin:14px 0 8px;font-size:15px}
   .rules-section h3:first-child{margin-top:0}
   .rules-section p{margin-bottom:8px}
   .rules-section ul{margin-left:18px;margin-bottom:8px}
   .rules-section li{margin-bottom:4px}
-  .rules-section b{color:#22d3ee}
+  .rules-section b{color:#fff}
   
   .card-list-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:left;max-height:60vh;overflow-y:auto;padding:4px}
-  .card-list-item{display:flex;gap:10px;padding:10px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid rgba(255,255,255,0.1)}
-  .card-list-thumb{width:56px;height:76px;flex-shrink:0;border-radius:6px;overflow:hidden;background:#1a0f0d;display:flex;align-items:center;justify-content:center}
+  .card-list-item{display:flex;gap:10px;padding:10px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
+  .card-list-thumb{width:56px;height:76px;flex-shrink:0;overflow:hidden;background:#1a0f0d;display:flex;align-items:center;justify-content:center;--cut:6px;
+    clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px)}
   .card-list-thumb img{width:100%;height:100%;object-fit:cover}
   .card-list-body{flex:1;min-width:0}
-  .card-list-name{font-size:12px;font-weight:900;color:#22d3ee;margin-bottom:3px}
-  .card-list-desc{font-size:10.5px;color:var(--c-text2);line-height:1.35}
+  .card-list-name{font-size:12px;font-weight:900;color:#fff;margin-bottom:3px}
+  .card-list-desc{font-size:10.5px;color:var(--white-dim);line-height:1.4}
   
   /* Alter future modal */
-  .alter-slot{display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:12px;border:1px solid rgba(255,255,255,0.12)}
-  .alter-slot-label{font-size:10px;font-weight:900;color:#22d3ee;text-transform:uppercase;letter-spacing:1px;width:60px;text-align:center}
+  .alter-slot{display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);--cut:10px;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
+  .alter-slot-label{font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:1px;width:60px;text-align:center}
   .alter-slot .card{width:64px;height:92px;flex-shrink:0}
   .alter-arrows{display:flex;flex-direction:column;gap:4px}
-  .alter-arrows button{padding:4px 10px;font-size:14px;border-radius:6px}
+  .alter-arrows button{padding:4px 10px;font-size:14px}
   
   @media (max-width:600px){
-    .card{width:74px;height:106px}
-    .pile{width:78px;height:110px}
-    .chat-p{width:100%;right:0;height:50vh;top:auto;bottom:0;transform:translateY(100%);border-radius:20px 20px 0 0}
+    .card{width:78px;height:112px}
+    .pile{width:100px;height:138px;font-size:36px}
+    .chat-p{width:100%;right:0;height:50vh;top:auto;bottom:0;transform:translateY(100%)}
     .chat-p.on{transform:translateY(0)}
     .glog{max-width:140px;font-size:10px}
     .room-code{font-size:28px;letter-spacing:6px}
-    .nope-btn{padding:12px 24px;font-size:18px}
     .btn-main{padding:20px 40px;font-size:18px;letter-spacing:3px}
     .card-list-grid{grid-template-columns:1fr}
-    .code-slot{width:38px;height:48px;font-size:22px}
+    .code-slot{width:40px;height:52px;font-size:22px}
     .keypad-key{font-size:18px}
-    .profile-avatar-big{width:82px;height:82px;font-size:42px}
-    .played-showcase .ps-card{width:130px;height:190px}
+    .profile-avatar-big{width:88px;height:88px;font-size:44px}
+    .played-showcase .ps-card{width:160px;height:230px}
     .action-notification{padding:12px 20px;min-width:240px}
     .action-notification .an-body{font-size:15px}
+    :root{--cut:20px}
   }
 </style>
 </head>
@@ -493,7 +549,7 @@
       <div class="topbar-name">
         <span id="topbarName">-</span>
         <span id="topbarAdminBadge" class="admin-badge" style="display:none">ADMIN</span>
-        <span id="topbarGuestBadge" class="admin-badge" style="display:none;background:linear-gradient(135deg,#888,#556)">GUEST</span>
+        <span id="topbarGuestBadge" class="admin-badge" style="display:none;background:linear-gradient(135deg,#888,#556);color:#fff">GUEST</span>
       </div>
       <div class="topbar-stats">
         <span>Trận: <b id="topbarGames">0</b></span>
@@ -546,10 +602,10 @@
   <div class="glass bevel lobby-box">
     <h2 class="lobby-title">PHÒNG CHỜ</h2>
     <div class="room-code" id="lobbyCode" onclick="UI.copyCode()">------</div>
-    <div id="lobbyStatus" style="text-align:center;font-size:12px;font-weight:bold;color:var(--c-text2);min-height:30px">Đang kết nối...</div>
+    <div id="lobbyStatus" style="text-align:center;font-size:12px;font-weight:800;color:#fff;min-height:30px">Đang kết nối...</div>
     <div class="plist" id="lobbyPlayers"></div>
     <div id="hostControls" style="display:none;flex-direction:column;gap:8px">
-      <label style="font-size:12px;font-weight:bold;color:var(--c-text2);text-align:left">Chế độ Bot:</label>
+      <label style="font-size:12px;font-weight:900;color:#fff;text-align:left">Chế độ Bot:</label>
       <select id="lobbyBotMode">
         <option value="normal">Bình thường</option>
         <option value="smart" selected>Thông minh</option>
@@ -574,8 +630,8 @@
     <div class="badge">Sống: <b id="uiAlive">0</b></div>
     <div class="badge hot" id="uiTurn">Lượt: ...</div>
     <div class="badge">Bài: <b id="uiDeck">0</b></div>
-    <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--w-red);color:#fff">×1</div>
-    <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:rgba(255,59,48,0.3);border:1px solid var(--w-red)">Thoát</button>
+    <div class="badge" id="uiTurnsLeft" style="display:none;background:#fff;color:#1a1f3a">×1</div>
+    <button onclick="UI.leaveRoom()" style="padding:6px 14px;font-size:11px;background:rgba(255,71,87,0.5);border:1.5px solid #ff4757;color:#fff">Thoát</button>
   </div>
   <div class="opps" id="opponentsArea"></div>
   <div class="board">
@@ -585,7 +641,7 @@
   </div>
   <div class="glass bevel hand-area">
     <div class="hand-action-bar" id="handActionBar"></div>
-    <div style="font-size:11px;font-weight:bold;color:#e6d5d0;margin-bottom:4px">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
+    <div style="font-size:11px;font-weight:800;color:#fff;margin-bottom:4px">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
     <div class="hand-scroll" id="handArea"></div>
   </div>
 </div>
@@ -617,7 +673,6 @@
 <script>
 window.addEventListener('error', e => {
   console.error('[Global Error]', e.message);
-  if(typeof UI !== 'undefined' && UI.toast) UI.toast('Lỗi: ' + e.message);
 });
 
 /* ===== CONSTANTS ===== */
@@ -625,37 +680,36 @@ const IMAGE_BASE = 'https://azerst-image-vn.vercel.app/images/';
 const PHOTO_AVATAR = 'https://azerst-image-vn.vercel.app/images/3CORZB1YF.png';
 
 const CARD_TYPES = {
-  EK:{name:'Mèo Nổ',short:'BOM',images:['BOM_1','BOM_2','BOM_3'],desc:'Rút trúng = thua',how:'Khi bốc phải lá này, bạn PHẢI có Gỡ Bom để tự cứu. Nếu không có Gỡ Bom, bạn bị loại khỏi trận ngay.'},
-  DEFUSE:{name:'Gỡ Bom',short:'GỠ BOM',images:['GO_BOM_1','GO_BOM_2','GO_BOM_3','GO_BOM_4'],desc:'Cứu mạng khi nổ',how:'Dùng khi bốc phải Mèo Nổ. Sau khi dùng, đặt Mèo Nổ vào bất kỳ vị trí nào (trên, giữa, dưới).'},
-  NOPE:{name:'Nope',short:'NOPE',images:['NOPE_1','NOPE_2','NOPE_3'],desc:'Chặn hành động',how:'Khi ai dùng lá bài (trừ Mèo Nổ, Gỡ Bom), bạn có thể NOPE để hủy. Có thể nope lại một nope khác.'},
-  ATTACK:{name:'Tấn Công',short:'TẤN CÔNG',images:['TAN_CONG_1','TAN_CONG_2','TAN_CONG_3'],desc:'Ép người sau +2 lượt',how:'Không bốc bài lượt này. Người kế tiếp phải bốc 2 lần. Nếu họ dùng ATTACK, số lượt tiếp tục tăng.'},
-  SKIP:{name:'Bỏ Lượt',short:'BỎ LƯỢT',images:['BO_LUOT_1','BO_LUOT_2','BO_LUOT_3'],desc:'Bỏ lượt không rút bài',how:'Kết thúc lượt hiện tại mà không bốc. Hữu ích khi sợ rút Mèo Nổ.'},
-  SEE_FUTURE:{name:'Nhìn Trước',short:'NHÌN TRƯỚC',images:['NHIN_TRUOC_TUONG_LAI_1','NHIN_TRUOC_TUONG_LAI_2','NHIN_TRUOC_TUONG_LAI_3'],desc:'Xem 3 lá trên cùng',how:'Xem 3 lá trên cùng của bộ bài (không đổi thứ tự). Biết trước để quyết định bốc hay không.'},
-  ALTER_FUTURE:{name:'Biến Đổi Tương Lai',short:'BIẾN ĐỔI',images:['BIEN_DOI_TUONG_LAI_1','BIEN_DOI_TUONG_LAI_2','BIEN_DOI_TUONG_LAI_3'],desc:'Sắp xếp lại 3 lá trên',how:'Xem 3 lá trên cùng VÀ sắp xếp lại theo ý bạn. Có thể đặt Mèo Nổ cho người kế tiếp!'},
-  SHUFFLE:{name:'Xào Bài',short:'XÀO BÀI',images:['XAO_BAI_1','XAO_BAI_2','XAO_BAI_3'],desc:'Xáo trộn bộ bài',how:'Xáo lại toàn bộ bộ bài chưa rút. Không ảnh hưởng đến bài trên tay.'},
-  FAVOR:{name:'Xin Xỏ',short:'XIN BÀI',images:['XIN_XO_1','XIN_XO_2','XIN_XO_3'],desc:'Xin 1 lá từ đối thủ',how:'Chọn 1 đối thủ, họ phải đưa 1 lá NGẪU NHIÊN trong tay. Có thể bị NOPE.'},
-  RUT_TU_DAY:{name:'Rút Từ Đáy',short:'RÚT ĐÁY',images:['RUT_TU_DAY_1','RUT_TU_DAY_2','RUT_TU_DAY_3'],desc:'Rút từ dưới đáy bộ bài',how:'Rút lá dưới cùng của bộ bài thay vì trên cùng. Dùng để né Mèo Nổ ở trên đỉnh.'},
-  CAT:{name:'Mèo Thường',short:'MÈO',images:['MEO_THUONG_1','MEO_THUONG_2','MEO_THUONG_3','MEO_THUONG_4','MEO_THUONG_5'],desc:'Combo 2+ cướp bài',how:'Đánh 2 lá CÙNG LOẠI: cướp 1 lá ngẫu nhiên từ đối thủ. Đánh 3 lá CÙNG LOẠI: gọi tên lá cụ thể, nếu có thì lấy.'}
+  EK:{name:'Mèo Nổ',short:'BOM',images:['BOM_1','BOM_2','BOM_3'],desc:'Rút trúng = thua',how:'Khi bốc phải lá này, bạn PHẢI có Gỡ Bom để tự cứu.'},
+  DEFUSE:{name:'Gỡ Bom',short:'GỠ BOM',images:['GO_BOM_1','GO_BOM_2','GO_BOM_3','GO_BOM_4'],desc:'Cứu mạng khi nổ',how:'Dùng khi bốc phải Mèo Nổ. Đặt lại Mèo Nổ vào vị trí bất kỳ.'},
+  NOPE:{name:'Nope',short:'NOPE',images:['NOPE_1','NOPE_2','NOPE_3'],desc:'Chặn hành động',how:'Khi ai dùng lá bài (trừ Mèo Nổ/Gỡ Bom), bạn có thể NOPE để hủy.'},
+  ATTACK:{name:'Tấn Công',short:'TẤN CÔNG',images:['TAN_CONG_1','TAN_CONG_2','TAN_CONG_3'],desc:'Ép người sau +2 lượt',how:'Người kế tiếp phải bốc 2 lần.'},
+  SKIP:{name:'Bỏ Lượt',short:'BỎ LƯỢT',images:['BO_LUOT_1','BO_LUOT_2','BO_LUOT_3'],desc:'Bỏ lượt không rút bài',how:'Kết thúc lượt hiện tại mà không bốc.'},
+  SEE_FUTURE:{name:'Nhìn Trước',short:'NHÌN TRƯỚC',images:['NHIN_TRUOC_TUONG_LAI_1','NHIN_TRUOC_TUONG_LAI_2','NHIN_TRUOC_TUONG_LAI_3'],desc:'Xem 3 lá trên cùng',how:'Xem 3 lá trên cùng bộ bài.'},
+  ALTER_FUTURE:{name:'Biến Đổi Tương Lai',short:'BIẾN ĐỔI',images:['BIEN_DOI_TUONG_LAI_1','BIEN_DOI_TUONG_LAI_2','BIEN_DOI_TUONG_LAI_3'],desc:'Sắp xếp lại 3 lá trên',how:'Xem VÀ sắp xếp lại 3 lá trên cùng.'},
+  SHUFFLE:{name:'Xào Bài',short:'XÀO BÀI',images:['XAO_BAI_1','XAO_BAI_2','XAO_BAI_3'],desc:'Xáo trộn bộ bài',how:'Xáo lại toàn bộ bộ bài chưa rút.'},
+  FAVOR:{name:'Xin Xỏ',short:'XIN BÀI',images:['XIN_XO_1','XIN_XO_2','XIN_XO_3'],desc:'Xin 1 lá từ đối thủ',how:'Chọn 1 đối thủ, họ phải đưa 1 lá ngẫu nhiên.'},
+  RUT_TU_DAY:{name:'Rút Từ Đáy',short:'RÚT ĐÁY',images:['RUT_TU_DAY_1','RUT_TU_DAY_2','RUT_TU_DAY_3'],desc:'Rút từ dưới đáy bộ bài',how:'Rút lá dưới cùng thay vì trên cùng.'},
+  CAT:{name:'Mèo Thường',short:'MÈO',images:['MEO_THUONG_1','MEO_THUONG_2','MEO_THUONG_3','MEO_THUONG_4','MEO_THUONG_5'],desc:'Combo 2+ CÙNG LOẠI cướp bài',how:'Đánh 2 lá CÙNG LOẠI (VD Mèo 1 với Mèo 1): cướp 1 lá. Đánh 3 lá CÙNG LOẠI: gọi tên lá cụ thể.'}
 };
 
 function makeCard(type){
   const t = CARD_TYPES[type];
   if(!t) return type + '#0';
-  const v = Math.floor(Math.random() * t.images.length);
-  return type + '#' + v;
+  return type + '#' + Math.floor(Math.random() * t.images.length);
 }
 function cardType(c){return String(c).split('#')[0]}
 function cardVariant(c){const p = String(c).split('#'); return p[1]?parseInt(p[1]):0}
 function cardImage(c){
   const t = cardType(c), v = cardVariant(c), info = CARD_TYPES[t];
   if(!info) return '';
-  const idx = Math.min(v, info.images.length - 1);
-  return IMAGE_BASE + info.images[idx] + '.png';
+  return IMAGE_BASE + info.images[Math.min(v, info.images.length - 1)] + '.png';
 }
 function cardInfo(c){return CARD_TYPES[cardType(c)] || {name:'?',short:'?',images:[]}}
 
-const NOPE_WINDOW = 3500;
-const NOPE_WINDOW_FAVOR = 2000;
+const NOPE_WINDOW = 4000;
+const NOPE_WINDOW_FAVOR = 3000;
+const CHOICE_TIMEOUT = 20000; // 20s auto-resolve for AFK
 
 const BOT_MODES = {
   normal:{label:'Bình thường',playProb:0.55,nopeProb:0.05,catProb:0.4,smartTarget:false},
@@ -663,7 +717,6 @@ const BOT_MODES = {
   ultimate:{label:'Tối thượng',playProb:1.0,nopeProb:0.35,catProb:1.0,smartTarget:true}
 };
 const BOT_NAMES = ['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo Ngu','Mèo Khôn','Mèo Bự'];
-
 const AVATARS = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','👑','🎭','😎','🤖','👻','🦄',PHOTO_AVATAR];
 
 const U = {
@@ -679,7 +732,7 @@ function renderAvatarHTML(avatar, size){
   if (avatar && typeof avatar === 'string' && avatar.startsWith('http')) {
     return `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">`;
   }
-  return `<span style="font-size:${size*0.6}px">${avatar || '🐱'}</span>`;
+  return `<span style="font-size:${size*0.6}px;line-height:1">${avatar || '🐱'}</span>`;
 }
 
 const Sound = {
@@ -718,7 +771,7 @@ const VFX = {
 
 /* ===== AUTH ===== */
 const Auth = {
-  KEY:'ek_accounts_v4', USER_KEY:'ek_current_user_v4', GUEST_KEY:'ek_guest_v4',
+  KEY:'ek_accounts_v5', USER_KEY:'ek_current_user_v5', GUEST_KEY:'ek_guest_v5',
   ADMIN:{username:'vanbacazerst.vn2908', password:'aBc@2908vanbac0809'},
   init(){
     const accounts = this.all();
@@ -796,7 +849,7 @@ const Auth = {
 
 /* ===== SOCIAL ===== */
 const Social = {
-  KEY_REQ:'ek_requests_v4', KEY_FRIENDS:'ek_friends_v4', KEY_INVITES:'ek_team_invites_v4',
+  KEY_REQ:'ek_requests_v5', KEY_FRIENDS:'ek_friends_v5', KEY_INVITES:'ek_team_invites_v5',
   allRequests(){try{return JSON.parse(localStorage.getItem(this.KEY_REQ)||'[]')}catch{return []}},
   _saveReqs(r){localStorage.setItem(this.KEY_REQ, JSON.stringify(r))},
   allFriends(){try{return JSON.parse(localStorage.getItem(this.KEY_FRIENDS)||'{}')}catch{return {}}},
@@ -874,7 +927,7 @@ const Social = {
 
 /* ===== ENGINE ===== */
 const Engine = {
-  state:null, hostId:null, pendingTimer:null, onChange:null,
+  state:null, hostId:null, pendingTimer:null, choiceTimer:null, onChange:null,
 
   createGame(players, hostId, botMode='smart'){
     this.hostId = hostId;
@@ -920,7 +973,8 @@ const Engine = {
   notify(meta){if(this.onChange)this.onChange(meta)},
 
   endTurn(){
-    this.state.pending=null;this.state.peekFor=null;this.state.alterFor=null;clearTimeout(this.pendingTimer);
+    this.state.pending=null;this.state.peekFor=null;this.state.alterFor=null;this.state.awaitingChoice=null;
+    clearTimeout(this.pendingTimer);clearTimeout(this.choiceTimer);
     let idx=this.state.turnIdx;
     do{idx=(idx+1)%this.state.players.length}while(!this.state.players[idx].alive);
     this.state.turnIdx=idx;this.state.turnsLeft=1;
@@ -930,7 +984,8 @@ const Engine = {
   },
 
   advanceTo(turns){
-    this.state.pending=null;this.state.peekFor=null;this.state.alterFor=null;clearTimeout(this.pendingTimer);
+    this.state.pending=null;this.state.peekFor=null;this.state.alterFor=null;this.state.awaitingChoice=null;
+    clearTimeout(this.pendingTimer);clearTimeout(this.choiceTimer);
     let idx=this.state.turnIdx;
     do{idx=(idx+1)%this.state.players.length}while(!this.state.players[idx].alive);
     this.state.turnIdx=idx;this.state.turnsLeft=turns;
@@ -962,7 +1017,6 @@ const Engine = {
     const primaryType = cardType(primary);
     if(['EK','DEFUSE','NOPE'].includes(primaryType)) return false;
 
-    // Validate cards exist in hand
     const tempHand = [...p.hand];
     for(const c of cardTypes){
       const idx = tempHand.indexOf(c);
@@ -970,7 +1024,7 @@ const Engine = {
       tempHand.splice(idx,1);
     }
     
-    // FIX: CAT must match SAME variant (Mèo 1 with Mèo 1 only)
+    // CAT: must be EXACT same card (same variant)
     if(primaryType === 'CAT'){
       if(cardTypes.length!==2 && cardTypes.length!==3) return false;
       if(!cardTypes.every(c => c === primary)) return false;
@@ -982,7 +1036,6 @@ const Engine = {
       if(!t||!t.alive||t.id===playerId||t.hand.length===0) return false;
     }
     
-    // Remove cards
     for(const c of cardTypes){
       p.hand.splice(p.hand.indexOf(c),1);
       this.state.discard.push(c);
@@ -1075,7 +1128,7 @@ const Engine = {
           if(reshufflable.length > 0){
             this.state.deck = U.shuffle(reshufflable);
             this.state.discard = this.state.discard.filter(c => cardType(c)==='EK');
-            this.log(`Hết bài! Xáo lại ${this.state.deck.length} lá từ đống bỏ.`);
+            this.log(`Hết bài! Xáo lại ${this.state.deck.length} lá.`);
           } else { this.log(`Bộ bài trống.`); this.notify(); return; }
         }
         const card = this.state.deck.shift();
@@ -1096,12 +1149,29 @@ const Engine = {
         if(t&&t.alive&&t.hand.length>0){
           this.log(`${p.name} xin bài từ ${t.name}.`);
           this.state.awaitingChoice = {type:'favor', fromId:pending.playerId, targetId:t.id};
+          this._armChoiceTimeout();
         }
         break;
       }
       default: if(pending.primaryType==='CAT') this.doCatCombo(p,pending.targetId,pending.cards.length,pending.payload);
     }
     this.notify({type:'resolve'});
+  },
+
+  _armChoiceTimeout(){
+    clearTimeout(this.choiceTimer);
+    this.choiceTimer = setTimeout(() => {
+      const choice = this.state.awaitingChoice;
+      if(!choice) return;
+      if(choice.type === 'favor'){
+        const t = this.byId(choice.targetId);
+        if(t && t.hand.length > 0){
+          this.resolveFavor(t.id, Math.floor(Math.random() * t.hand.length));
+        }
+      } else if(choice.type === 'defuse'){
+        this.placeDefuse(choice.playerId, 'random');
+      }
+    }, CHOICE_TIMEOUT);
   },
 
   applyAlterFuture(playerId, order){
@@ -1150,7 +1220,7 @@ const Engine = {
       if(reshufflable.length > 0){
         this.state.deck = U.shuffle(reshufflable);
         this.state.discard = this.state.discard.filter(c => cardType(c)==='EK');
-        this.log(`Hết bài! Xáo lại ${this.state.deck.length} lá từ đống bỏ.`);
+        this.log(`Hết bài! Xáo lại ${this.state.deck.length} lá.`);
       } else {
         this.log(`Bộ bài trống, ${p.name} không rút được.`);
         this.endTurn(); return true;
@@ -1191,6 +1261,7 @@ const Engine = {
       this.log(`${p.name} dùng GỠ BOM!`);
       Sound.play('defuse');
       this.state.awaitingChoice = {type:'defuse', playerId:p.id, ekCard:card};
+      this._armChoiceTimeout();
       this.notify({type:'defuse-prompt', playerId:p.id});
     }
   },
@@ -1198,6 +1269,7 @@ const Engine = {
   placeDefuse(playerId, pos){
     if(!this.state.awaitingChoice||this.state.awaitingChoice.type!=='defuse') return false;
     if(this.state.awaitingChoice.playerId!==playerId) return false;
+    clearTimeout(this.choiceTimer);
     const ekCard = this.state.awaitingChoice.ekCard || makeCard('EK');
     let idx;
     if(pos==='top') idx = this.state.deck.length;
@@ -1217,9 +1289,11 @@ const Engine = {
     if(!this.state.awaitingChoice||this.state.awaitingChoice.type!=='favor') return false;
     const {fromId, targetId:exp} = this.state.awaitingChoice;
     if(targetId!==exp) return false;
+    clearTimeout(this.choiceTimer);
     const target = this.byId(targetId);
     const from = this.byId(fromId);
     if(!target||!from) return false;
+    if(target.hand.length===0){ this.state.awaitingChoice = null; this.notify(); return false; }
     if(cardIdx<0||cardIdx>=target.hand.length) return false;
     const card = target.hand.splice(cardIdx,1)[0];
     from.hand.unshift(card);
@@ -1244,6 +1318,19 @@ const Engine = {
     this.state.discard.push(...p.hand);
     p.hand = [];
     this.log(`${p.name} đã thoát!`);
+    
+    // Clean up stuck states
+    if(this.state.peekFor?.playerId === playerId) this.state.peekFor = null;
+    if(this.state.alterFor?.playerId === playerId) this.state.alterFor = null;
+    if(this.state.awaitingChoice?.playerId === playerId || this.state.awaitingChoice?.targetId === playerId) {
+      this.state.awaitingChoice = null;
+      clearTimeout(this.choiceTimer);
+    }
+    if(this.state.pending?.playerId === playerId) {
+      this.state.pending = null;
+      clearTimeout(this.pendingTimer);
+    }
+    
     if(this.checkWin()) return;
     if(this.state.players[this.state.turnIdx]?.id === playerId) this.endTurn();
     else this.notify();
@@ -1258,6 +1345,7 @@ const Engine = {
       this.state.pending = null;
       this.state.alterFor = null;
       clearTimeout(this.pendingTimer);
+      clearTimeout(this.choiceTimer);
       if(alive[0]) this.log(`${alive[0].name} CHIẾN THẮNG!`);
       Sound.play('win');
       this.notify({type:'win', winner:this.state.winner});
@@ -1282,7 +1370,7 @@ const Net = {
   _createHostPeer(code){
     if(typeof Peer === 'undefined'){if(this.onError) this.onError('Thư viện mạng chưa tải.');return;}
     try{
-      this.peer = new Peer('ek_room_v4_'+code, {config:{iceServers:[{url:'stun:stun.l.google.com:19302'},{url:'stun:stun1.l.google.com:19302'},{url:'stun:stun2.l.google.com:19302'}]}});
+      this.peer = new Peer('ek_room_v5_'+code, {config:{iceServers:[{url:'stun:stun.l.google.com:19302'},{url:'stun:stun1.l.google.com:19302'},{url:'stun:stun2.l.google.com:19302'}]}});
     }catch(e){if(this.onError) this.onError('Lỗi khởi tạo: '+e.message);return;}
     const timeout = setTimeout(() => {
       if(this.peer && !this.peer.destroyed && !this.peer.open){
@@ -1333,7 +1421,7 @@ const Net = {
     }, 10000);
     this.peer.on('open', () => {
       clearTimeout(timeout);
-      this.conn = this.peer.connect('ek_room_v4_'+code, {reliable:true});
+      this.conn = this.peer.connect('ek_room_v5_'+code, {reliable:true});
       this.conn.on('open', () => {if(this.onConnectSuccess) this.onConnectSuccess();});
       this.conn.on('data', (data) => this.route(data));
       this.conn.on('close', () => {if(this.onHostLeft) this.onHostLeft();});
@@ -1397,13 +1485,14 @@ const Net = {
 const UI = {
   myId:null, roomCode:null, isHost:false,
   lobbyPlayers:[], botScheduled:false,
-  currentModal:null, _animatedDrawId:null, _animatedStealId:null, _lastPlayId:null,
-  selectedCatIndices:[], pendingCatPlay:null, _handSig:'',
+  currentModal:null,
+  _animatedDrawId:null, _animatedStealId:null, _lastShownPlayId:null, _lastEKEKId:null,
+  selectedCatIndices:[], _handSig:'',
   isShuffling:false, _lastPendingTs:null, _dealing:false, _statsRecorded:false,
   _codeInput:'', _pollTimer:null, _shownInvites:new Set(),
   _friendsTab:'list', _alterCards:null, _alterOriginal:null,
-  _cardSelectionMode:false, _namedCatType:null,
-  _showcaseTimeout:null,
+  _showcaseTimeout:null, _nopeHighlightTimer:null,
+  _hostWatchdogTimer:null, _lastProcessedNopeCount:0,
 
   init(){
     Auth.init();
@@ -1414,6 +1503,29 @@ const UI = {
     if(cur){ this.enterMenu(cur); }
     else { this.showScreen('sc-auth'); }
     this._pollTimer = setInterval(() => this._pollSocial(), 2500);
+    this._setupExitGuards();
+  },
+
+  _setupExitGuards(){
+    try { history.pushState({ekPage:'app'}, '', location.href); } catch(e){}
+    window.addEventListener('popstate', () => {
+      const inGame = Engine.state && Engine.state.phase === 'playing';
+      if(inGame){
+        try { history.pushState({ekPage:'app'}, '', location.href); } catch(e){}
+        if(confirm('⚠️ Trận đấu đang diễn ra!\n\nBạn có chắc muốn thoát? Bạn sẽ bị xử thua.')){
+          Engine.state = null;
+          this.leaveRoom();
+        }
+      }
+    });
+    window.addEventListener('beforeunload', (e) => {
+      if(Engine.state && Engine.state.phase === 'playing'){
+        const msg = 'Trận đấu đang diễn ra. Thoát khỏi trang?';
+        e.preventDefault();
+        e.returnValue = msg;
+        return msg;
+      }
+    });
   },
 
   _pollSocial(){
@@ -1439,7 +1551,7 @@ const UI = {
     el.style.cssText = `position:fixed;top:20px;right:20px;max-width:320px;padding:16px;z-index:9999;animation:slideDown .3s ease-out`;
     el.innerHTML = `
       <div style="font-weight:900;margin-bottom:6px">Lời mời vào đội</div>
-      <div style="font-size:12px;color:var(--c-text2);margin-bottom:10px">
+      <div style="font-size:12px;color:#fff;margin-bottom:10px">
         <b>${this.escapeHtml(inv.from)}</b> mời bạn vào phòng <b>${inv.roomCode}</b>
       </div>
       <div style="display:flex;gap:6px">
@@ -1512,7 +1624,7 @@ const UI = {
     document.getElementById('topbarName').textContent = user.username;
     document.getElementById('topbarGames').textContent = user.games || 0;
     document.getElementById('topbarWins').textContent = user.wins || 0;
-    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(user.avatar || '🐱', 62);
+    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(user.avatar || '🐱', 66);
     document.getElementById('topbarAdminBadge').style.display = user.isAdmin ? 'inline-block' : 'none';
     document.getElementById('topbarGuestBadge').style.display = user.isGuest ? 'inline-block' : 'none';
     document.getElementById('adminCard').style.display = user.isAdmin ? 'flex' : 'none';
@@ -1527,7 +1639,6 @@ const UI = {
     this._pollSocial();
   },
 
-  /* ===== MODAL HELPERS ===== */
   openModal(id, html){
     this.currentModal = id;
     const modal = document.getElementById('modalContent');
@@ -1539,7 +1650,7 @@ const UI = {
     this.currentModal = null;
   },
 
-  /* ===== PROFILE (REDESIGNED) ===== */
+  /* ===== PROFILE ===== */
   openProfile(){
     const user = this.currentUser();
     if(!user) return;
@@ -1547,7 +1658,7 @@ const UI = {
     const level = user.games < 5 ? 'Tân Binh' : user.games < 20 ? 'Chiến Binh' : user.games < 50 ? 'Cao Thủ' : 'Huyền Thoại';
     this.openModal('profile', `
       <div class="profile-hero-new">
-        <div class="profile-avatar-big" onclick="UI.openAvatarPicker()">${renderAvatarHTML(user.avatar || '🐱', 104)}</div>
+        <div class="profile-avatar-big" onclick="UI.openAvatarPicker()">${renderAvatarHTML(user.avatar || '🐱', 110)}</div>
         <div class="profile-name-new">${this.escapeHtml(user.username)}</div>
         <div class="profile-tags">
           ${user.isAdmin ? '<span class="profile-tag admin">👑 ADMIN</span>' : ''}
@@ -1556,7 +1667,7 @@ const UI = {
         </div>
       </div>
       ${user.isGuest ? 
-        `<div style="text-align:center;padding:14px;background:rgba(74,158,255,0.12);border-radius:12px;font-size:12px;color:var(--c-text2);margin-bottom:12px;border:1px solid rgba(120,180,255,0.3)">
+        `<div style="text-align:center;padding:14px;background:rgba(255,255,255,0.15);font-size:12px;color:#fff;margin-bottom:12px;border:1.5px solid rgba(255,255,255,0.3);--cut:12px;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px)">
           💡 Đăng ký tài khoản để lưu trận, kết bạn và chơi đội!
         </div>
         <button class="btn-p" onclick="UI.closeModal(); UI.showScreen('sc-auth')">Đăng Ký Ngay</button>
@@ -1567,7 +1678,7 @@ const UI = {
           <div class="stat-card-new"><div class="stat-card-value-new">${winRate}%</div><div class="stat-card-label-new">Tỷ lệ</div></div>
         </div>`
       }
-      <button class="btn-o" onclick="UI.openAvatarPicker()">🖼️ Đổi Avatar</button>
+      <button class="btn-p" onclick="UI.openAvatarPicker()">🖼️ Đổi Avatar</button>
       ${user.isGuest ? '' : '<button class="btn-danger" onclick="UI.doLogout()">Đăng Xuất</button>'}
     `);
   },
@@ -1597,7 +1708,7 @@ const UI = {
     } else {
       Auth.setAvatar(avatar);
     }
-    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(avatar, 62);
+    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(avatar, 66);
     this.toast('Đã đổi avatar');
     setTimeout(() => this.openProfile(), 200);
   },
@@ -1608,7 +1719,7 @@ const UI = {
     this.showScreen('sc-auth');
   },
 
-  /* ===== FRIENDS (fixed search) ===== */
+  /* ===== FRIENDS ===== */
   openFriends(){
     const user = this.currentUser();
     if(!user || user.isGuest){ this.toast('Cần đăng nhập để dùng bạn bè'); return; }
@@ -1627,7 +1738,7 @@ const UI = {
           const a = accs[f];
           const av = a?.avatar || '🐱';
           return `<div class="friend-item">
-            <div class="av">${renderAvatarHTML(av, 36)}</div>
+            <div class="av">${renderAvatarHTML(av, 38)}</div>
             <div class="nm">${this.escapeHtml(f)}</div>
             <div class="actions">
               <button class="btn-danger" onclick="UI.friendRemove('${this.escapeHtml(f)}')">Xóa</button>
@@ -1639,10 +1750,10 @@ const UI = {
       content = `
         <div class="search-row">
           <input type="text" id="friendSearchInput" placeholder="Nhập tên user cần kết bạn..." maxlength="20" onkeypress="if(event.key==='Enter')UI.friendSearch()">
-          <button class="btn-p" onclick="UI.friendSearch()">Tìm & Kết Bạn</button>
+          <button class="btn-p" onclick="UI.friendSearch()">Kết Bạn</button>
         </div>
-        <div id="friendSearchResult" style="min-height:20px;font-size:12px;padding:8px;border-radius:8px"></div>
-        <div style="font-size:11px;color:var(--c-text3);margin-top:8px;text-align:left">
+        <div id="friendSearchResult" style="min-height:20px;font-size:12px;padding:8px;color:#fff"></div>
+        <div style="font-size:11px;color:var(--white-dim);margin-top:8px;text-align:left">
           💡 Nhập đúng tên user (không phân biệt hoa thường). Hỏi bạn bè tên đăng nhập của họ.
         </div>
       `;
@@ -1651,7 +1762,7 @@ const UI = {
       else content = incoming.map(r => {
         const a = accs[r.from];
         return `<div class="friend-item">
-          <div class="av">${renderAvatarHTML(a?.avatar || '🐱', 36)}</div>
+          <div class="av">${renderAvatarHTML(a?.avatar || '🐱', 38)}</div>
           <div class="nm">${this.escapeHtml(r.from)}</div>
           <div class="actions">
             <button class="btn-p" onclick="UI.friendAccept(${r.ts})">✓</button>
@@ -1665,7 +1776,7 @@ const UI = {
         <div class="friend-item">
           <div class="av">⏳</div>
           <div class="nm">${this.escapeHtml(r.to)}</div>
-          <div class="actions"><span style="font-size:11px;color:var(--c-text3)">Đang chờ</span></div>
+          <div class="actions"><span style="font-size:11px;color:var(--white-dim)">Đang chờ</span></div>
         </div>
       `).join('');
     }
@@ -1689,36 +1800,28 @@ const UI = {
     const result = document.getElementById('friendSearchResult');
     if(!input || !result) return;
     const val = input.value.trim();
-    if(!val){ result.textContent = '⚠️ Nhập tên user!'; result.style.color = '#ff8a7a'; result.style.background = 'rgba(255,59,48,0.15)'; return; }
+    if(!val){ result.textContent = '⚠️ Nhập tên user!'; result.style.color = '#ff8a7a'; return; }
     const user = this.currentUser();
     if(!user) return;
     const realName = Auth.findUser(val);
     if(!realName){
       result.textContent = `❌ Không tìm thấy user "${val}". Kiểm tra lại tên!`;
-      result.style.color = '#ff8a7a'; result.style.background = 'rgba(255,59,48,0.15)';
+      result.style.color = '#ff8a7a';
       return;
     }
     const res = Social.sendRequest(user.username, realName);
     if(res.ok){
       result.textContent = `✅ Đã gửi lời mời tới "${realName}"!`;
-      result.style.color = '#8affa8'; result.style.background = 'rgba(80,200,100,0.15)';
+      result.style.color = '#8affa8';
       setTimeout(() => this.openFriends(), 800);
     } else {
       result.textContent = `⚠️ ${res.msg}`;
-      result.style.color = '#ffc766'; result.style.background = 'rgba(255,180,0,0.15)';
+      result.style.color = '#ffc766';
     }
   },
 
-  friendAccept(ts){
-    Social.accept(ts);
-    this.toast('Đã chấp nhận');
-    this.openFriends();
-  },
-  friendReject(ts){
-    Social.reject(ts);
-    this.toast('Đã từ chối');
-    this.openFriends();
-  },
+  friendAccept(ts){ Social.accept(ts); this.toast('Đã chấp nhận'); this.openFriends(); },
+  friendReject(ts){ Social.reject(ts); this.toast('Đã từ chối'); this.openFriends(); },
   friendRemove(name){
     const user = this.currentUser();
     if(!user) return;
@@ -1744,7 +1847,7 @@ const UI = {
         <ul>
           <li>Mỗi lượt bạn có thể đánh <b>nhiều lá bài</b> hoặc <b>rút 1 lá</b> để kết thúc lượt.</li>
           <li>Nếu rút trúng <b>Mèo Nổ</b>, bạn phải có <b>Gỡ Bom</b> để sống. Không có → bị loại!</li>
-          <li>Khi đánh bài có thể bị đối thủ <b>NOPE</b> để hủy.</li>
+          <li>Khi đánh bài có thể bị đối thủ <b>NOPE</b> để hủy (trong 4 giây).</li>
           <li>Bom được giấu lại bộ bài ở vị trí bạn chọn sau khi gỡ.</li>
         </ul>
         <h3>🐱 Mèo Thường (Combo)</h3>
@@ -1769,7 +1872,7 @@ const UI = {
         ${Object.entries(CARD_TYPES).map(([k, info]) => {
           const sample = makeCard(k);
           return `<div class="card-list-item">
-            <div class="card-list-thumb"><img src="${cardImage(sample)}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'card-fallback\\' style=\\'display:flex\\'>${info.short}</div>'" alt=""></div>
+            <div class="card-list-thumb"><img src="${cardImage(sample)}" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=&quot;color:#fff;font-weight:900;font-size:9px&quot;>${info.short}</div>'" alt=""></div>
             <div class="card-list-body">
               <div class="card-list-name">${info.name}</div>
               <div class="card-list-desc">${info.desc}</div>
@@ -1787,7 +1890,7 @@ const UI = {
     this._htpData = {rules, cards};
   },
   htpSwitch(tab){
-    document.querySelectorAll('.info-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tab === 'rules' ? 'luật' : 'lá')));
+    document.querySelectorAll('.info-tab').forEach((t, i) => t.classList.toggle('active', (tab === 'rules' && i === 0) || (tab === 'cards' && i === 1)));
     const c = document.getElementById('htpContent');
     if(c && this._htpData) c.innerHTML = this._htpData[tab];
   },
@@ -1826,7 +1929,7 @@ const UI = {
     this.openModal('solo', `
       <h2>Solo với Bot</h2>
       <p>Chọn số người & độ khó</p>
-      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--c-text2)">Số người:</label>
+      <label style="text-align:left;font-size:12px;font-weight:900;color:#fff">Số người:</label>
       <select id="soloCount" style="margin-bottom:8px">
         <option value="2">2 người</option>
         <option value="3" selected>3 người</option>
@@ -1834,7 +1937,7 @@ const UI = {
         <option value="5">5 người</option>
         <option value="6">6 người</option>
       </select>
-      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--c-text2)">Độ khó Bot:</label>
+      <label style="text-align:left;font-size:12px;font-weight:900;color:#fff">Độ khó Bot:</label>
       <select id="soloBotMode">
         <option value="normal">Bình thường</option>
         <option value="smart" selected>Thông minh</option>
@@ -1869,7 +1972,7 @@ const UI = {
     this.enterGame(true);
   },
 
-  /* ===== JOIN ROOM ===== */
+  /* ===== JOIN ===== */
   openJoinRoomModal(){
     this._codeInput = '';
     this.openModal('join', `
@@ -1906,10 +2009,7 @@ const UI = {
     this._codeInput += digit;
     this._updateKeypadDisplay();
   },
-  keypadBackspace(){
-    this._codeInput = this._codeInput.slice(0, -1);
-    this._updateKeypadDisplay();
-  },
+  keypadBackspace(){ this._codeInput = this._codeInput.slice(0, -1); this._updateKeypadDisplay(); },
   keypadConfirm(){
     if(this._codeInput.length !== 6) return this.toast('Nhập đủ 6 số!');
     const code = this._codeInput;
@@ -1995,7 +2095,7 @@ const UI = {
       };
       Net.onAction = (pid, action, payload) => {
         try{ this.hostAction(pid, action, payload); }
-        catch(e){ console.error('[EK] hostAction:', e); }
+        catch(e){ console.error('[EK] hostAction error:', e); }
       };
       Net.onChat = (name, text) => this.addChatMsg(name, text);
       Net.host(this.roomCode);
@@ -2014,7 +2114,12 @@ const UI = {
         document.getElementById('lobbyStatus').innerHTML = '✅ Đã kết nối';
       };
       Net.onStart = (state) => { Engine.state = state; this.enterGame(false); };
-      Net.onState = (state) => { Engine.state = state; this.render(); this.updateModals(); };
+      Net.onState = (state) => {
+        Engine.state = state;
+        this.render();
+        this.updateModals();
+        this._processStateVFX();
+      };
       Net.onChat = (name, text) => this.addChatMsg(name, text);
       Net.onHostLeft = () => {
         if(Engine.state && Engine.state.phase === 'playing'){
@@ -2047,7 +2152,7 @@ const UI = {
     box.innerHTML = this.lobbyPlayers.map(p => {
       const av = accs[p.name]?.avatar || (p.isBot?'🤖':'👤');
       return `<div class="pitem">
-        <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 36)}</div>
+        <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 38)}</div>
         <div class="nm">${this.escapeHtml(p.name)}${p.id===this.myId?' (bạn)':''}</div>
         <div class="st">${p.isHost?'HOST':(p.isBot?'BOT':'OK')}</div>
       </div>`;
@@ -2085,7 +2190,7 @@ const UI = {
         ${friends.map(f => {
           const av = accs[f]?.avatar || '🐱';
           return `<div class="friend-item">
-            <div class="av">${renderAvatarHTML(av, 36)}</div>
+            <div class="av">${renderAvatarHTML(av, 38)}</div>
             <div class="nm">${this.escapeHtml(f)}</div>
             <button class="btn-p" onclick="UI.sendTeamInvite('${this.escapeHtml(f)}')">Mời</button>
           </div>`;
@@ -2116,15 +2221,20 @@ const UI = {
     navigator.clipboard?.writeText(this.roomCode).then(() => this.toast('Đã copy mã: ' + this.roomCode)).catch(()=>{});
   },
 
-  /* ===== GAME ENTRY ===== */
+  /* ===== GAME ===== */
   enterGame(asHost){
     this.isHost = asHost;
     this._statsRecorded = false;
+    this._lastShownPlayId = null;
+    this._lastEKEKId = null;
+    this._animatedDrawId = null;
+    this._animatedStealId = null;
     this.showScreen('sc-game');
     document.getElementById('chatFab').classList.add('on');
     this._dealing = true;
     this.render();
     this.updateModals();
+    this._processStateVFX();
     setTimeout(() => {
       this._dealing = false;
       document.querySelectorAll('.card.deal-in').forEach(c => c.classList.remove('deal-in'));
@@ -2143,25 +2253,27 @@ const UI = {
       Net.close();
     }
     clearTimeout(Engine.pendingTimer);
+    clearTimeout(Engine.choiceTimer);
+    clearTimeout(this._hostWatchdogTimer);
+    clearTimeout(this._nopeHighlightTimer);
+    clearTimeout(this._showcaseTimeout);
     Engine.pendingTimer = null;
+    Engine.choiceTimer = null;
     Engine.state = null;
     this.isHost = false;
     this.roomCode = null;
     this.lobbyPlayers = [];
     this.selectedCatIndices = [];
-    this.pendingCatPlay = null;
     this.botScheduled = false;
     this._lastPendingTs = null;
+    this._lastShownPlayId = null;
+    this._lastEKEKId = null;
     this._animatedDrawId = null;
     this._animatedStealId = null;
     this._alterCards = null;
     this._alterOriginal = null;
-    this._cardSelectionMode = false;
-    this._namedCatType = null;
     document.getElementById('chatFab').classList.remove('on');
     this.closeModal();
-    const nc = document.getElementById('nopeContainer');
-    if(nc) nc.remove();
     const showcase = document.getElementById('playedShowcase');
     if(showcase) showcase.classList.remove('show');
     this.enterMenu(this.currentUser());
@@ -2184,6 +2296,7 @@ const UI = {
         case 'favor': ok = Engine.resolveFavor(playerId, payload.idx); break;
         case 'clearPeek': ok = Engine.clearPeek(playerId); break;
         case 'alterFuture': ok = Engine.applyAlterFuture(playerId, payload.order); break;
+        case 'forceResolve': if(Engine.state.pending) Engine.resolvePending(); ok = true; break;
       }
     }catch(e){ console.error('[EK] Engine error:', e); }
     if(!ok && this.isHost) Net.send({type:'state', state:U.clone(Engine.state)});
@@ -2201,75 +2314,131 @@ const UI = {
     if(this.isHost) Net.send({type:'state', state:U.clone(Engine.state)});
     this.render();
     this.updateModals();
-    this.renderVFX();
+    this._processStateVFX();
     if(this.isHost) this.processBots();
-    this._handleNotifications(meta);
+    if(this.isHost) this._armHostWatchdog();
   },
 
-  /* ===== NOTIFICATIONS (bottom-center) ===== */
-  _handleNotifications(meta){
+  /* ===== HOST WATCHDOG (fix stuck state) ===== */
+  _armHostWatchdog(){
+    if(!this.isHost) return;
+    clearTimeout(this._hostWatchdogTimer);
+    const s = Engine.state;
+    if(!s || s.phase !== 'playing') return;
+    
+    let timeout = 0;
+    if(s.pending){
+      timeout = (s.pending.windowMs || NOPE_WINDOW) + 3000;
+    } else if(s.awaitingChoice){
+      if(s.awaitingChoice.playerId?.startsWith('bot_') || s.awaitingChoice.targetId?.startsWith('bot_')) return;
+      timeout = CHOICE_TIMEOUT + 3000;
+    } else if(s.peekFor && !s.peekFor.playerId.startsWith('bot_')){
+      timeout = 60000;
+    } else if(s.alterFor && !s.alterFor.playerId.startsWith('bot_')){
+      timeout = 60000;
+    }
+    
+    if(timeout > 0){
+      this._hostWatchdogTimer = setTimeout(() => {
+        if(!this.isHost) return;
+        const st = Engine.state;
+        if(!st || st.phase !== 'playing') return;
+        if(st.pending) Engine.resolvePending();
+        else if(st.awaitingChoice?.type === 'favor'){
+          const t = Engine.byId(st.awaitingChoice.targetId);
+          if(t && t.hand.length > 0) Engine.resolveFavor(t.id, Math.floor(Math.random() * t.hand.length));
+          else { st.awaitingChoice = null; Engine.notify(); }
+        } else if(st.awaitingChoice?.type === 'defuse'){
+          Engine.placeDefuse(st.awaitingChoice.playerId, 'random');
+        } else if(st.peekFor){
+          st.peekFor = null; Engine.notify();
+        } else if(st.alterFor){
+          st.alterFor = null; Engine.notify();
+        }
+      }, timeout);
+    }
+  },
+
+  /* ===== STATE VFX (SYNC on all devices) ===== */
+  _processStateVFX(){
     const s = Engine.state;
     if(!s) return;
-    const lastLog = s.logs[s.logs.length-1] || '';
     
-    if(meta?.type === 'play' && s.lastPlay){
+    // Card play showcase (both host & client)
+    if(s.lastPlay && s.lastPlay.id !== this._lastShownPlayId){
+      this._lastShownPlayId = s.lastPlay.id;
       const player = Engine.byId(s.lastPlay.playerId);
       const info = CARD_TYPES[cardType(s.lastPlay.card)];
       if(player && info){
         this.showPlayedCard(s.lastPlay.card, player.name, info.short);
+        const t = cardType(s.lastPlay.card);
         let notifType = 'info';
-        let label = info.short;
-        if(cardType(s.lastPlay.card) === 'ATTACK') notifType = 'attack';
-        else if(cardType(s.lastPlay.card) === 'SKIP') notifType = 'skip';
-        else if(cardType(s.lastPlay.card) === 'FAVOR') notifType = 'nope';
+        if(t === 'ATTACK') notifType = 'attack';
+        else if(t === 'SKIP') notifType = 'skip';
+        else if(t === 'FAVOR') notifType = 'nope';
         this.showBottomNotification({
           type: notifType,
           title: player.name + ' vừa dùng',
           body: info.name,
-          card: label
+          card: info.short
         });
       }
     }
-    if(meta?.type === 'nope'){
-      const lastPlayer = s.pending ? Engine.byId(s.pending.playerId) : null;
-      this.showBottomNotification({
-        type: 'nope',
-        title: 'NOPE!',
-        body: 'Hành động bị chặn'
-      });
+    
+    // Draw animation (SLOW ~1200ms)
+    if(s.lastDraw && s.lastDraw.id !== this._animatedDrawId){
+      this._animatedDrawId = s.lastDraw.id;
+      const isMe = s.lastDraw.playerId === this.myId;
+      this.animateDraw(s.lastDraw.playerId, s.lastDraw.card, isMe, s.lastDraw.fromBottom);
+      
+      // Handle EK boom/defuse notification
+      if(s.lastDraw.isEK && s.lastDraw.id !== this._lastEKEKId){
+        this._lastEKEKId = s.lastDraw.id;
+        const drawer = Engine.byId(s.lastDraw.playerId);
+        if(drawer && !drawer.alive){
+          this.showBottomNotification({
+            type: 'boom',
+            title: '💥 MÈO NỔ!',
+            body: `${drawer.name} đã bị loại!`
+          });
+          const deck = document.getElementById('deckPile');
+          if(deck){
+            const r = deck.getBoundingClientRect();
+            setTimeout(() => VFX.explode(r.left + r.width/2, r.top + r.height/2), 100);
+          }
+        } else if(drawer && drawer.alive){
+          this.showBottomNotification({
+            type: 'defuse',
+            title: '💥 MÈO NỔ!',
+            body: `${drawer.name} đã gỡ bom thành công`
+          });
+        }
+      }
     }
-    if(meta?.type === 'defuse-prompt'){
-      const p = Engine.byId(meta.playerId);
-      if(p) this.showBottomNotification({
-        type: 'defuse',
-        title: p.name,
-        body: 'Gỡ Bom thành công!',
-        card: 'Chọn vị trí giấu bom'
-      });
+    
+    // Steal notification
+    if(s.lastSteal && s.lastSteal.id !== this._animatedStealId){
+      this._animatedStealId = s.lastSteal.id;
+      const thief = Engine.byId(s.lastSteal.thiefId);
+      const victim = Engine.byId(s.lastSteal.victimId);
+      if(thief && victim){
+        this.showBottomNotification({
+          type: 'nope',
+          title: '🎯 Cướp bài',
+          body: `${thief.name} lấy ${CARD_TYPES[cardType(s.lastSteal.card)].name} từ ${victim.name}`
+        });
+      }
     }
-    if(meta?.type === 'defuse-done'){
-      this.showBottomNotification({
-        type: 'defuse',
-        title: 'Đã gỡ bom',
-        body: 'Bom được giấu lại'
-      });
-    }
-    if(meta?.type === 'win' && meta.winner){
-      this.showBottomNotification({
-        type: 'defuse',
-        title: '🏆 CHIẾN THẮNG',
-        body: meta.winner.name
-      });
-    }
-    if(lastLog.includes('BỊ LOẠI')){
-      this.showBottomNotification({
-        type: 'boom',
-        title: '💥 MÈO NỔ!',
-        body: lastLog.replace('BỊ LOẠI!','đã bị loại!')
-      });
-    }
-    if(s.pending?.primaryType === 'SKIP' && s.pending.playerId === this.myId){
-      // Handled by play action already
+    
+    // Shuffle animation
+    const lastLog = s.logs[s.logs.length-1] || '';
+    if(lastLog.includes('xáo bài') && !this.isShuffling){
+      this.isShuffling = true;
+      const deck = document.getElementById('deckPile');
+      if(deck){
+        deck.classList.add('shuffling');
+        setTimeout(() => { deck.classList.remove('shuffling'); this.isShuffling = false; }, 800);
+      }
     }
   },
 
@@ -2294,7 +2463,7 @@ const UI = {
     
     const img = cardImage(card);
     const info = cardInfo(card);
-    cardEl.innerHTML = `<img src="${img}" onerror="this.parentElement.innerHTML='<div style=&quot;padding:20px;font-size:22px;font-weight:900;color:#fff;text-align:center;line-height:1.4&quot;>${info.short}</div>'" alt="">`;
+    cardEl.innerHTML = `<img src="${img}" onerror="this.parentElement.innerHTML='<div style=&quot;padding:20px;font-size:24px;font-weight:900;color:#fff;text-align:center;line-height:1.4&quot;>${info.short}</div>'" alt="">`;
     nameEl.textContent = playerName;
     actEl.textContent = actionText;
     
@@ -2305,42 +2474,10 @@ const UI = {
     clearTimeout(this._showcaseTimeout);
     this._showcaseTimeout = setTimeout(() => {
       showcase.classList.remove('show');
-    }, 2200);
+    }, 2400);
   },
 
-  /* ===== VFX ===== */
-  renderVFX(){
-    const s = Engine.state; if(!s) return;
-    const lastLog = s.logs[s.logs.length-1] || '';
-    if(lastLog.includes('MÈO NỔ')){
-      const deck = document.getElementById('deckPile');
-      if(deck){
-        const r = deck.getBoundingClientRect();
-        setTimeout(() => VFX.explode(r.left + r.width/2, r.top + r.height/2), 100);
-      }
-    }
-    if(lastLog.includes('xáo bài')){
-      if(!this.isShuffling){
-        this.isShuffling = true;
-        const deck = document.getElementById('deckPile');
-        if(deck){
-          deck.classList.add('shuffling');
-          setTimeout(() => { deck.classList.remove('shuffling'); this.isShuffling = false; }, 800);
-        }
-      }
-    }
-    if(s.lastDraw && s.lastDraw.id !== this._animatedDrawId){
-      this._animatedDrawId = s.lastDraw.id;
-      const isMe = s.lastDraw.playerId === this.myId;
-      this.animateDraw(s.lastDraw.playerId, s.lastDraw.card, isMe, s.lastDraw.fromBottom);
-    }
-    if(s.lastSteal && s.lastSteal.id !== this._animatedStealId){
-      this._animatedStealId = s.lastSteal.id;
-      this.animateSteal(s.lastSteal);
-    }
-  },
-
-  /* ===== DRAW ANIMATION (SLOWER) ===== */
+  /* ===== DRAW ANIMATION (slower 1200ms) ===== */
   animateDraw(playerId, card, isMe, fromBottom = false){
     const deckEl = document.getElementById('deckPile');
     if(!deckEl) return;
@@ -2370,34 +2507,21 @@ const UI = {
     const startY = startRect.top;
     flyer.style.left = startX + 'px';
     flyer.style.top = startY + 'px';
-    flyer.style.width = '90px';
-    flyer.style.height = '130px';
+    flyer.style.width = '94px';
+    flyer.style.height = '136px';
     document.body.appendChild(flyer);
     
-    const endX = endRect.left + endRect.width/2 - startX - 45;
-    const endY = endRect.top + endRect.height/2 - startY - 65;
+    const endX = endRect.left + endRect.width/2 - startX - 47;
+    const endY = endRect.top + endRect.height/2 - startY - 68;
     
-    // SLOWER: 1200ms instead of 500ms
+    // SLOW: 1200ms with arc
     flyer.animate([
       { transform:'translate(0,0) rotate(0) scale(1)', opacity: 1 },
-      { transform:`translate(${endX*0.4}px,${endY*0.4 - 60}px) rotate(-15deg) scale(1.15)`, opacity: 1, offset: 0.5 },
+      { transform:`translate(${endX*0.4}px,${endY*0.4 - 70}px) rotate(-15deg) scale(1.15)`, opacity: 1, offset: 0.5 },
       { transform:`translate(${endX}px,${endY}px) rotate(0) scale(0.8)`, opacity: 0.9 }
     ], { duration: 1200, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }).onfinish = () => {
       flyer.remove();
     };
-  },
-
-  animateSteal(steal){
-    const s = Engine.state;
-    const thief = Engine.byId(steal.thiefId);
-    const victim = Engine.byId(steal.victimId);
-    if(!thief || !victim) return;
-    // Simple floating notification
-    this.showBottomNotification({
-      type: 'nope',
-      title: 'Cướp bài',
-      body: `${thief.name} lấy ${CARD_TYPES[cardType(steal.card)].name} từ ${victim.name}`
-    });
   },
 
   /* ===== RENDER ===== */
@@ -2413,8 +2537,6 @@ const UI = {
     if(s.turnsLeft > 1){ tEl.style.display='inline-block'; tEl.textContent = '×' + s.turnsLeft; }
     else tEl.style.display = 'none';
     
-    // Opponents
-    const me = this.me();
     const opps = s.players.filter(p => p.id !== this.myId);
     const oppsArea = document.getElementById('opponentsArea');
     oppsArea.innerHTML = opps.map(p => {
@@ -2422,29 +2544,25 @@ const UI = {
       const acc = Auth.all()[p.name];
       const av = acc?.avatar || (p.isBot?'🤖':'👤');
       return `<div class="opp ${isTurn?'turn':''} ${p.alive?'':'dead'}">
-        <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 36)}</div>
+        <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 38)}</div>
         <div class="nm">${this.escapeHtml(p.name)}</div>
         <div class="cnt">🃏 ${p.hand.length}</div>
       </div>`;
     }).join('');
     
-    // Discard pile
     const discPile = document.getElementById('discardPile');
     if(s.discard.length > 0){
       const last = s.discard[s.discard.length-1];
       discPile.innerHTML = `<img src="${cardImage(last)}" onerror="this.parentElement.textContent='?'" alt="">`;
     } else { discPile.textContent = '-'; }
     
-    // Deck can draw
     const deckEl = document.getElementById('deckPile');
     const canDraw = cur?.id === this.myId && !s.pending && !s.awaitingChoice && !s.alterFor && s.phase === 'playing';
     deckEl.classList.toggle('can', canDraw);
     deckEl.classList.toggle('locked', !canDraw);
     
-    // Game log
     document.getElementById('gameLog').innerHTML = s.logs.slice(-3).join('<br>');
     
-    // Hand
     this.renderHand();
     this.renderHandActionBar();
   },
@@ -2459,13 +2577,20 @@ const UI = {
     const isMyTurn = cur?.id === this.myId;
     const canPlay = isMyTurn && !s.pending && !s.awaitingChoice && !s.alterFor && s.phase === 'playing';
     
+    // NOPE highlight: active when pending exists and player has NOPE and timer still running
+    const hasPending = !!s.pending && s.pending.playerId !== this.myId;
+    const canNopeNow = hasPending && this._nopeHighlightTimer;
+    
     handArea.innerHTML = me.hand.map((card, idx) => {
       const info = cardInfo(card);
       const img = cardImage(card);
-      const dis = !canPlay ? 'dis' : '';
+      const isNopeCard = cardType(card) === 'NOPE';
+      const nopeActive = canNopeNow && isNopeCard;
+      const dis = (!canPlay && !nopeActive) ? 'dis' : '';
       const isSelected = this.selectedCatIndices.includes(idx);
       const selClass = isSelected ? 'selected' : '';
-      return `<div class="card ${dis} ${selClass}" data-idx="${idx}" onclick="UI.onCardClick(${idx})">
+      const nopeClass = nopeActive ? 'nope-active' : '';
+      return `<div class="card ${dis} ${selClass} ${nopeClass}" data-idx="${idx}" onclick="UI.onCardClick(${idx})">
         <img class="card-img" src="${img}" onerror="this.closest('.card').classList.add('no-img')" alt="">
         <div class="card-fallback">${info.short}</div>
       </div>`;
@@ -2500,7 +2625,7 @@ const UI = {
       const t = types[0];
       const info = CARD_TYPES[t];
       const nonCatPlayable = ['ATTACK','SKIP','SHUFFLE','SEE_FUTURE','ALTER_FUTURE','RUT_TU_DAY'].includes(t);
-      const needsTarget = ['FAVOR','CAT'].includes(t);
+      const needsTarget = ['FAVOR'].includes(t);
       
       if(nonCatPlayable){
         bar.innerHTML = `
@@ -2528,8 +2653,15 @@ const UI = {
     const s = Engine.state;
     const me = this.me();
     if(!me || !me.hand[idx]) return;
-    if(!Engine.canAct(this.myId, 'play')){ return; }
     const card = me.hand[idx];
+    
+    // Special: NOPE click during pending
+    if(s.pending && cardType(card) === 'NOPE' && s.pending.playerId !== this.myId && this._nopeHighlightTimer){
+      this.doNope();
+      return;
+    }
+    
+    if(!Engine.canAct(this.myId, 'play')) return;
     if(['EK','DEFUSE','NOPE'].includes(cardType(card))) return this.toast('Không thể đánh lá này trực tiếp');
     
     if(this.selectedCatIndices.includes(idx)){
@@ -2579,15 +2711,11 @@ const UI = {
       this.selectedCatIndices = [];
       this.act('play', {cards, targetId});
     } else if(count === 3){
-      // Named cat - show picker
       this.showNamedCatPicker(cards, targetId);
     }
   },
   
   showNamedCatPicker(cards, targetId){
-    const catTypes = ['CAT'];
-    const catInfo = CARD_TYPES.CAT;
-    const variants = catInfo.images.map((_, i) => `CAT#${i}`);
     this.openModal('named', `
       <h2>Gọi Tên Lá</h2>
       <p>Chọn loại lá muốn lấy từ đối thủ</p>
@@ -2595,7 +2723,7 @@ const UI = {
         ${Object.entries(CARD_TYPES).filter(([k]) => k !== 'EK').map(([k, info]) => {
           const sample = makeCard(k);
           return `<button class="btn-o" style="padding:10px;display:flex;align-items:center;gap:8px;justify-content:flex-start" onclick="UI.confirmNamedCat('${k}')">
-            <img src="${cardImage(sample)}" style="width:32px;height:46px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'" alt="">
+            <img src="${cardImage(sample)}" style="width:32px;height:46px;object-fit:cover" onerror="this.style.display='none'" alt="">
             <span style="font-size:12px;font-weight:900">${info.name}</span>
           </button>`;
         }).join('')}
@@ -2615,33 +2743,37 @@ const UI = {
   },
 
   onDrawClick(){
-    const s = Engine.state;
-    if(!s) return;
+    if(!Engine.state) return;
     if(!Engine.canAct(this.myId, 'draw')) return;
     this.act('draw');
   },
 
-  /* ===== MODALS (defuse, peek, alter, favor, nope) ===== */
+  /* ===== MODALS ===== */
   updateModals(){
     const s = Engine.state;
     if(!s) return;
-    // Nope window
-    const nopeEl = document.getElementById('nopeContainer');
-    if(s.pending && s.pending.playerId !== this.myId && !s.pending.isOwn){
+    
+    // NOPE highlight (compact — highlight NOPE cards in hand)
+    if(s.pending && s.pending.playerId !== this.myId){
       const me = this.me();
       const hasNope = me && me.hand.some(c => cardType(c) === 'NOPE');
       const isTarget = s.pending.targetId === this.myId;
-      if(hasNope && (isTarget || this._shouldShowNope(s.pending))){
-        if(!nopeEl){
-          const el = document.createElement('div');
-          el.id = 'nopeContainer';
-          el.className = 'nope-container';
-          el.innerHTML = `<button class="nope-btn" onclick="UI.doNope()">NOPE!</button><button class="nope-skip-btn" onclick="UI.skipNope()">Bỏ qua</button>`;
-          document.body.appendChild(el);
-          this._lastPendingTs = s.pending.timestamp;
-        }
-      } else if(nopeEl){ nopeEl.remove(); }
-    } else if(nopeEl){ nopeEl.remove(); }
+      const canNope = hasNope && (isTarget || s.pending.primaryType !== 'FAVOR');
+      
+      if(canNope && !this._nopeHighlightTimer){
+        this._nopeHighlightTimer = setTimeout(() => {
+          this._nopeHighlightTimer = null;
+          this.renderHand();
+        }, NOPE_WINDOW);
+        this.renderHand();
+      }
+    } else {
+      if(this._nopeHighlightTimer){
+        clearTimeout(this._nopeHighlightTimer);
+        this._nopeHighlightTimer = null;
+        this.renderHand();
+      }
+    }
     
     // Defuse choice
     if(s.awaitingChoice?.type === 'defuse' && s.awaitingChoice.playerId === this.myId){
@@ -2665,7 +2797,7 @@ const UI = {
         <h2>👁️ Nhìn Trước</h2>
         <p>3 lá trên cùng (từ trên xuống):</p>
         <div style="display:flex;justify-content:center;gap:10px;margin:12px 0;flex-wrap:wrap">
-          ${cards.map(c => `<div style="width:70px;height:100px;border-radius:8px;overflow:hidden;border:2px solid gold;background:#1a0f0d"><img src="${cardImage(c)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${cardInfo(c).short}';this.parentElement.style.color='#fff';this.parentElement.style.fontWeight='900';this.parentElement.style.fontSize='11px';this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center'" alt=""></div>`).join('')}
+          ${cards.map(c => `<div style="width:76px;height:110px;overflow:hidden;border:2.5px solid #fff;background:#1a0f0d;--cut:10px;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)"><img src="${cardImage(c)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${cardInfo(c).short}';this.parentElement.style.color='#fff';this.parentElement.style.fontWeight='900';this.parentElement.style.fontSize='11px';this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center'" alt=""></div>`).join('')}
         </div>
         <button class="btn-p" onclick="UI.doClearPeek()">Đã Xem</button>
       `);
@@ -2731,14 +2863,12 @@ const UI = {
     }
   },
 
-  _shouldShowNope(pending){
-    return pending.primaryType !== 'FAVOR';
-  },
-
-  doNope(){ this.act('nope'); },
-  skipNope(){
-    const el = document.getElementById('nopeContainer');
-    if(el) el.remove();
+  doNope(){
+    if(this._nopeHighlightTimer){
+      clearTimeout(this._nopeHighlightTimer);
+      this._nopeHighlightTimer = null;
+    }
+    this.act('nope');
   },
 
   doDefuse(pos){
@@ -2812,36 +2942,26 @@ const UI = {
     const s = Engine.state;
     if(!s || s.phase !== 'playing' || !this.isHost) return;
     
-    // Handle bot defuse
     if(s.awaitingChoice?.type === 'defuse' && s.awaitingChoice.playerId.startsWith('bot_')){
-      const positions = ['top', 'random', 'bottom'];
-      Engine.placeDefuse(s.awaitingChoice.playerId, U.pick(positions));
+      Engine.placeDefuse(s.awaitingChoice.playerId, U.pick(['top', 'random', 'bottom']));
       return;
     }
-    // Handle bot favor
     if(s.awaitingChoice?.type === 'favor' && s.awaitingChoice.targetId.startsWith('bot_')){
       const target = Engine.byId(s.awaitingChoice.targetId);
       if(target && target.hand.length > 0){
-        const idx = Math.floor(Math.random() * target.hand.length);
-        Engine.resolveFavor(s.awaitingChoice.targetId, idx);
+        Engine.resolveFavor(target.id, Math.floor(Math.random() * target.hand.length));
       }
       return;
     }
-    // Handle bot peek/alter
     if(s.peekFor?.playerId.startsWith('bot_')){
-      setTimeout(() => { if(this.isHost) Engine.clearPeek(s.peekFor.playerId); }, 800);
+      setTimeout(() => { if(this.isHost && s.peekFor) Engine.clearPeek(s.peekFor.playerId); }, 800);
       return;
     }
     if(s.alterFor?.playerId.startsWith('bot_')){
       const cards = [...s.alterFor.cards];
-      // 50% chance bot shuffles
       if(Math.random() < 0.5) U.shuffle(cards);
       Engine.applyAlterFuture(s.alterFor.playerId, cards);
       return;
-    }
-    // Handle pending nope from bots
-    if(s.pending && s.pending.playerId !== this.myId && !s.pending.playerId.startsWith('bot_')){
-      // Other human played - bots may nope
     }
     if(s.pending) return;
     if(s.awaitingChoice || s.alterFor) return;
@@ -2853,23 +2973,18 @@ const UI = {
     const p = cur;
     const hand = p.hand;
     
-    // Try to play a card
     if(Math.random() < mode.playProb){
       const playable = [];
-      // Check for pairs of same cat
+      // Pairs of same CAT variant
       const catCounts = {};
       hand.forEach(c => {
-        if(cardType(c) === 'CAT'){
-          catCounts[c] = (catCounts[c] || 0) + 1;
-        }
+        if(cardType(c) === 'CAT') catCounts[c] = (catCounts[c] || 0) + 1;
       });
       Object.entries(catCounts).forEach(([card, count]) => {
         if(count >= 2 && Math.random() < mode.catProb){
           playable.push({cards: Array(count).fill(card), type:'CAT'});
         }
       });
-      
-      // Non-cat cards
       hand.forEach(c => {
         const t = cardType(c);
         if(['ATTACK','SKIP','SHUFFLE','SEE_FUTURE','ALTER_FUTURE','RUT_TU_DAY','FAVOR'].includes(t)){
@@ -2882,8 +2997,7 @@ const UI = {
         let targetId = null;
         if(choice.type === 'CAT' || choice.type === 'FAVOR'){
           const targets = s.players.filter(x => x.alive && x.id !== p.id && x.hand.length > 0);
-          if(targets.length === 0) return this._botDraw(p);
-          // Smart target: pick player with fewest cards (or most cards for cat stealing)
+          if(targets.length === 0) return Engine.drawCard(p.id);
           if(mode.smartTarget){
             targets.sort((a,b) => choice.type === 'CAT' ? b.hand.length - a.hand.length : a.hand.length - b.hand.length);
             targetId = targets[0].id;
@@ -2900,13 +3014,6 @@ const UI = {
         return;
       }
     }
-    
-    // Draw
-    this._botDraw(p);
-  },
-
-  _botDraw(p){
-    // Small chance to skip if has skip
     Engine.drawCard(p.id);
   },
 
@@ -2936,7 +3043,6 @@ const UI = {
     box.scrollTop = box.scrollHeight;
   },
 
-  /* ===== TOAST ===== */
   toast(msg){
     const el = document.createElement('div');
     el.className = 'toast';
