@@ -3,19 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens - V3</title>
+<title>Exploding Kittens V4</title>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-<script>
-  if (typeof Peer === 'undefined') {
-    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"><\/script>');
-  }
-</script>
 <style>
   :root{
-    --red:#ff3b30;--red-2:#d93828;--red-dark:#b52a1c;
-    --gold:#ffcc00;--gold-2:#ff8a00;
-    --cyan:#00d4ff;
-    --text:#fff;--text-2:#e6d5d0;--text-3:#a89690;
+    /* Cool theme (lobby/auth/menu) */
+    --c-bg1:#0a0e27; --c-bg2:#1a1f3a; --c-bg3:#252c4f;
+    --c-accent:#4a9eff; --c-accent2:#a855f7; --c-cyan:#22d3ee;
+    --c-text:#fff; --c-text2:#c9d1e8; --c-text3:#8892b0;
+    /* Warm theme (game) */
+    --w-red:#ff3b30; --w-red2:#d93828; --w-gold:#ffcc00; --w-gold2:#ff8a00;
     --cut:20px;
   }
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -23,152 +20,171 @@
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
     background:
-      radial-gradient(circle at 10% 10%, rgba(255,90,60,0.4) 0%, transparent 40%),
-      radial-gradient(circle at 90% 90%, rgba(255,200,50,0.25) 0%, transparent 45%),
-      radial-gradient(circle at 50% 50%, #5c1a10 0%, #1a0808 60%, #050202 100%);
-    color:var(--text);-webkit-font-smoothing:antialiased;user-select:none;min-height:100vh;
+      radial-gradient(circle at 10% 10%, rgba(74,158,255,0.35) 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(168,85,247,0.25) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, #1a1f3a 0%, #0a0e27 60%, #050814 100%);
+    color:var(--c-text);-webkit-font-smoothing:antialiased;user-select:none;min-height:100vh;
   }
-  .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(70px);opacity:0.6}
-  .orb-1{width:400px;height:400px;top:-120px;left:-120px;background:rgba(255,90,60,0.5);animation:orbFloat 14s ease-in-out infinite}
-  .orb-2{width:450px;height:450px;bottom:-180px;right:-180px;background:rgba(255,200,50,0.35);animation:orbFloat 16s ease-in-out infinite reverse}
-  .orb-3{width:300px;height:300px;top:40%;right:10%;background:rgba(0,212,255,0.2);animation:orbFloat 12s ease-in-out infinite;animation-delay:-4s}
+  .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);opacity:0.55}
+  .orb-1{width:420px;height:420px;top:-120px;left:-120px;background:rgba(74,158,255,0.6);animation:orbFloat 14s ease-in-out infinite}
+  .orb-2{width:460px;height:460px;bottom:-180px;right:-180px;background:rgba(168,85,247,0.5);animation:orbFloat 16s ease-in-out infinite reverse}
+  .orb-3{width:320px;height:320px;top:40%;right:10%;background:rgba(34,211,238,0.35);animation:orbFloat 12s ease-in-out infinite;animation-delay:-4s}
   @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.15)}}
-  .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.03;
+  .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.04;
     background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),
       linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);
-    background-size:40px 40px}
+    background-size:44px 44px}
   
   .glass{
     position:relative;
-    background:linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+    background:linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
     backdrop-filter:blur(30px) saturate(180%);
     -webkit-backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid rgba(255,255,255,0.18);
-    box-shadow:0 10px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.15);
+    border:1px solid rgba(255,255,255,0.15);
+    box-shadow:0 10px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
     z-index:1;
   }
-  .bevel{clip-path:polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut))}
+  .bevel{clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
   
-  button{
-    font-family:inherit;font-weight:700;font-size:14px;padding:12px 20px;
+  button{font-family:inherit;font-weight:700;font-size:14px;padding:12px 20px;
     border:1px solid rgba(255,255,255,0.2);border-radius:12px;cursor:pointer;
     transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
-    background:linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));
-    color:var(--text);box-shadow:0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.35);
-    backdrop-filter:blur(20px);
-  }
-  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5)}
+    background:linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.05));
+    color:var(--c-text);box-shadow:0 4px 14px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.3);
+    backdrop-filter:blur(20px);}
+  button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.5)}
   button:active:not(:disabled){transform:translateY(1px) scale(0.98)}
   button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(1)}
-  .btn-p{background:linear-gradient(180deg, #ff6b5b 0%, var(--red) 100%);border-color:rgba(255,255,255,0.4);box-shadow:0 6px 24px rgba(255,59,48,0.55), inset 0 1px 0 rgba(255,255,255,0.5)}
-  .btn-p:hover:not(:disabled){box-shadow:0 10px 36px rgba(255,59,48,0.75)}
-  .btn-o{background:rgba(255,255,255,0.06)}
-  .btn-danger{background:linear-gradient(180deg, #ff6666, #cc2200);color:#fff}
+  .btn-p{background:linear-gradient(180deg,#6bb6ff 0%,#4a9eff 60%,#2563eb 100%);border-color:rgba(255,255,255,0.4);box-shadow:0 6px 24px rgba(74,158,255,0.55),inset 0 1px 0 rgba(255,255,255,0.5)}
+  .btn-p:hover:not(:disabled){box-shadow:0 10px 36px rgba(74,158,255,0.75)}
+  .btn-p2{background:linear-gradient(180deg,#c084fc,#a855f7 60%,#7c3aed);border-color:rgba(255,255,255,0.4);box-shadow:0 6px 24px rgba(168,85,247,0.55),inset 0 1px 0 rgba(255,255,255,0.5)}
+  .btn-o{background:rgba(255,255,255,0.05)}
+  .btn-danger{background:linear-gradient(180deg,#ff6666,#cc2200);color:#fff}
+  .btn-icon{width:34px;height:34px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:16px;line-height:1}
   
-  input,select{width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);font-family:inherit;font-size:15px;color:var(--text);outline:none;transition:all .25s}
-  input::placeholder{color:var(--text-3)}
-  input:focus,select:focus{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.5);box-shadow:0 0 0 4px rgba(255,90,60,0.25)}
-  select option{background:#2a1815;color:#fff}
+  input,select{width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);backdrop-filter:blur(20px);font-family:inherit;font-size:15px;color:var(--c-text);outline:none;transition:all .25s}
+  input::placeholder{color:var(--c-text3)}
+  input:focus,select:focus{background:rgba(255,255,255,0.12);border-color:rgba(74,158,255,0.7);box-shadow:0 0 0 4px rgba(74,158,255,0.2)}
+  select option{background:#1a1f3a;color:#fff}
   
   .screen{display:none;position:fixed;inset:0;flex-direction:column;padding:12px;overflow:hidden;z-index:1}
   .screen.on{display:flex}
   
-  /* === AUTH === */
+  /* ===== AUTH ===== */
   #sc-auth{justify-content:center;align-items:center;padding:20px;overflow-y:auto}
-  .auth-box{width:100%;max-width:420px;padding:34px 28px;display:flex;flex-direction:column;gap:14px;text-align:center;--cut:26px;animation:slideUp .6s cubic-bezier(0.34,1.56,0.64,1)}
+  .auth-box{width:100%;max-width:440px;padding:34px 28px;display:flex;flex-direction:column;gap:14px;text-align:center;--cut:26px;animation:slideUp .6s cubic-bezier(0.34,1.56,0.64,1)}
   @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-  .auth-title{font-size:40px;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg, #ff6b5b 0%, #ffcc00 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 10px rgba(255,90,60,0.4))}
-  .auth-sub{font-size:11px;color:var(--text-3);margin-bottom:8px;letter-spacing:2px;text-transform:uppercase}
+  .auth-title{font-size:42px;font-weight:900;letter-spacing:5px;background:linear-gradient(135deg,#4a9eff 0%,#22d3ee 50%,#a855f7 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 12px rgba(74,158,255,0.6))}
+  .auth-sub{font-size:11px;color:var(--c-text3);margin-bottom:8px;letter-spacing:2px;text-transform:uppercase}
   .auth-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:6px}
-  .auth-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none;letter-spacing:0.5px}
-  .auth-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff;box-shadow:0 4px 14px rgba(255,59,48,0.5)}
-  .auth-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
+  .auth-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--c-text3);box-shadow:none;letter-spacing:0.5px}
+  .auth-tab.active{background:linear-gradient(180deg,#6bb6ff,#4a9eff);color:#fff;box-shadow:0 4px 14px rgba(74,158,255,0.5)}
+  .auth-tab:hover:not(.active){color:var(--c-text);transform:none;box-shadow:none}
   .auth-msg{font-size:12px;min-height:18px;padding:6px;border-radius:8px;transition:all .3s}
   .auth-msg.err{color:#ff8a7a;background:rgba(255,59,48,0.15)}
   .auth-msg.ok{color:#8affa8;background:rgba(80,200,100,0.15)}
-  .guest-link{background:transparent;border:none;color:var(--text-3);font-size:12px;text-decoration:underline;cursor:pointer;padding:8px;box-shadow:none}
-  .guest-link:hover{color:var(--text);transform:none;box-shadow:none}
+  .guest-link{background:transparent;border:none;color:var(--c-text3);font-size:12px;text-decoration:underline;cursor:pointer;padding:8px;box-shadow:none}
+  .guest-link:hover{color:var(--c-text);transform:none;box-shadow:none}
   
-  /* === MENU (redesigned clean) === */
+  /* ===== MENU (Cool theme) ===== */
   #sc-menu{padding:0;overflow-y:auto}
-  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;margin:12px 12px 0;--cut:16px;animation:slideDown .5s ease-out}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;margin:14px 14px 0;--cut:16px;animation:slideDown .5s ease-out;
+    background:linear-gradient(135deg, rgba(74,158,255,0.16), rgba(168,85,247,0.08));border:1px solid rgba(120,160,255,0.28)}
   @keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
   .topbar-info{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
   .topbar-name{font-size:16px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  .topbar-stats{font-size:11px;color:var(--text-3);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  .topbar-stats b{color:var(--text-2);font-weight:800}
-  .admin-badge{background:linear-gradient(135deg,#ffcc00,#ff8a00);color:#1a0f0d;font-weight:900;font-size:9px;padding:2px 7px;border-radius:6px;letter-spacing:.8px;box-shadow:0 2px 10px rgba(255,204,0,0.6);animation:shine 2s ease-in-out infinite}
-  @keyframes shine{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
-  .topbar-avatar{width:60px;height:60px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg, #ff6b5b, #ffcc00);display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);border:2px solid rgba(255,255,255,0.6);box-shadow:0 6px 20px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.5)}
-  .topbar-avatar:hover{transform:scale(1.1) rotate(8deg);box-shadow:0 10px 32px rgba(255,59,48,0.8)}
+  .topbar-stats{font-size:11px;color:var(--c-text3);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .topbar-stats b{color:var(--c-text2);font-weight:800}
+  .admin-badge{background:linear-gradient(135deg,#4a9eff,#a855f7);color:#fff;font-weight:900;font-size:9px;padding:2px 8px;border-radius:6px;letter-spacing:.8px;box-shadow:0 2px 10px rgba(74,158,255,0.6)}
+  .topbar-avatar{width:62px;height:62px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4a9eff,#a855f7);display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);border:2px solid rgba(255,255,255,0.5);box-shadow:0 6px 20px rgba(74,158,255,0.5);overflow:hidden}
+  .topbar-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .topbar-avatar:hover{transform:scale(1.08) rotate(6deg);box-shadow:0 10px 32px rgba(74,158,255,0.8)}
   
-  .menu-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 40px;gap:24px}
+  .menu-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 40px;gap:26px}
   
-  .btn-main{padding:26px 76px;font-size:24px;font-weight:900;letter-spacing:5px;background:linear-gradient(135deg, #ff6b5b 0%, #ff3b30 50%, #b52a1c 100%);border:2px solid rgba(255,255,255,0.5);border-radius:20px;color:#fff;cursor:pointer;text-transform:uppercase;box-shadow:0 15px 50px rgba(255,59,48,0.6), inset 0 2px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.2);animation:mainPulse 2.5s ease-in-out infinite;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);max-width:92vw}
-  .btn-main:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 20px 60px rgba(255,59,48,0.85), inset 0 2px 0 rgba(255,255,255,0.7)}
+  .btn-main{padding:26px 76px;font-size:24px;font-weight:900;letter-spacing:5px;
+    background:linear-gradient(135deg,#4a9eff 0%,#22d3ee 50%,#a855f7 100%);
+    border:2px solid rgba(255,255,255,0.45);border-radius:20px;color:#fff;cursor:pointer;text-transform:uppercase;
+    box-shadow:0 15px 50px rgba(74,158,255,0.55),inset 0 2px 0 rgba(255,255,255,0.5);
+    animation:mainPulse 2.5s ease-in-out infinite;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);max-width:92vw;position:relative;overflow:hidden}
+  .btn-main::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%);animation:shineSweep 3s infinite}
+  @keyframes shineSweep{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
+  .btn-main:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 20px 60px rgba(74,158,255,0.85),inset 0 2px 0 rgba(255,255,255,0.6)}
   .btn-main:active{transform:translateY(-1px) scale(1)}
-  @keyframes mainPulse{0%,100%{box-shadow:0 15px 50px rgba(255,59,48,0.6), inset 0 2px 0 rgba(255,255,255,0.6)}50%{box-shadow:0 15px 70px rgba(255,59,48,0.9), inset 0 2px 0 rgba(255,255,255,0.7)}}
+  @keyframes mainPulse{0%,100%{box-shadow:0 15px 50px rgba(74,158,255,0.55)}50%{box-shadow:0 15px 70px rgba(74,158,255,0.9)}}
   
-  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:620px}
-  .menu-card{
-    aspect-ratio:1.15/1;padding:20px 12px;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;
-    background:linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:640px}
+  .menu-card{aspect-ratio:1.15/1;padding:20px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.06));
     backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid rgba(255,255,255,0.18);border-radius:18px;
+    border:1px solid rgba(120,160,255,0.24);border-radius:18px;
     transition:all .3s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow:0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
-    position:relative;overflow:hidden;text-align:center;
-  }
-  .menu-card:hover{transform:translateY(-8px) scale(1.03);border-color:rgba(255,255,255,0.4);box-shadow:0 18px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4)}
+    box-shadow:0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    position:relative;overflow:hidden;text-align:center;}
+  .menu-card:hover{transform:translateY(-8px) scale(1.03);border-color:rgba(120,180,255,0.6);box-shadow:0 18px 40px rgba(0,0,0,0.5), 0 0 25px rgba(74,158,255,0.35), inset 0 1px 0 rgba(255,255,255,0.35)}
   .menu-card:active{transform:translateY(-3px) scale(0.99)}
-  .menu-card-title{font-size:15px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase}
-  .menu-card-sub{font-size:10px;color:var(--text-3);letter-spacing:0.5px}
+  .menu-card-icon{font-size:32px;line-height:1;margin-bottom:2px;filter:drop-shadow(0 3px 8px rgba(74,158,255,0.5))}
+  .menu-card-title{font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:linear-gradient(135deg,#6bb6ff,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .menu-card-sub{font-size:10px;color:var(--c-text3);letter-spacing:0.5px}
   .menu-card.locked{opacity:0.55}
   .menu-card.locked::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:14px}
-  .menu-card.admin-card{border-color:rgba(255,204,0,0.6);background:linear-gradient(135deg, rgba(255,204,0,0.22), rgba(255,140,0,0.08))}
-  .menu-card.admin-card .menu-card-title{background:linear-gradient(135deg,#ffcc00,#ff8a00);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .menu-card-badge{position:absolute;top:8px;right:8px;min-width:20px;height:20px;padding:0 6px;background:var(--red);border-radius:10px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,59,48,0.6);animation:badgePulse 1.5s ease-in-out infinite}
+  .menu-card.admin-card{border-color:rgba(74,158,255,0.7);background:linear-gradient(135deg, rgba(74,158,255,0.28), rgba(168,85,247,0.12))}
+  .menu-card-badge{position:absolute;top:8px;right:8px;min-width:20px;height:20px;padding:0 6px;background:linear-gradient(135deg,#ff5a5a,#c03030);border-radius:10px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,90,90,0.6);animation:badgePulse 1.5s ease-in-out infinite}
   @keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
   
   @media (max-width:600px){
-    .menu-grid{grid-template-columns:repeat(2,1fr);max-width:420px;gap:12px}
+    .menu-grid{grid-template-columns:repeat(2,1fr);max-width:440px;gap:12px}
     .btn-main{padding:22px 48px;font-size:20px;letter-spacing:3px}
     .topbar-avatar{width:52px;height:52px;font-size:26px}
   }
   
-  /* === LOBBY === */
+  /* ===== LOBBY ===== */
   #sc-lobby{justify-content:center;align-items:center;overflow-y:auto;padding:20px}
-  .lobby-box{width:100%;max-width:500px;padding:28px;display:flex;flex-direction:column;gap:14px;--cut:24px}
-  .room-code{font-size:42px;font-weight:900;letter-spacing:12px;text-align:center;cursor:pointer;padding:18px;background:linear-gradient(135deg, rgba(255,59,48,0.3), rgba(255,204,0,0.2));border:2px dashed rgba(255,255,255,0.5);border-radius:14px;font-family:'SF Mono','Consolas',monospace;color:#fff;text-shadow:0 0 25px rgba(255,59,48,0.8);transition:all .25s}
-  .room-code:hover{transform:scale(1.03);box-shadow:0 0 40px rgba(255,59,48,0.5);border-color:rgba(255,255,255,0.8)}
+  .lobby-box{width:100%;max-width:520px;padding:28px;display:flex;flex-direction:column;gap:14px;--cut:24px;
+    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.06));border:1px solid rgba(120,160,255,0.28)}
+  .lobby-title{text-align:center;font-size:22px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#6bb6ff,#a855f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .room-code{font-size:42px;font-weight:900;letter-spacing:12px;text-align:center;cursor:pointer;padding:18px;
+    background:linear-gradient(135deg, rgba(74,158,255,0.3), rgba(168,85,247,0.2));
+    border:2px dashed rgba(120,180,255,0.6);border-radius:14px;
+    font-family:'SF Mono','Consolas',monospace;color:#fff;text-shadow:0 0 25px rgba(74,158,255,0.9);transition:all .25s}
+  .room-code:hover{transform:scale(1.03);box-shadow:0 0 40px rgba(74,158,255,0.6);border-color:rgba(120,180,255,0.9)}
   .plist{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;min-height:60px}
-  .pitem{display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(255,255,255,0.07);border-radius:12px;border:1px solid rgba(255,255,255,0.12);animation:itemIn .3s ease-out}
+  .pitem{display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(74,158,255,0.08);border-radius:12px;border:1px solid rgba(120,160,255,0.2);animation:itemIn .3s ease-out}
   @keyframes itemIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
-  .pitem .av{font-size:22px}.pitem .nm{flex:1;font-weight:700}
-  .pitem .st{font-size:10px;font-weight:800;color:var(--red);text-transform:uppercase;padding:3px 9px;background:rgba(255,59,48,0.2);border-radius:6px;letter-spacing:0.5px}
-  .plist-empty{text-align:center;padding:24px;color:var(--text-3);font-size:13px;font-style:italic}
-  .connecting{display:inline-block;width:14px;height:14px;border:2px solid var(--red);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+  .pitem .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#4a9eff,#a855f7);overflow:hidden;flex-shrink:0}
+  .pitem .av img{width:100%;height:100%;object-fit:cover}
+  .pitem .nm{flex:1;font-weight:700}
+  .pitem .st{font-size:10px;font-weight:800;color:#6bb6ff;text-transform:uppercase;padding:3px 9px;background:rgba(74,158,255,0.2);border-radius:6px;letter-spacing:0.5px}
+  .plist-empty{text-align:center;padding:24px;color:var(--c-text3);font-size:13px;font-style:italic}
+  .connecting{display:inline-block;width:14px;height:14px;border:2px solid var(--c-accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
   
-  /* === GAME === */
-  #sc-game{padding:8px;gap:8px}
-  .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:12px;flex-shrink:0;gap:6px;flex-wrap:wrap;--cut:12px}
-  .badge{background:rgba(255,255,255,0.1);padding:6px 13px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);font-size:11px;display:inline-flex;align-items:center;gap:4px}
-  .badge.hot{background:linear-gradient(135deg, #ff6b5b, var(--red));color:#fff;border-color:rgba(255,255,255,0.4);animation:pulseBadge 1.5s infinite}
+  /* ===== GAME (Warm theme) ===== */
+  #sc-game{padding:8px;gap:8px;
+    background:radial-gradient(circle at 10% 10%, rgba(255,90,60,0.28) 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(255,200,50,0.16) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, #5c1a10 0%, #1a0808 60%, #050202 100%)}
+  .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:12px;flex-shrink:0;gap:6px;flex-wrap:wrap;--cut:12px;
+    background:linear-gradient(135deg, rgba(255,90,60,0.16), rgba(255,200,50,0.06));border:1px solid rgba(255,120,80,0.28)}
+  .badge{background:rgba(255,255,255,0.08);padding:6px 13px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);font-size:11px;display:inline-flex;align-items:center;gap:4px}
+  .badge.hot{background:linear-gradient(135deg,#ff6b5b,var(--w-red));color:#fff;border-color:rgba(255,255,255,0.4);animation:pulseBadge 1.5s infinite}
   @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
   .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
-  .opp{display:flex;flex-direction:column;align-items:center;padding:10px 14px;min-width:82px;transition:.3s;position:relative;background:linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));border:1px solid rgba(255,255,255,0.15);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.25)}
-  .opp.turn{box-shadow:0 0 0 2px var(--red), 0 0 28px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.3);transform:scale(1.06)}
+  .opp{display:flex;flex-direction:column;align-items:center;padding:10px 14px;min-width:82px;transition:.3s;position:relative;
+    background:linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));border:1px solid rgba(255,255,255,0.15);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.25)}
+  .opp.turn{box-shadow:0 0 0 2px var(--w-red), 0 0 28px rgba(255,59,48,0.7), inset 0 1px 0 rgba(255,255,255,0.3);transform:scale(1.06)}
   .opp.dead{opacity:.35;filter:grayscale(1)}
   .opp.dead::after{content:'OUT';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;font-weight:900;color:#fff;background:rgba(0,0,0,0.7);padding:4px 10px;border-radius:8px;z-index:2;letter-spacing:2px}
-  .opp .av{font-size:28px;margin-bottom:2px}
+  .opp .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#ff6b5b,#ffcc00);margin-bottom:4px;overflow:hidden}
+  .opp .av img{width:100%;height:100%;object-fit:cover}
   .opp .nm{font-size:11px;font-weight:bold;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
-  .opp .cnt{font-size:11px;color:var(--text-2);font-weight:bold}
+  .opp .cnt{font-size:11px;color:#e6d5d0;font-weight:bold}
   
   .board{flex:1;display:flex;justify-content:center;align-items:center;gap:30px;position:relative;min-height:0}
   .pile{width:96px;height:134px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;flex-shrink:0;transition:transform .2s;overflow:hidden}
-  .deck{background:linear-gradient(135deg, #ff6b5b, var(--red-2));cursor:pointer;border:3px solid rgba(255,255,255,0.6);box-shadow:0 12px 30px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px}
+  .deck{background:linear-gradient(135deg,#ff6b5b,var(--w-red2));cursor:pointer;border:3px solid rgba(255,255,255,0.6);
+    box-shadow:0 12px 30px rgba(255,59,48,0.5), inset 0 2px 0 rgba(255,255,255,0.3);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px}
   .deck:hover{transform:translateY(-5px) scale(1.03)}
   .deck.can{animation:deckPulse 1.5s infinite}
   @keyframes deckPulse{0%,100%{box-shadow:0 0 20px rgba(255,59,48,0.6), inset 0 2px 0 rgba(255,255,255,0.3)}50%{box-shadow:0 0 40px rgba(255,59,48,1), inset 0 2px 0 rgba(255,255,255,0.4)}}
@@ -177,32 +193,87 @@
   @keyframes shuffleAnim{0%{transform:translateY(0) rotate(0)}25%{transform:translateY(-15px) rotate(-10deg) scale(1.05)}50%{transform:translateY(5px) rotate(10deg) scale(.95)}75%{transform:translateY(-5px) rotate(-5deg)}100%{transform:translateY(0) rotate(0)}}
   .disc{background:rgba(255,255,255,0.08);border:2px dashed rgba(255,255,255,0.3);box-shadow:inset 0 2px 8px rgba(0,0,0,0.2);padding:0;overflow:hidden}
   .disc img{width:100%;height:100%;object-fit:cover}
-  .badge-p{position:absolute;bottom:-8px;right:-8px;background:#fff;color:var(--red);min-width:28px;height:28px;padding:0 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:5}
+  .badge-p{position:absolute;bottom:-8px;right:-8px;background:#fff;color:var(--w-red);min-width:28px;height:28px;padding:0 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:5}
   .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,0.65);color:#fff;padding:8px 10px;border-radius:10px;pointer-events:none;max-width:220px;backdrop-filter:blur(10px);line-height:1.4;border:1px solid rgba(255,255,255,0.1)}
   
-  .hand-area{padding:12px;min-height:170px;display:flex;flex-direction:column;flex-shrink:0;--cut:14px}
+  /* ==== Played Card Showcase (TO ở giữa) ==== */
+  .played-showcase{
+    position:fixed;top:46%;left:50%;transform:translate(-50%,-50%) scale(0);
+    z-index:4200;display:flex;flex-direction:column;align-items:center;gap:10px;
+    pointer-events:none;opacity:0;
+    transition:all .45s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .played-showcase.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+  .played-showcase .ps-card{
+    width:170px;height:245px;border-radius:16px;overflow:hidden;
+    border:3px solid gold;background:#1a0f0d;
+    box-shadow:0 25px 70px rgba(0,0,0,0.85), 0 0 50px rgba(255,204,0,0.7), 0 0 100px rgba(255,140,0,0.4);
+    display:flex;align-items:center;justify-content:center;
+    animation:psPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes psPulse{0%,100%{box-shadow:0 25px 70px rgba(0,0,0,0.85), 0 0 50px rgba(255,204,0,0.7)}50%{box-shadow:0 25px 80px rgba(0,0,0,0.9), 0 0 80px rgba(255,204,0,1)}}
+  .played-showcase .ps-card img{width:100%;height:100%;object-fit:cover}
+  .played-showcase .ps-name{
+    background:linear-gradient(135deg,#ff6b5b,#ff3b30);
+    color:#fff;font-weight:900;font-size:13px;padding:6px 18px;border-radius:20px;
+    letter-spacing:1px;text-transform:uppercase;
+    box-shadow:0 6px 20px rgba(255,59,48,0.6);border:1px solid rgba(255,255,255,0.5);
+    white-space:nowrap;
+  }
+  .played-showcase .ps-action{
+    background:rgba(0,0,0,0.85);color:#ffcc00;font-weight:900;font-size:14px;
+    padding:6px 16px;border-radius:12px;letter-spacing:1px;
+    border:1px solid rgba(255,204,0,0.5);backdrop-filter:blur(10px);
+  }
+  
+  /* ==== Bottom action notification ==== */
+  .action-notification{
+    position:fixed;bottom:22%;left:50%;transform:translateX(-50%);
+    z-index:5500;pointer-events:none;
+    background:linear-gradient(135deg, rgba(30,20,50,0.96), rgba(80,30,110,0.96));
+    border:2px solid rgba(255,255,255,0.4);
+    border-radius:18px;padding:16px 32px;min-width:280px;max-width:90vw;
+    box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(168,85,247,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    text-align:center;backdrop-filter:blur(20px);
+    animation:actionNotify 2.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  .action-notification.attack{background:linear-gradient(135deg, rgba(120,20,20,0.96), rgba(255,60,40,0.92));border-color:rgba(255,180,120,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(255,90,60,0.7)}
+  .action-notification.skip{background:linear-gradient(135deg, rgba(40,60,100,0.96), rgba(74,158,255,0.92));border-color:rgba(180,210,255,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(74,158,255,0.7)}
+  .action-notification.nope{background:linear-gradient(135deg, rgba(80,20,100,0.96), rgba(200,50,255,0.92));border-color:rgba(220,150,255,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(200,50,255,0.7)}
+  .action-notification.defuse{background:linear-gradient(135deg, rgba(20,80,40,0.96), rgba(50,200,100,0.92));border-color:rgba(150,255,180,0.6);box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(50,200,100,0.7)}
+  .action-notification.boom{background:linear-gradient(135deg, rgba(100,0,0,0.96), rgba(255,50,20,0.96));border-color:rgba(255,180,100,0.8);box-shadow:0 20px 80px rgba(0,0,0,0.8), 0 0 60px rgba(255,90,30,0.9)}
+  .action-notification .an-title{font-size:11px;opacity:0.85;letter-spacing:2px;text-transform:uppercase;font-weight:800;margin-bottom:6px}
+  .action-notification .an-body{font-size:17px;font-weight:900;letter-spacing:0.5px;line-height:1.35}
+  .action-notification .an-card{font-size:14px;font-weight:800;color:#ffcc00;margin-top:4px;letter-spacing:1px}
+  @keyframes actionNotify{
+    0%{opacity:0;transform:translate(-50%,20px) scale(0.7)}
+    12%{opacity:1;transform:translate(-50%,0) scale(1.05)}
+    22%{transform:translate(-50%,0) scale(1)}
+    80%{opacity:1;transform:translate(-50%,0) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-15px) scale(0.92)}
+  }
+  
+  .hand-area{padding:12px;min-height:170px;display:flex;flex-direction:column;flex-shrink:0;--cut:14px;
+    background:linear-gradient(135deg, rgba(255,90,60,0.14), rgba(255,200,50,0.05));border:1px solid rgba(255,120,80,0.24)}
   .hand-action-bar{display:none;margin-bottom:6px;padding:8px 12px;background:rgba(0,204,102,0.2);border:2px solid #00cc66;border-radius:10px;font-size:12px;font-weight:bold;align-items:center;gap:8px;flex-wrap:wrap}
   .hand-action-bar.on{display:flex}
   .hand-action-bar button{padding:6px 14px;font-size:12px}
   .hand-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 0 12px;align-items:center;scrollbar-width:thin}
   
   .card{width:90px;height:130px;border-radius:12px;flex-shrink:0;cursor:pointer;position:relative;background:#1a0f0d;box-shadow:0 4px 14px rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.85);transition:all .25s;overflow:hidden;display:flex;align-items:center;justify-content:center}
-  .card:hover:not(.dis):not(.selected){transform:translateY(-14px) scale(1.06);z-index:10;box-shadow:0 15px 30px rgba(0,0,0,0.55);border-color:var(--gold)}
+  .card:hover:not(.dis):not(.selected){transform:translateY(-14px) scale(1.06);z-index:10;box-shadow:0 15px 30px rgba(0,0,0,0.55);border-color:var(--w-gold)}
   .card.dis{opacity:.4;filter:grayscale(.8);cursor:not-allowed}
   .card-img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-  .card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:11px;font-weight:900;color:#fff;background:linear-gradient(135deg, #ff6b5b, #d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:0.5px}
+  .card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:11px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff6b5b,#d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:0.5px}
   .card.no-img .card-img{display:none}
   .card.no-img .card-fallback{display:flex}
-  
-  .card.selected{border-color:#00ff88!important;box-shadow:0 0 0 3px #00cc66, 0 0 25px #00ff88, 0 0 50px rgba(0,255,136,0.5), 0 4px 12px rgba(0,0,0,0.2)!important;z-index:8!important}
+  .card.selected{border-color:#00ff88!important;box-shadow:0 0 0 3px #00cc66, 0 0 25px #00ff88, 0 0 50px rgba(0,255,136,0.5)!important;z-index:8!important}
   .card.selected::before{content:'✓';position:absolute;top:-8px;right:-8px;background:#00cc66;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.4);z-index:10}
-  .card.new-draw{animation:newDrawIn .6s cubic-bezier(0.34,1.56,0.64,1);border-color:gold!important;box-shadow:0 0 25px gold, 0 0 50px rgba(255,215,0,0.6), 0 8px 20px rgba(0,0,0,0.3)!important;z-index:6}
-  @keyframes newDrawIn{0%{transform:translateX(-120px) scale(0.5) rotate(-15deg);opacity:0}60%{transform:translateX(10px) scale(1.15) rotate(3deg);opacity:1}100%{transform:translateX(0) scale(1) rotate(0);opacity:1}}
   .card.deal-in{animation:dealIn .55s cubic-bezier(0.34,1.56,0.64,1) backwards}
-  @keyframes dealIn{from{transform:translate(-200px, -300px) rotate(-60deg) scale(0.3);opacity:0}to{transform:translate(0,0) rotate(0) scale(1);opacity:1}}
+  @keyframes dealIn{from{transform:translate(-200px,-300px) rotate(-60deg) scale(0.3);opacity:0}to{transform:translate(0,0) rotate(0) scale(1);opacity:1}}
   
   /* NOPE */
-  .nope-container{position:fixed;bottom:38%;left:50%;transform:translate(-50%,50%);z-index:200;display:flex;gap:10px;align-items:center;animation:nopeIn .3s ease-out}
+  .nope-container{position:fixed;bottom:38%;left:50%;transform:translate(-50%,50%);z-index:5200;display:flex;gap:10px;align-items:center;animation:nopeIn .3s ease-out}
   @keyframes nopeIn{from{opacity:0;transform:translate(-50%,calc(50% + 20px))}to{opacity:1;transform:translate(-50%,50%)}}
   .nope-btn{padding:14px 32px;font-size:22px;font-weight:900;background:linear-gradient(135deg,#ff0000,#ff6b5b);color:#fff;border-radius:50px;border:3px solid rgba(255,255,255,0.7);box-shadow:0 0 25px rgba(255,0,0,0.8);cursor:pointer;animation:pulseNope .6s infinite alternate}
   @keyframes pulseNope{from{transform:scale(1)}to{transform:scale(1.08)}}
@@ -212,121 +283,157 @@
   .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(20,10,8,0.95);color:#fff;padding:12px 24px;border-radius:30px;font-weight:bold;z-index:10000;animation:toastIn .3s ease-out;font-size:14px;max-width:90%;text-align:center;border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(20px)}
   @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
   
-  .opp-action-toast{position:fixed;top:12%;left:50%;transform:translateX(-50%);background:linear-gradient(135deg, rgba(255,59,48,0.95), rgba(180,30,20,0.95));color:#fff;padding:16px 28px;border-radius:16px;z-index:9998;text-align:center;pointer-events:none;border:2px solid rgba(255,255,255,0.4);box-shadow:0 20px 60px rgba(255,59,48,0.7);backdrop-filter:blur(20px);animation:oppActionIn 3s cubic-bezier(0.34,1.56,0.64,1) forwards;max-width:340px}
-  @keyframes oppActionIn{0%{transform:translate(-50%,-100px) scale(0.5);opacity:0}15%{transform:translate(-50%,0) scale(1.08);opacity:1}25%{transform:translate(-50%,0) scale(1)}75%{transform:translate(-50%,0) scale(1);opacity:1}100%{transform:translate(-50%,-30px) scale(0.9);opacity:0}}
-  .opp-action-name{font-size:11px;opacity:.85;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
-  .opp-action-card{font-size:15px;font-weight:900;letter-spacing:1px}
-  
-  /* Animated flying card */
+  /* Flying card animation (slower) */
   .anim-card{position:fixed;display:flex;align-items:center;justify-content:center;background:#1a0f0d;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(255,204,0,0.3);border:3px solid rgba(255,255,255,0.9);overflow:hidden;z-index:5000}
   .anim-card-img{width:100%;height:100%;object-fit:cover;display:block}
-  .anim-card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:12px;font-size:14px;font-weight:900;color:#fff;background:linear-gradient(135deg, #ff6b5b, #d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:1px}
+  .anim-card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:12px;font-size:14px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff6b5b,#d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:1px}
   .anim-card.no-img .anim-card-img{display:none}
   .anim-card.no-img .anim-card-fallback{display:flex}
-  .anim-card-back{width:100%;height:100%;background:linear-gradient(135deg, #ff6b5b 0%, #d93828 100%);position:relative;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:rgba(255,255,255,0.4);text-shadow:0 4px 10px rgba(0,0,0,0.3)}
+  .anim-card-back{width:100%;height:100%;background:linear-gradient(135deg,#ff6b5b 0%,#d93828 100%);position:relative;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:rgba(255,255,255,0.4);text-shadow:0 4px 10px rgba(0,0,0,0.3)}
   .anim-card-back::before{content:'';position:absolute;inset:8px;border:2px dashed rgba(255,255,255,0.4);border-radius:8px}
   
   /* Chat */
   .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;backdrop-filter:blur(4px)}
   .chat-ov.on{display:block}
-  .chat-p{position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);width:320px;height:400px;display:flex;flex-direction:column;z-index:201;transition:transform .3s;background:linear-gradient(135deg, rgba(40,20,15,0.95), rgba(20,10,8,0.95));border:1px solid rgba(255,255,255,0.2);border-radius:16px;backdrop-filter:blur(30px);overflow:hidden}
+  .chat-p{position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);width:320px;height:400px;display:flex;flex-direction:column;z-index:201;transition:transform .3s;
+    background:linear-gradient(135deg, rgba(20,20,40,0.95), rgba(10,10,25,0.95));border:1px solid rgba(120,160,255,0.3);border-radius:16px;backdrop-filter:blur(30px);overflow:hidden}
   .chat-p.on{transform:translateY(-50%) translateX(0)}
   .chat-h{padding:14px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;font-weight:bold}
-  .chat-x{cursor:pointer;font-size:20px;color:var(--red);padding:0 5px}
+  .chat-x{cursor:pointer;font-size:20px;color:#ff6b5b;padding:0 5px}
   .chat-m{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px}
-  .chat-m .u{color:#ff8a7a;font-weight:bold}
+  .chat-m .u{color:#6bb6ff;font-weight:bold}
   .chat-i{display:flex;padding:12px;gap:8px;border-top:1px solid rgba(255,255,255,0.1)}
   .chat-i input{padding:8px;font-size:14px}
   .chat-i button{padding:8px 14px;font-size:14px}
-  .chat-f{position:fixed;right:20px;bottom:190px;z-index:100;padding:10px 14px;border-radius:20px;cursor:pointer;background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.3);font-weight:bold;font-size:14px;display:none;color:#fff}
+  .chat-f{position:fixed;right:20px;bottom:190px;z-index:100;padding:10px 14px;border-radius:20px;cursor:pointer;background:rgba(74,158,255,0.28);backdrop-filter:blur(20px);border:1px solid rgba(120,160,255,0.4);font-weight:bold;font-size:14px;display:none;color:#fff}
   .chat-f.on{display:block}
   
   /* Modal */
-  .ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(12px);display:flex;justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(12px);display:flex;justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px}
   .ov.on{opacity:1;pointer-events:auto}
-  .modal{width:100%;max-width:520px;padding:26px;display:flex;flex-direction:column;gap:14px;text-align:center;transform:scale(.9);transition:.3s;max-height:90vh;overflow-y:auto;--cut:26px}
+  .modal{width:100%;max-width:560px;padding:26px;display:flex;flex-direction:column;gap:14px;text-align:center;transform:scale(.9);transition:.3s;max-height:90vh;overflow-y:auto;--cut:26px;position:relative;
+    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.06));border:1px solid rgba(120,160,255,0.28)}
   .ov.on .modal{transform:scale(1)}
-  .modal h2{font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-  .modal p{font-size:13px;color:var(--text-2)}
-  .mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-  .mcol{display:flex;flex-direction:column;gap:8px}
+  .modal h2{font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:linear-gradient(135deg,#6bb6ff,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .modal p{font-size:13px;color:var(--c-text2)}
+  .modal-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,59,48,0.2);border:1px solid rgba(255,90,80,0.5);color:#ff8a7a;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;z-index:10;box-shadow:none;padding:0}
+  .modal-close:hover{background:rgba(255,59,48,0.4);color:#fff;transform:rotate(90deg) scale(1.1);box-shadow:0 0 20px rgba(255,59,48,0.6)}
   
   .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;gap:10px;align-items:center}
   .stat-row:last-child{border:none}
-  .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:var(--red);border:1.5px solid var(--red);border-radius:8px;cursor:pointer;font-weight:bold}
+  .retry-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#fff;color:var(--c-accent);border:1.5px solid var(--c-accent);border-radius:8px;cursor:pointer;font-weight:bold}
   
-  /* Profile */
-  .profile-hero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 16px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:8px}
-  .profile-avatar-big{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg, #ff6b5b, #ffcc00);display:flex;align-items:center;justify-content:center;font-size:46px;border:3px solid rgba(255,255,255,0.6);box-shadow:0 10px 30px rgba(255,59,48,0.6), inset 0 3px 0 rgba(255,255,255,0.5)}
-  .profile-name{font-size:20px;font-weight:900}
-  .profile-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
-  .stat-card{padding:14px 8px;border-radius:12px;text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12)}
-  .stat-card-value{font-size:20px;font-weight:900;color:#ffcc00}
-  .stat-card-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+  /* ===== NEW PROFILE ===== */
+  .profile-hero-new{
+    position:relative;padding:32px 20px 24px;margin:-26px -26px 20px;
+    background:linear-gradient(135deg, rgba(74,158,255,0.28), rgba(168,85,247,0.2), rgba(34,211,238,0.15));
+    border-bottom:1px solid rgba(120,160,255,0.3);
+    border-radius:0 0 30px 30px;overflow:hidden;
+  }
+  .profile-hero-new::before{
+    content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+    background:radial-gradient(circle at 30% 40%, rgba(74,158,255,0.4), transparent 50%),
+      radial-gradient(circle at 70% 60%, rgba(168,85,247,0.4), transparent 50%);
+    animation:heroFloat 10s ease-in-out infinite;
+  }
+  @keyframes heroFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-10px) scale(1.1)}}
+  .profile-hero-new > *{position:relative;z-index:1}
+  .profile-avatar-big{width:104px;height:104px;border-radius:50%;margin:0 auto 12px;
+    background:linear-gradient(135deg,#4a9eff,#a855f7,#22d3ee);
+    display:flex;align-items:center;justify-content:center;font-size:52px;
+    border:3px solid rgba(255,255,255,0.7);
+    box-shadow:0 12px 40px rgba(74,158,255,0.6), 0 0 60px rgba(168,85,247,0.4), inset 0 3px 0 rgba(255,255,255,0.5);
+    overflow:hidden;cursor:pointer;transition:transform .3s}
+  .profile-avatar-big:hover{transform:scale(1.06) rotate(-5deg)}
+  .profile-avatar-big img{width:100%;height:100%;object-fit:cover}
+  .profile-name-new{font-size:24px;font-weight:900;letter-spacing:1px;
+    background:linear-gradient(135deg,#fff,#6bb6ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 2px 8px rgba(74,158,255,0.5))}
+  .profile-tags{display:flex;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .profile-tag{font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;letter-spacing:1px;text-transform:uppercase}
+  .profile-tag.admin{background:linear-gradient(135deg,#4a9eff,#a855f7);color:#fff;box-shadow:0 2px 10px rgba(74,158,255,0.5)}
+  .profile-tag.guest{background:linear-gradient(135deg,#889,#556);color:#fff}
+  .profile-tag.level{background:linear-gradient(135deg,#ffcc00,#ff8a00);color:#000}
   
-  .avatar-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0}
-  .avatar-opt{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(255,255,255,0.08);border-radius:12px;cursor:pointer;border:2px solid transparent;transition:all .2s}
-  .avatar-opt:hover{background:rgba(255,255,255,0.2);transform:scale(1.1)}
-  .avatar-opt.selected{border-color:#00ff88;background:rgba(0,255,136,0.2);box-shadow:0 0 15px rgba(0,255,136,0.5)}
+  .profile-stats-new{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 16px}
+  .stat-card-new{padding:16px 8px;border-radius:16px;text-align:center;
+    background:linear-gradient(135deg, rgba(74,158,255,0.14), rgba(168,85,247,0.08));
+    border:1px solid rgba(120,160,255,0.28);position:relative;overflow:hidden;transition:transform .25s}
+  .stat-card-new:hover{transform:translateY(-3px);border-color:rgba(120,180,255,0.5)}
+  .stat-card-new::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4a9eff,#a855f7,#22d3ee)}
+  .stat-card-value-new{font-size:22px;font-weight:900;background:linear-gradient(135deg,#6bb6ff,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .stat-card-label-new{font-size:10px;color:var(--c-text3);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:800}
+  
+  .avatar-picker-new{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+  @media(min-width:520px){.avatar-picker-new{grid-template-columns:repeat(6,1fr)}}
+  .avatar-opt{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;
+    background:rgba(255,255,255,0.06);border-radius:14px;cursor:pointer;border:2px solid transparent;
+    transition:all .25s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;position:relative}
+  .avatar-opt img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+  .avatar-opt:hover{background:rgba(74,158,255,0.2);transform:scale(1.08);border-color:rgba(120,180,255,0.5)}
+  .avatar-opt.selected{border-color:#22d3ee;background:rgba(34,211,238,0.2);box-shadow:0 0 20px rgba(34,211,238,0.6),inset 0 0 20px rgba(34,211,238,0.2)}
+  .avatar-opt.selected::after{content:'✓';position:absolute;top:2px;right:2px;width:18px;height:18px;background:#22d3ee;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
   
   /* Custom keypad */
-  .keypad-modal{display:flex;flex-direction:column;gap:20px;align-items:center;max-width:400px}
+  .keypad-modal{display:flex;flex-direction:column;gap:20px;align-items:center;max-width:400px;margin:0 auto}
   .keypad-display{display:flex;gap:8px;justify-content:center;margin:10px 0 16px}
-  .code-slot{width:48px;height:60px;border-radius:12px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;transition:all .2s}
-  .code-slot.filled{background:linear-gradient(135deg, rgba(255,59,48,0.4), rgba(255,204,0,0.3));border-color:rgba(255,255,255,0.5);box-shadow:0 4px 14px rgba(255,59,48,0.4)}
-  .code-slot.active{border-color:var(--red);animation:slotPulse 1s ease-in-out infinite}
-  @keyframes slotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.5)}50%{box-shadow:0 0 0 6px rgba(255,59,48,0)}}
+  .code-slot{width:48px;height:60px;border-radius:12px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;transition:all .2s}
+  .code-slot.filled{background:linear-gradient(135deg, rgba(74,158,255,0.4), rgba(168,85,247,0.3));border-color:rgba(120,180,255,0.6);box-shadow:0 4px 14px rgba(74,158,255,0.4)}
+  .code-slot.active{border-color:var(--c-accent);animation:slotPulse 1s ease-in-out infinite}
+  @keyframes slotPulse{0%,100%{box-shadow:0 0 0 0 rgba(74,158,255,0.5)}50%{box-shadow:0 0 0 6px rgba(74,158,255,0)}}
   .keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:320px}
-  .keypad-key{aspect-ratio:1.15;font-size:22px;font-weight:900;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3)}
-  .keypad-key:hover{transform:translateY(-2px);background:linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.1))}
+  .keypad-key{aspect-ratio:1.15;font-size:22px;font-weight:900;border-radius:14px;background:linear-gradient(180deg,rgba(74,158,255,0.2),rgba(74,158,255,0.08));border:1px solid rgba(120,160,255,0.3);color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);font-family:inherit}
+  .keypad-key:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(74,158,255,0.3),rgba(74,158,255,0.15))}
   .keypad-key:active{transform:scale(0.94)}
-  .keypad-key.del{background:linear-gradient(180deg, rgba(255,59,48,0.4), rgba(180,30,20,0.3));font-size:20px}
-  .keypad-key.confirm{background:linear-gradient(180deg, #ff6b5b, var(--red));font-size:20px;box-shadow:0 6px 20px rgba(255,59,48,0.5), inset 0 1px 0 rgba(255,255,255,0.5)}
+  .keypad-key.del{background:linear-gradient(180deg,rgba(255,59,48,0.4),rgba(180,30,20,0.3));font-size:20px}
+  .keypad-key.confirm{background:linear-gradient(180deg,#6bb6ff,#4a9eff);font-size:20px;box-shadow:0 6px 20px rgba(74,158,255,0.5), inset 0 1px 0 rgba(255,255,255,0.5)}
   
   /* Friends */
   .friend-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:10px}
-  .friend-tab{flex:1;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none}
-  .friend-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff}
-  .friend-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
-  .friend-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.1)}
-  .friend-item .av{font-size:24px}
+  .friend-tab{flex:1;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;transition:all .2s;border:none;background:transparent;color:var(--c-text3);box-shadow:none}
+  .friend-tab.active{background:linear-gradient(180deg,#6bb6ff,#4a9eff);color:#fff}
+  .friend-tab:hover:not(.active){color:var(--c-text);transform:none;box-shadow:none}
+  .friend-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid rgba(255,255,255,0.1)}
+  .friend-item .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#4a9eff,#a855f7);overflow:hidden;flex-shrink:0}
+  .friend-item .av img{width:100%;height:100%;object-fit:cover}
   .friend-item .nm{flex:1;font-weight:700;font-size:13px;text-align:left}
   .friend-item .actions{display:flex;gap:6px}
   .friend-item button{padding:6px 12px;font-size:11px;border-radius:8px}
-  .empty-state{text-align:center;padding:32px 16px;color:var(--text-3)}
+  .empty-state{text-align:center;padding:32px 16px;color:var(--c-text3)}
   .empty-state-icon{font-size:42px;margin-bottom:8px;opacity:0.5}
   .empty-state-text{font-size:13px;font-style:italic}
+  .search-row{display:flex;gap:8px;margin-bottom:8px}
+  .search-row input{flex:1}
+  .search-row button{flex-shrink:0}
   
   /* Info tabs */
   .info-tabs{display:flex;gap:6px;padding:5px;background:rgba(0,0,0,0.35);border-radius:12px;margin-bottom:10px}
-  .info-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--text-3);box-shadow:none}
-  .info-tab.active{background:linear-gradient(180deg, #ff6b5b, var(--red));color:#fff}
-  .info-tab:hover:not(.active){color:var(--text);transform:none;box-shadow:none}
+  .info-tab{flex:1;padding:9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--c-text3);box-shadow:none}
+  .info-tab.active{background:linear-gradient(180deg,#6bb6ff,#4a9eff);color:#fff}
+  .info-tab:hover:not(.active){color:var(--c-text);transform:none;box-shadow:none}
   
-  .rules-section{text-align:left;font-size:13px;line-height:1.6;color:var(--text-2);max-height:55vh;overflow-y:auto;padding:6px}
+  .rules-section{text-align:left;font-size:13px;line-height:1.65;color:var(--c-text2);max-height:55vh;overflow-y:auto;padding:6px}
   .rules-section h3{color:#fff;margin:14px 0 8px;font-size:15px}
   .rules-section h3:first-child{margin-top:0}
   .rules-section p{margin-bottom:8px}
   .rules-section ul{margin-left:18px;margin-bottom:8px}
   .rules-section li{margin-bottom:4px}
-  .rules-section b{color:#ffcc00}
+  .rules-section b{color:#22d3ee}
   
   .card-list-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:left;max-height:60vh;overflow-y:auto;padding:4px}
-  .card-list-item{display:flex;gap:10px;padding:10px;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.1)}
+  .card-list-item{display:flex;gap:10px;padding:10px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid rgba(255,255,255,0.1)}
   .card-list-thumb{width:56px;height:76px;flex-shrink:0;border-radius:6px;overflow:hidden;background:#1a0f0d;display:flex;align-items:center;justify-content:center}
   .card-list-thumb img{width:100%;height:100%;object-fit:cover}
-  .card-list-thumb .card-fallback{font-size:9px}
   .card-list-body{flex:1;min-width:0}
-  .card-list-name{font-size:12px;font-weight:900;color:#ffcc00;margin-bottom:3px}
-  .card-list-desc{font-size:10.5px;color:var(--text-2);line-height:1.35}
+  .card-list-name{font-size:12px;font-weight:900;color:#22d3ee;margin-bottom:3px}
+  .card-list-desc{font-size:10.5px;color:var(--c-text2);line-height:1.35}
   
   /* Alter future modal */
-  .alter-slot{display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.06);border-radius:12px;border:1px solid rgba(255,255,255,0.12)}
-  .alter-slot-label{font-size:10px;font-weight:900;color:#ffcc00;text-transform:uppercase;letter-spacing:1px;width:60px;text-align:center}
+  .alter-slot{display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:12px;border:1px solid rgba(255,255,255,0.12)}
+  .alter-slot-label{font-size:10px;font-weight:900;color:#22d3ee;text-transform:uppercase;letter-spacing:1px;width:60px;text-align:center}
   .alter-slot .card{width:64px;height:92px;flex-shrink:0}
   .alter-arrows{display:flex;flex-direction:column;gap:4px}
   .alter-arrows button{padding:4px 10px;font-size:14px;border-radius:6px}
-  .alter-arrows button:disabled{opacity:0.3}
   
   @media (max-width:600px){
     .card{width:74px;height:106px}
@@ -337,11 +444,13 @@
     .room-code{font-size:28px;letter-spacing:6px}
     .nope-btn{padding:12px 24px;font-size:18px}
     .btn-main{padding:20px 40px;font-size:18px;letter-spacing:3px}
-    .avatar-picker{grid-template-columns:repeat(4,1fr)}
     .card-list-grid{grid-template-columns:1fr}
     .code-slot{width:38px;height:48px;font-size:22px}
     .keypad-key{font-size:18px}
-    .profile-avatar-big{width:72px;height:72px;font-size:36px}
+    .profile-avatar-big{width:82px;height:82px;font-size:42px}
+    .played-showcase .ps-card{width:130px;height:190px}
+    .action-notification{padding:12px 20px;min-width:240px}
+    .action-notification .an-body{font-size:15px}
   }
 </style>
 </head>
@@ -357,27 +466,21 @@
   <div class="glass bevel auth-box">
     <h1 class="auth-title">MÈO NỔ</h1>
     <p class="auth-sub">Exploding Kittens · Online</p>
-    
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login" onclick="UI.switchAuthTab('login')">Đăng Nhập</button>
       <button class="auth-tab" data-tab="register" onclick="UI.switchAuthTab('register')">Đăng Ký</button>
     </div>
-    
     <div id="authLoginForm" style="display:flex;flex-direction:column;gap:10px">
       <input type="text" id="loginUser" placeholder="Tên đăng nhập" maxlength="20" autocomplete="username">
-      <input type="password" id="loginPass" placeholder="Mật khẩu" autocomplete="current-password"
-        onkeypress="if(event.key==='Enter')UI.doLogin()">
+      <input type="password" id="loginPass" placeholder="Mật khẩu" autocomplete="current-password" onkeypress="if(event.key==='Enter')UI.doLogin()">
       <button class="btn-p" onclick="UI.doLogin()" style="margin-top:4px">Đăng Nhập</button>
     </div>
-    
     <div id="authRegisterForm" style="display:none;flex-direction:column;gap:10px">
       <input type="text" id="regUser" placeholder="Tên đăng nhập (≥3 ký tự)" maxlength="20" autocomplete="username">
       <input type="password" id="regPass" placeholder="Mật khẩu (≥4 ký tự)" autocomplete="new-password">
-      <input type="password" id="regPass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password"
-        onkeypress="if(event.key==='Enter')UI.doRegister()">
+      <input type="password" id="regPass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password" onkeypress="if(event.key==='Enter')UI.doRegister()">
       <button class="btn-p" onclick="UI.doRegister()" style="margin-top:4px">Tạo Tài Khoản</button>
     </div>
-    
     <div id="authMsg" class="auth-msg"></div>
     <button class="guest-link" onclick="UI.playAsGuest()">Chơi với tư cách Khách →</button>
   </div>
@@ -390,7 +493,7 @@
       <div class="topbar-name">
         <span id="topbarName">-</span>
         <span id="topbarAdminBadge" class="admin-badge" style="display:none">ADMIN</span>
-        <span id="topbarGuestBadge" class="admin-badge" style="display:none;background:linear-gradient(135deg,#888,#555);color:#fff">GUEST</span>
+        <span id="topbarGuestBadge" class="admin-badge" style="display:none;background:linear-gradient(135deg,#888,#556)">GUEST</span>
       </div>
       <div class="topbar-stats">
         <span>Trận: <b id="topbarGames">0</b></span>
@@ -400,33 +503,37 @@
     </div>
     <div class="topbar-avatar" id="topbarAvatar" onclick="UI.openProfile()">🐱</div>
   </div>
-  
   <div class="menu-body">
     <button class="btn-main" onclick="UI.createRoom()">TẠO PHÒNG</button>
-    
     <div class="menu-grid">
       <div class="menu-card" onclick="UI.openSoloModal()">
+        <div class="menu-card-icon">🤖</div>
         <div class="menu-card-title">Solo</div>
         <div class="menu-card-sub">Chơi với Bot</div>
       </div>
       <div class="menu-card" onclick="UI.openJoinRoomModal()">
+        <div class="menu-card-icon">🚪</div>
         <div class="menu-card-title">Vào Phòng</div>
         <div class="menu-card-sub">Nhập mã 6 số</div>
       </div>
       <div class="menu-card" onclick="UI.openHowToPlay()">
+        <div class="menu-card-icon">📖</div>
         <div class="menu-card-title">Hướng Dẫn</div>
         <div class="menu-card-sub">Luật & Lá bài</div>
       </div>
       <div class="menu-card" id="friendsCard" onclick="UI.openFriends()">
+        <div class="menu-card-icon">👥</div>
         <div class="menu-card-title">Bạn Bè</div>
         <div class="menu-card-sub">Kết bạn & Đội</div>
         <div class="menu-card-badge" id="friendsBadge" style="display:none">0</div>
       </div>
       <div class="menu-card admin-card" id="adminCard" style="display:none" onclick="UI.openAdminPanel()">
+        <div class="menu-card-icon">👑</div>
         <div class="menu-card-title">Admin</div>
         <div class="menu-card-sub">Quản trị</div>
       </div>
       <div class="menu-card" onclick="UI.openProfile()">
+        <div class="menu-card-icon">👤</div>
         <div class="menu-card-title">Hồ Sơ</div>
         <div class="menu-card-sub">Tài khoản</div>
       </div>
@@ -437,14 +544,12 @@
 <!-- LOBBY -->
 <div id="sc-lobby" class="screen">
   <div class="glass bevel lobby-box">
-    <h2 style="text-align:center;font-size:20px">Phòng Chờ</h2>
+    <h2 class="lobby-title">PHÒNG CHỜ</h2>
     <div class="room-code" id="lobbyCode" onclick="UI.copyCode()">------</div>
-    <div id="lobbyStatus" style="text-align:center;font-size:12px;font-weight:bold;color:var(--text-2);min-height:30px">Đang kết nối...</div>
-    
+    <div id="lobbyStatus" style="text-align:center;font-size:12px;font-weight:bold;color:var(--c-text2);min-height:30px">Đang kết nối...</div>
     <div class="plist" id="lobbyPlayers"></div>
-    
     <div id="hostControls" style="display:none;flex-direction:column;gap:8px">
-      <label style="font-size:12px;font-weight:bold;color:var(--text-2);text-align:left">Chế độ Bot:</label>
+      <label style="font-size:12px;font-weight:bold;color:var(--c-text2);text-align:left">Chế độ Bot:</label>
       <select id="lobbyBotMode">
         <option value="normal">Bình thường</option>
         <option value="smart" selected>Thông minh</option>
@@ -456,7 +561,6 @@
       </div>
       <button class="btn-o" id="inviteFriendsBtn" style="display:none" onclick="UI.openInviteFriends()">Mời Bạn Bè</button>
     </div>
-    
     <div style="display:flex;gap:8px;flex-direction:column">
       <button class="btn-p" id="btnStart" style="display:none" onclick="UI.startMultiplayerGame()">Bắt Đầu Game</button>
       <button class="btn-danger" onclick="UI.leaveRoom()">Rời Phòng</button>
@@ -470,22 +574,27 @@
     <div class="badge">Sống: <b id="uiAlive">0</b></div>
     <div class="badge hot" id="uiTurn">Lượt: ...</div>
     <div class="badge">Bài: <b id="uiDeck">0</b></div>
-    <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--red);color:#fff">×1</div>
-    <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:rgba(255,59,48,0.3);border:1px solid var(--red)">Thoát</button>
+    <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--w-red);color:#fff">×1</div>
+    <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:rgba(255,59,48,0.3);border:1px solid var(--w-red)">Thoát</button>
   </div>
   <div class="opps" id="opponentsArea"></div>
   <div class="board">
     <div class="glog" id="gameLog"></div>
     <div class="pile disc" id="discardPile">-</div>
-    <div class="pile deck" id="deckPile" onclick="UI.onDrawClick()">
-      RÚT <div class="badge-p" id="deckBadge">0</div>
-    </div>
+    <div class="pile deck" id="deckPile" onclick="UI.onDrawClick()">RÚT<div class="badge-p" id="deckBadge">0</div></div>
   </div>
   <div class="glass bevel hand-area">
     <div class="hand-action-bar" id="handActionBar"></div>
-    <div style="font-size:11px;font-weight:bold;color:var(--text-2);margin-bottom:4px">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
+    <div style="font-size:11px;font-weight:bold;color:#e6d5d0;margin-bottom:4px">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
     <div class="hand-scroll" id="handArea"></div>
   </div>
+</div>
+
+<!-- Played card showcase -->
+<div class="played-showcase" id="playedShowcase">
+  <div class="ps-card" id="psCard"></div>
+  <div class="ps-name" id="psName"></div>
+  <div class="ps-action" id="psAction"></div>
 </div>
 
 <!-- Chat -->
@@ -511,79 +620,23 @@ window.addEventListener('error', e => {
   if(typeof UI !== 'undefined' && UI.toast) UI.toast('Lỗi: ' + e.message);
 });
 
-/* ========== CARD SYSTEM ========== */
+/* ===== CONSTANTS ===== */
 const IMAGE_BASE = 'https://azerst-image-vn.vercel.app/images/';
+const PHOTO_AVATAR = 'https://azerst-image-vn.vercel.app/images/3CORZB1YF.png';
 
 const CARD_TYPES = {
-  EK: {
-    name: 'Mèo Nổ', short: 'BOM',
-    images: ['BOM_1', 'BOM_2', 'BOM_3'],
-    desc: 'Rút trúng = thua',
-    how: 'Khi bốc phải lá này, bạn PHẢI có Gỡ Bom để tự cứu. Nếu không có Gỡ Bom, bạn bị loại khỏi trận ngay.'
-  },
-  DEFUSE: {
-    name: 'Gỡ Bom', short: 'GỠ BOM',
-    images: ['GO_BOM_1', 'GO_BOM_2', 'GO_BOM_3', 'GO_BOM_4'],
-    desc: 'Cứu mạng khi nổ',
-    how: 'Dùng khi bốc phải Mèo Nổ. Sau khi dùng, đặt Mèo Nổ vào bất kỳ vị trí nào (trên, giữa, dưới).'
-  },
-  NOPE: {
-    name: 'Nope', short: 'NOPE',
-    images: ['NOPE_1', 'NOPE_2', 'NOPE_3'],
-    desc: 'Chặn hành động',
-    how: 'Khi ai dùng lá bài (trừ Mèo Nổ, Gỡ Bom), bạn có thể NOPE để hủy. Có thể nope lại một nope khác.'
-  },
-  ATTACK: {
-    name: 'Tấn Công', short: 'TẤN CÔNG',
-    images: ['TAN_CONG_1', 'TAN_CONG_2', 'TAN_CONG_3'],
-    desc: 'Ép người sau +2 lượt',
-    how: 'Không bốc bài lượt này. Người kế tiếp phải bốc 2 lần. Nếu họ dùng ATTACK, số lượt tiếp tục tăng.'
-  },
-  SKIP: {
-    name: 'Bỏ Lượt', short: 'BỎ LƯỢT',
-    images: ['BO_LUOT_1', 'BO_LUOT_2', 'BO_LUOT_3'],
-    desc: 'Bỏ lượt không rút bài',
-    how: 'Kết thúc lượt hiện tại mà không bốc. Hữu ích khi sợ rút Mèo Nổ.'
-  },
-  SEE_FUTURE: {
-    name: 'Nhìn Trước', short: 'NHÌN TRƯỚC',
-    images: ['NHIN_TRUOC_TUONG_LAI_1', 'NHIN_TRUOC_TUONG_LAI_2', 'NHIN_TRUOC_TUONG_LAI_3'],
-    desc: 'Xem 3 lá trên cùng',
-    how: 'Xem 3 lá trên cùng của bộ bài (không đổi thứ tự). Biết trước để quyết định bốc hay không.'
-  },
-  ALTER_FUTURE: {
-    name: 'Biến Đổi Tương Lai', short: 'BIẾN ĐỔI',
-    images: ['BIEN_DOI_TUONG_LAI_1', 'BIEN_DOI_TUONG_LAI_2', 'BIEN_DOI_TUONG_LAI_3'],
-    desc: 'Sắp xếp lại 3 lá trên',
-    how: 'Xem 3 lá trên cùng VÀ sắp xếp lại theo ý bạn. Có thể đặt Mèo Nổ cho người kế tiếp!'
-  },
-  SHUFFLE: {
-    name: 'Xào Bài', short: 'XÀO BÀI',
-    images: ['XAO_BAI_1', 'XAO_BAI_2', 'XAO_BAI_3'],
-    desc: 'Xáo trộn bộ bài',
-    how: 'Xáo lại toàn bộ bộ bài chưa rút. Không ảnh hưởng đến bài trên tay.'
-  },
-  FAVOR: {
-    name: 'Xin Xỏ', short: 'XIN BÀI',
-    images: ['XIN_XO_1', 'XIN_XO_2', 'XIN_XO_3'],
-    desc: 'Xin 1 lá từ đối thủ',
-    how: 'Chọn 1 đối thủ, họ phải đưa 1 lá NGẪU NHIÊN trong tay. Có thể bị NOPE.'
-  },
-  RUT_TU_DAY: {
-    name: 'Rút Từ Đáy', short: 'RÚT ĐÁY',
-    images: ['RUT_TU_DAY_1', 'RUT_TU_DAY_2', 'RUT_TU_DAY_3'],
-    desc: 'Rút từ dưới đáy bộ bài',
-    how: 'Rút lá dưới cùng của bộ bài thay vì trên cùng. Dùng để né Mèo Nổ ở trên đỉnh.'
-  },
-  CAT: {
-    name: 'Mèo Thường', short: 'MÈO',
-    images: ['MEO_THUONG_1', 'MEO_THUONG_2', 'MEO_THUONG_3', 'MEO_THUONG_4', 'MEO_THUONG_5'],
-    desc: 'Combo 2+ cướp bài',
-    how: 'Đánh 2 lá: cướp 1 lá ngẫu nhiên từ đối thủ. Đánh 3 lá: gọi tên lá cụ thể, nếu có thì lấy.'
-  }
+  EK:{name:'Mèo Nổ',short:'BOM',images:['BOM_1','BOM_2','BOM_3'],desc:'Rút trúng = thua',how:'Khi bốc phải lá này, bạn PHẢI có Gỡ Bom để tự cứu. Nếu không có Gỡ Bom, bạn bị loại khỏi trận ngay.'},
+  DEFUSE:{name:'Gỡ Bom',short:'GỠ BOM',images:['GO_BOM_1','GO_BOM_2','GO_BOM_3','GO_BOM_4'],desc:'Cứu mạng khi nổ',how:'Dùng khi bốc phải Mèo Nổ. Sau khi dùng, đặt Mèo Nổ vào bất kỳ vị trí nào (trên, giữa, dưới).'},
+  NOPE:{name:'Nope',short:'NOPE',images:['NOPE_1','NOPE_2','NOPE_3'],desc:'Chặn hành động',how:'Khi ai dùng lá bài (trừ Mèo Nổ, Gỡ Bom), bạn có thể NOPE để hủy. Có thể nope lại một nope khác.'},
+  ATTACK:{name:'Tấn Công',short:'TẤN CÔNG',images:['TAN_CONG_1','TAN_CONG_2','TAN_CONG_3'],desc:'Ép người sau +2 lượt',how:'Không bốc bài lượt này. Người kế tiếp phải bốc 2 lần. Nếu họ dùng ATTACK, số lượt tiếp tục tăng.'},
+  SKIP:{name:'Bỏ Lượt',short:'BỎ LƯỢT',images:['BO_LUOT_1','BO_LUOT_2','BO_LUOT_3'],desc:'Bỏ lượt không rút bài',how:'Kết thúc lượt hiện tại mà không bốc. Hữu ích khi sợ rút Mèo Nổ.'},
+  SEE_FUTURE:{name:'Nhìn Trước',short:'NHÌN TRƯỚC',images:['NHIN_TRUOC_TUONG_LAI_1','NHIN_TRUOC_TUONG_LAI_2','NHIN_TRUOC_TUONG_LAI_3'],desc:'Xem 3 lá trên cùng',how:'Xem 3 lá trên cùng của bộ bài (không đổi thứ tự). Biết trước để quyết định bốc hay không.'},
+  ALTER_FUTURE:{name:'Biến Đổi Tương Lai',short:'BIẾN ĐỔI',images:['BIEN_DOI_TUONG_LAI_1','BIEN_DOI_TUONG_LAI_2','BIEN_DOI_TUONG_LAI_3'],desc:'Sắp xếp lại 3 lá trên',how:'Xem 3 lá trên cùng VÀ sắp xếp lại theo ý bạn. Có thể đặt Mèo Nổ cho người kế tiếp!'},
+  SHUFFLE:{name:'Xào Bài',short:'XÀO BÀI',images:['XAO_BAI_1','XAO_BAI_2','XAO_BAI_3'],desc:'Xáo trộn bộ bài',how:'Xáo lại toàn bộ bộ bài chưa rút. Không ảnh hưởng đến bài trên tay.'},
+  FAVOR:{name:'Xin Xỏ',short:'XIN BÀI',images:['XIN_XO_1','XIN_XO_2','XIN_XO_3'],desc:'Xin 1 lá từ đối thủ',how:'Chọn 1 đối thủ, họ phải đưa 1 lá NGẪU NHIÊN trong tay. Có thể bị NOPE.'},
+  RUT_TU_DAY:{name:'Rút Từ Đáy',short:'RÚT ĐÁY',images:['RUT_TU_DAY_1','RUT_TU_DAY_2','RUT_TU_DAY_3'],desc:'Rút từ dưới đáy bộ bài',how:'Rút lá dưới cùng của bộ bài thay vì trên cùng. Dùng để né Mèo Nổ ở trên đỉnh.'},
+  CAT:{name:'Mèo Thường',short:'MÈO',images:['MEO_THUONG_1','MEO_THUONG_2','MEO_THUONG_3','MEO_THUONG_4','MEO_THUONG_5'],desc:'Combo 2+ cướp bài',how:'Đánh 2 lá CÙNG LOẠI: cướp 1 lá ngẫu nhiên từ đối thủ. Đánh 3 lá CÙNG LOẠI: gọi tên lá cụ thể, nếu có thì lấy.'}
 };
-
-const CATS = ['CAT'];
 
 function makeCard(type){
   const t = CARD_TYPES[type];
@@ -591,39 +644,27 @@ function makeCard(type){
   const v = Math.floor(Math.random() * t.images.length);
   return type + '#' + v;
 }
-
-function cardType(card){
-  return String(card).split('#')[0];
-}
-
-function cardVariant(card){
-  const p = String(card).split('#');
-  return p[1] ? parseInt(p[1]) : 0;
-}
-
-function cardImage(card){
-  const t = cardType(card);
-  const v = cardVariant(card);
-  const info = CARD_TYPES[t];
+function cardType(c){return String(c).split('#')[0]}
+function cardVariant(c){const p = String(c).split('#'); return p[1]?parseInt(p[1]):0}
+function cardImage(c){
+  const t = cardType(c), v = cardVariant(c), info = CARD_TYPES[t];
   if(!info) return '';
-  const imgs = info.images;
-  const idx = Math.min(v, imgs.length - 1);
-  return IMAGE_BASE + imgs[idx] + '.png';
+  const idx = Math.min(v, info.images.length - 1);
+  return IMAGE_BASE + info.images[idx] + '.png';
 }
-
-function cardInfo(card){
-  return CARD_TYPES[cardType(card)] || {name: '?', short: '?', images: []};
-}
+function cardInfo(c){return CARD_TYPES[cardType(c)] || {name:'?',short:'?',images:[]}}
 
 const NOPE_WINDOW = 3500;
 const NOPE_WINDOW_FAVOR = 2000;
 
 const BOT_MODES = {
-  normal:{label:'Bình thường',playProb:0.55,nopeProb:0.05,catProb:0.4,skipProb:0.45,attackProb:0.55,smartTarget:false},
-  smart:{label:'Thông minh',playProb:0.88,nopeProb:0.18,catProb:0.85,skipProb:0.6,attackProb:0.9,smartTarget:true},
-  ultimate:{label:'Tối thượng',playProb:1.0,nopeProb:0.35,catProb:1.0,skipProb:0.9,attackProb:1.0,smartTarget:true}
+  normal:{label:'Bình thường',playProb:0.55,nopeProb:0.05,catProb:0.4,smartTarget:false},
+  smart:{label:'Thông minh',playProb:0.88,nopeProb:0.18,catProb:0.85,smartTarget:true},
+  ultimate:{label:'Tối thượng',playProb:1.0,nopeProb:0.35,catProb:1.0,smartTarget:true}
 };
 const BOT_NAMES = ['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo Ngu','Mèo Khôn','Mèo Bự'];
+
+const AVATARS = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','👑','🎭','😎','🤖','👻','🦄',PHOTO_AVATAR];
 
 const U = {
   uid:()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4),
@@ -632,6 +673,14 @@ const U = {
   clone:o=>JSON.parse(JSON.stringify(o)),
   pick:arr=>arr[Math.floor(Math.random()*arr.length)]
 };
+
+function renderAvatarHTML(avatar, size){
+  size = size || 40;
+  if (avatar && typeof avatar === 'string' && avatar.startsWith('http')) {
+    return `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">`;
+  }
+  return `<span style="font-size:${size*0.6}px">${avatar || '🐱'}</span>`;
+}
 
 const Sound = {
   ctx:null,
@@ -643,7 +692,7 @@ const Sound = {
       const t=this.ctx.currentTime;
       const o=this.ctx.createOscillator(),g=this.ctx.createGain();
       o.connect(g);g.connect(this.ctx.destination);
-      const cfg={draw:{f:380,f2:620,d:.1,w:'sine',v:.08},play:{f:340,f2:120,d:.18,w:'triangle',v:.12},boom:{f:110,f2:25,d:.5,w:'sawtooth',v:.28},defuse:{f:700,f2:1200,d:.25,w:'sine',v:.15},nope:{f:220,f2:150,d:.15,w:'square',v:.12},win:{f:500,f2:800,d:.4,w:'sine',v:.2}}[type];
+      const cfg={draw:{f:380,f2:620,d:.12,w:'sine',v:.06},play:{f:340,f2:120,d:.18,w:'triangle',v:.12},boom:{f:110,f2:25,d:.5,w:'sawtooth',v:.28},defuse:{f:700,f2:1200,d:.25,w:'sine',v:.15},nope:{f:220,f2:150,d:.15,w:'square',v:.12},win:{f:500,f2:800,d:.4,w:'sine',v:.2}}[type];
       if(!cfg)return;
       o.type=cfg.w;o.frequency.setValueAtTime(cfg.f,t);o.frequency.exponentialRampToValueAtTime(cfg.f2,t+cfg.d);
       g.gain.setValueAtTime(cfg.v,t);g.gain.exponentialRampToValueAtTime(.001,t+cfg.d);
@@ -667,9 +716,9 @@ const VFX = {
   }
 };
 
-/* ========== AUTH ========== */
+/* ===== AUTH ===== */
 const Auth = {
-  KEY:'ek_accounts_v3', USER_KEY:'ek_current_user', GUEST_KEY:'ek_guest',
+  KEY:'ek_accounts_v4', USER_KEY:'ek_current_user_v4', GUEST_KEY:'ek_guest_v4',
   ADMIN:{username:'vanbacazerst.vn2908', password:'aBc@2908vanbac0809'},
   init(){
     const accounts = this.all();
@@ -680,12 +729,21 @@ const Auth = {
   },
   all(){try{return JSON.parse(localStorage.getItem(this.KEY)||'{}')}catch{return {}}},
   _save(d){localStorage.setItem(this.KEY, JSON.stringify(d))},
+  findUser(username){
+    if(!username) return null;
+    const target = String(username).trim().toLowerCase();
+    const accs = this.all();
+    for(const name of Object.keys(accs)){
+      if(name.toLowerCase() === target) return name;
+    }
+    return null;
+  },
   register(u,p){
     u = String(u||'').trim();
     if(u.length < 3) return {ok:false, msg:'Tên phải ≥ 3 ký tự'};
     if(!p || p.length < 4) return {ok:false, msg:'Mật khẩu phải ≥ 4 ký tự'};
     const accounts = this.all();
-    if(accounts[u]) return {ok:false, msg:'Tên đã tồn tại'};
+    if(this.findUser(u)) return {ok:false, msg:'Tên đã tồn tại'};
     accounts[u] = {password:p, isAdmin:false, avatar:'🐱', games:0, wins:0, createdAt:Date.now()};
     this._save(accounts);
     localStorage.setItem(this.USER_KEY, u);
@@ -693,11 +751,11 @@ const Auth = {
   },
   login(u,p){
     u = String(u||'').trim();
-    const accounts = this.all();
-    const acc = accounts[u];
-    if(!acc) return {ok:false, msg:'Không tìm thấy tài khoản'};
+    const realName = this.findUser(u);
+    if(!realName) return {ok:false, msg:'Không tìm thấy tài khoản'};
+    const acc = this.all()[realName];
     if(acc.password !== p) return {ok:false, msg:'Mật khẩu sai'};
-    localStorage.setItem(this.USER_KEY, u);
+    localStorage.setItem(this.USER_KEY, realName);
     return {ok:true};
   },
   current(){
@@ -725,20 +783,20 @@ const Auth = {
     if(won) accounts[u].wins = (accounts[u].wins||0) + 1;
     this._save(accounts);
   },
-  setAvatar(emoji){
+  setAvatar(avatar){
     const u = localStorage.getItem(this.USER_KEY);
     if(!u) return;
     const accounts = this.all();
     if(!accounts[u]) return;
-    accounts[u].avatar = emoji;
+    accounts[u].avatar = avatar;
     this._save(accounts);
   },
   logout(){localStorage.removeItem(this.USER_KEY)}
 };
 
-/* ========== SOCIAL ========== */
+/* ===== SOCIAL ===== */
 const Social = {
-  KEY_REQ:'ek_requests', KEY_FRIENDS:'ek_friends', KEY_INVITES:'ek_team_invites',
+  KEY_REQ:'ek_requests_v4', KEY_FRIENDS:'ek_friends_v4', KEY_INVITES:'ek_team_invites_v4',
   allRequests(){try{return JSON.parse(localStorage.getItem(this.KEY_REQ)||'[]')}catch{return []}},
   _saveReqs(r){localStorage.setItem(this.KEY_REQ, JSON.stringify(r))},
   allFriends(){try{return JSON.parse(localStorage.getItem(this.KEY_FRIENDS)||'{}')}catch{return {}}},
@@ -746,17 +804,18 @@ const Social = {
   allInvites(){try{return JSON.parse(localStorage.getItem(this.KEY_INVITES)||'[]')}catch{return []}},
   _saveInvites(i){localStorage.setItem(this.KEY_INVITES, JSON.stringify(i))},
   sendRequest(from, to){
-    if(from === to) return {ok:false, msg:'Không thể tự kết bạn'};
-    const accs = Auth.all();
-    if(!accs[to]) return {ok:false, msg:'Không tìm thấy user'};
+    if(!to) return {ok:false, msg:'Nhập tên user'};
+    const realName = Auth.findUser(to);
+    if(!realName) return {ok:false, msg:'Không tìm thấy user "' + to + '"'};
+    if(from === realName) return {ok:false, msg:'Không thể tự kết bạn'};
     const friends = this.getFriends(from);
-    if(friends.includes(to)) return {ok:false, msg:'Đã là bạn bè'};
+    if(friends.includes(realName)) return {ok:false, msg:'Đã là bạn bè'};
     const reqs = this.allRequests();
-    if(reqs.some(r => r.from===from && r.to===to && r.status==='pending')) return {ok:false, msg:'Đã gửi rồi'};
-    if(reqs.some(r => r.from===to && r.to===from && r.status==='pending')) return {ok:false, msg:'Người đó đã gửi cho bạn. Kiểm tra hộp thư!'};
-    reqs.push({from, to, status:'pending', ts:Date.now()});
+    if(reqs.some(r => r.from===from && r.to===realName && r.status==='pending')) return {ok:false, msg:'Đã gửi rồi'};
+    if(reqs.some(r => r.from===realName && r.to===from && r.status==='pending')) return {ok:false, msg:'Người đó đã gửi cho bạn. Kiểm tra hộp thư!'};
+    reqs.push({from, to:realName, status:'pending', ts:Date.now()});
     this._saveReqs(reqs);
-    return {ok:true};
+    return {ok:true, msg:'Đã gửi lời mời tới ' + realName};
   },
   incoming(username){return this.allRequests().filter(r => r.to === username && r.status === 'pending')},
   outgoing(username){return this.allRequests().filter(r => r.from === username && r.status === 'pending')},
@@ -813,7 +872,7 @@ const Social = {
   }
 };
 
-/* ========== ENGINE ========== */
+/* ===== ENGINE ===== */
 const Engine = {
   state:null, hostId:null, pendingTimer:null, onChange:null,
 
@@ -847,7 +906,6 @@ const Engine = {
     for(let i=0;i<5;i++) deck.push(makeCard('NOPE'));
     for(let i=0;i<12;i++) deck.push(makeCard('CAT'));
     for(let i=0;i<2;i++) deck.push(makeCard('DEFUSE'));
-    
     U.shuffle(deck);
     for(let i=0;i<5;i++) for(const p of this.state.players) p.hand.push(deck.pop());
     for(const p of this.state.players) p.hand.push(makeCard('DEFUSE'));
@@ -885,7 +943,7 @@ const Engine = {
     if(this.state.phase!=='playing') return false;
     const p=this.byId(playerId);
     if(!p||!p.alive) return false;
-    if(action==='nope') return !!this.state.pending && p.hand.some(c => cardType(c) === 'NOPE');
+    if(action==='nope') return !!this.state.pending && p.hand.some(c => cardType(c)==='NOPE');
     if(action==='clearPeek') return this.state.peekFor?.playerId===playerId;
     if(action==='alterFuture') return this.state.alterFor?.playerId===playerId;
     if(action==='defuse') return this.state.awaitingChoice?.type==='defuse' && this.state.awaitingChoice.playerId===playerId;
@@ -900,19 +958,22 @@ const Engine = {
   playCards(playerId, cardTypes, targetId, payload={}){
     if(!this.canAct(playerId,'play')) return false;
     const p = this.byId(playerId);
-    const hand = [...p.hand];
-    for(const c of cardTypes){
-      const idx = hand.indexOf(c);
-      if(idx===-1) return false;
-      hand.splice(idx,1);
-    }
     const primary = cardTypes[0];
     const primaryType = cardType(primary);
     if(['EK','DEFUSE','NOPE'].includes(primaryType)) return false;
+
+    // Validate cards exist in hand
+    const tempHand = [...p.hand];
+    for(const c of cardTypes){
+      const idx = tempHand.indexOf(c);
+      if(idx===-1) return false;
+      tempHand.splice(idx,1);
+    }
     
-    if(CATS.includes(primaryType)){
+    // FIX: CAT must match SAME variant (Mèo 1 with Mèo 1 only)
+    if(primaryType === 'CAT'){
       if(cardTypes.length!==2 && cardTypes.length!==3) return false;
-      if(!cardTypes.every(c=>cardType(c)===primaryType)) return false;
+      if(!cardTypes.every(c => c === primary)) return false;
       const t = this.byId(targetId);
       if(!t||!t.alive||t.id===playerId||t.hand.length===0) return false;
     }
@@ -920,6 +981,8 @@ const Engine = {
       const t = this.byId(targetId);
       if(!t||!t.alive||t.id===playerId||t.hand.length===0) return false;
     }
+    
+    // Remove cards
     for(const c of cardTypes){
       p.hand.splice(p.hand.indexOf(c),1);
       this.state.discard.push(c);
@@ -947,7 +1010,7 @@ const Engine = {
     if(!this.state.pending) return false;
     const p = this.byId(playerId);
     if(!p||!p.alive) return false;
-    const nopeIdx = p.hand.findIndex(c => cardType(c) === 'NOPE');
+    const nopeIdx = p.hand.findIndex(c => cardType(c)==='NOPE');
     if(nopeIdx === -1) return false;
     const nopeCard = p.hand.splice(nopeIdx,1)[0];
     this.state.discard.push(nopeCard);
@@ -1008,16 +1071,12 @@ const Engine = {
       }
       case 'RUT_TU_DAY':{
         if(this.state.deck.length===0){
-          const reshufflable = this.state.discard.filter(c => cardType(c) !== 'EK');
+          const reshufflable = this.state.discard.filter(c => cardType(c)!=='EK');
           if(reshufflable.length > 0){
             this.state.deck = U.shuffle(reshufflable);
-            this.state.discard = this.state.discard.filter(c => cardType(c) === 'EK');
+            this.state.discard = this.state.discard.filter(c => cardType(c)==='EK');
             this.log(`Hết bài! Xáo lại ${this.state.deck.length} lá từ đống bỏ.`);
-          } else {
-            this.log(`Bộ bài trống.`);
-            this.notify();
-            return;
-          }
+          } else { this.log(`Bộ bài trống.`); this.notify(); return; }
         }
         const card = this.state.deck.shift();
         Sound.play('draw');
@@ -1040,7 +1099,7 @@ const Engine = {
         }
         break;
       }
-      default: if(CATS.includes(pending.primaryType)) this.doCatCombo(p,pending.targetId,pending.cards.length,pending.payload);
+      default: if(pending.primaryType==='CAT') this.doCatCombo(p,pending.targetId,pending.cards.length,pending.payload);
     }
     this.notify({type:'resolve'});
   },
@@ -1086,19 +1145,17 @@ const Engine = {
   drawCard(playerId){
     if(!this.canAct(playerId,'draw')) return false;
     const p = this.byId(playerId);
-
     if(this.state.deck.length===0){
-      const reshufflable = this.state.discard.filter(c => cardType(c) !== 'EK');
+      const reshufflable = this.state.discard.filter(c => cardType(c)!=='EK');
       if(reshufflable.length > 0){
         this.state.deck = U.shuffle(reshufflable);
-        this.state.discard = this.state.discard.filter(c => cardType(c) === 'EK');
+        this.state.discard = this.state.discard.filter(c => cardType(c)==='EK');
         this.log(`Hết bài! Xáo lại ${this.state.deck.length} lá từ đống bỏ.`);
       } else {
         this.log(`Bộ bài trống, ${p.name} không rút được.`);
         this.endTurn(); return true;
       }
     }
-
     const card = this.state.deck.pop();
     Sound.play('draw');
     this.log(`${p.name} rút 1 lá...`);
@@ -1118,7 +1175,7 @@ const Engine = {
     this.state.discard.push(card);
     this.state.lastDraw = {playerId:p.id, card, id:Math.random(), isEK:true};
     this.log(`${p.name} rút trúng MÈO NỔ!`);
-    const defIdx = p.hand.findIndex(c => cardType(c) === 'DEFUSE');
+    const defIdx = p.hand.findIndex(c => cardType(c)==='DEFUSE');
     if(defIdx===-1){
       p.alive = false;
       this.state.discard.push(...p.hand);
@@ -1210,7 +1267,7 @@ const Engine = {
   }
 };
 
-/* ========== NET ========== */
+/* ===== NET ===== */
 const Net = {
   peer:null, conn:null, conns:[], isHost:false, roomCode:null, retryCount:0,
   playerByConn:new Map(),
@@ -1222,20 +1279,17 @@ const Net = {
     this.playerByConn.clear();
     this._createHostPeer(code);
   },
-
   _createHostPeer(code){
     if(typeof Peer === 'undefined'){if(this.onError) this.onError('Thư viện mạng chưa tải.');return;}
     try{
-      this.peer = new Peer('ek_room_'+code, {config:{iceServers:[{url:'stun:stun.l.google.com:19302'},{url:'stun:stun1.l.google.com:19302'},{url:'stun:stun2.l.google.com:19302'}]}});
+      this.peer = new Peer('ek_room_v4_'+code, {config:{iceServers:[{url:'stun:stun.l.google.com:19302'},{url:'stun:stun1.l.google.com:19302'},{url:'stun:stun2.l.google.com:19302'}]}});
     }catch(e){if(this.onError) this.onError('Lỗi khởi tạo: '+e.message);return;}
-
     const timeout = setTimeout(() => {
       if(this.peer && !this.peer.destroyed && !this.peer.open){
         try{this.peer.destroy()}catch(e){}
         if(this.onError) this.onError('Kết nối quá tải. Thử lại!');
       }
     }, 10000);
-
     this.peer.on('open', () => {clearTimeout(timeout);this.retryCount = 0;if(this.onHostReady) this.onHostReady();});
     this.peer.on('connection', (c) => {
       this.conns.push(c);
@@ -1265,24 +1319,21 @@ const Net = {
       if(this.onError) this.onError(msg);
     });
   },
-
   join(code){
     this.roomCode = code; this.isHost = false;
     if(typeof Peer === 'undefined'){if(this.onError) this.onError('Thư viện mạng chưa tải.');return;}
     try{
       this.peer = new Peer({config:{iceServers:[{url:'stun:stun.l.google.com:19302'},{url:'stun:stun1.l.google.com:19302'},{url:'stun:stun2.l.google.com:19302'}]}});
     }catch(e){if(this.onError) this.onError('Lỗi: '+e.message);return;}
-
     const timeout = setTimeout(() => {
       if(this.peer && !this.peer.destroyed && !this.peer.open){
         try{this.peer.destroy()}catch(e){}
         if(this.onError) this.onError('Kết nối quá tải!');
       }
     }, 10000);
-
     this.peer.on('open', () => {
       clearTimeout(timeout);
-      this.conn = this.peer.connect('ek_room_'+code, {reliable:true});
+      this.conn = this.peer.connect('ek_room_v4_'+code, {reliable:true});
       this.conn.on('open', () => {if(this.onConnectSuccess) this.onConnectSuccess();});
       this.conn.on('data', (data) => this.route(data));
       this.conn.on('close', () => {if(this.onHostLeft) this.onHostLeft();});
@@ -1295,7 +1346,6 @@ const Net = {
       else {if(this.onError) this.onError('Lỗi: '+err.type);}
     });
   },
-
   close(){
     if(this.conn) try{this.conn.close()}catch(e){}
     if(this.conns) this.conns.forEach(c => {try{c.close()}catch(e){}});
@@ -1303,7 +1353,6 @@ const Net = {
     this.conn=null; this.conns=[]; this.peer=null; this.retryCount=0;
     this.playerByConn.clear();
   },
-
   send(msg, targetConn=null){
     try{
       if(this.isHost){
@@ -1314,7 +1363,6 @@ const Net = {
       }
     }catch(e){console.error('[Net.send]', e);}
   },
-
   route(msg, conn){
     if(!msg||!msg.type) return;
     if(this.isHost){
@@ -1345,16 +1393,17 @@ const Net = {
   }
 };
 
-/* ========== UI ========== */
+/* ===== UI ===== */
 const UI = {
   myId:null, roomCode:null, isHost:false,
   lobbyPlayers:[], botScheduled:false,
   currentModal:null, _animatedDrawId:null, _animatedStealId:null, _lastPlayId:null,
   selectedCatIndices:[], pendingCatPlay:null, _handSig:'',
-  isShuffling:false, nopeSkippedFor:null,
-  _lastPendingTs:null, _dealing:false, _statsRecorded:false,
+  isShuffling:false, _lastPendingTs:null, _dealing:false, _statsRecorded:false,
   _codeInput:'', _pollTimer:null, _shownInvites:new Set(),
   _friendsTab:'list', _alterCards:null, _alterOriginal:null,
+  _cardSelectionMode:false, _namedCatType:null,
+  _showcaseTimeout:null,
 
   init(){
     Auth.init();
@@ -1390,7 +1439,7 @@ const UI = {
     el.style.cssText = `position:fixed;top:20px;right:20px;max-width:320px;padding:16px;z-index:9999;animation:slideDown .3s ease-out`;
     el.innerHTML = `
       <div style="font-weight:900;margin-bottom:6px">Lời mời vào đội</div>
-      <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">
+      <div style="font-size:12px;color:var(--c-text2);margin-bottom:10px">
         <b>${this.escapeHtml(inv.from)}</b> mời bạn vào phòng <b>${inv.roomCode}</b>
       </div>
       <div style="display:flex;gap:6px">
@@ -1410,6 +1459,15 @@ const UI = {
     Social.rejectInvite(ts);
     this.toast('Đã từ chối');
   },
+
+  showScreen(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+    document.getElementById(id)?.classList.add('on');
+  },
+  currentUser(){
+    return Auth.current() || (localStorage.getItem(Auth.GUEST_KEY) ? Auth.guest() : null);
+  },
+  escapeHtml(str){return String(str??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
 
   switchAuthTab(tab){
     document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
@@ -1454,7 +1512,7 @@ const UI = {
     document.getElementById('topbarName').textContent = user.username;
     document.getElementById('topbarGames').textContent = user.games || 0;
     document.getElementById('topbarWins').textContent = user.wins || 0;
-    document.getElementById('topbarAvatar').textContent = user.avatar || '🐱';
+    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(user.avatar || '🐱', 62);
     document.getElementById('topbarAdminBadge').style.display = user.isAdmin ? 'inline-block' : 'none';
     document.getElementById('topbarGuestBadge').style.display = user.isGuest ? 'inline-block' : 'none';
     document.getElementById('adminCard').style.display = user.isAdmin ? 'flex' : 'none';
@@ -1469,49 +1527,79 @@ const UI = {
     this._pollSocial();
   },
 
+  /* ===== MODAL HELPERS ===== */
+  openModal(id, html){
+    this.currentModal = id;
+    const modal = document.getElementById('modalContent');
+    modal.innerHTML = `<button class="modal-close" onclick="UI.closeModal()" aria-label="Đóng">×</button>${html}`;
+    document.getElementById('overlayModal').classList.add('on');
+  },
+  closeModal(){
+    document.getElementById('overlayModal').classList.remove('on');
+    this.currentModal = null;
+  },
+
+  /* ===== PROFILE (REDESIGNED) ===== */
   openProfile(){
     const user = this.currentUser();
     if(!user) return;
-    const avatars = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','👑','🎭','😎','🤖','👻','🦄'];
     const winRate = user.games ? Math.round((user.wins/user.games)*100) : 0;
+    const level = user.games < 5 ? 'Tân Binh' : user.games < 20 ? 'Chiến Binh' : user.games < 50 ? 'Cao Thủ' : 'Huyền Thoại';
     this.openModal('profile', `
-      <div class="profile-hero">
-        <div class="profile-avatar-big">${user.avatar || '🐱'}</div>
-        <div class="profile-name">${this.escapeHtml(user.username)}</div>
-        ${user.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}
-        ${user.isGuest ? '<span class="admin-badge" style="background:linear-gradient(135deg,#888,#555)">GUEST</span>' : ''}
+      <div class="profile-hero-new">
+        <div class="profile-avatar-big" onclick="UI.openAvatarPicker()">${renderAvatarHTML(user.avatar || '🐱', 104)}</div>
+        <div class="profile-name-new">${this.escapeHtml(user.username)}</div>
+        <div class="profile-tags">
+          ${user.isAdmin ? '<span class="profile-tag admin">👑 ADMIN</span>' : ''}
+          ${user.isGuest ? '<span class="profile-tag guest">GUEST</span>' : ''}
+          ${!user.isGuest ? `<span class="profile-tag level">⭐ ${level}</span>` : ''}
+        </div>
       </div>
       ${user.isGuest ? 
-        `<div style="text-align:center;padding:12px;background:rgba(255,204,0,0.1);border-radius:10px;font-size:12px;color:var(--text-2);margin-bottom:8px">
-          Đăng ký tài khoản để lưu trận, kết bạn và chơi đội!
+        `<div style="text-align:center;padding:14px;background:rgba(74,158,255,0.12);border-radius:12px;font-size:12px;color:var(--c-text2);margin-bottom:12px;border:1px solid rgba(120,180,255,0.3)">
+          💡 Đăng ký tài khoản để lưu trận, kết bạn và chơi đội!
         </div>
         <button class="btn-p" onclick="UI.closeModal(); UI.showScreen('sc-auth')">Đăng Ký Ngay</button>
         ` :
-        `<div class="profile-stats-grid">
-          <div class="stat-card"><div class="stat-card-value">${user.games||0}</div><div class="stat-card-label">Trận</div></div>
-          <div class="stat-card"><div class="stat-card-value">${user.wins||0}</div><div class="stat-card-label">Thắng</div></div>
-          <div class="stat-card"><div class="stat-card-value">${winRate}%</div><div class="stat-card-label">Tỷ lệ</div></div>
+        `<div class="profile-stats-new">
+          <div class="stat-card-new"><div class="stat-card-value-new">${user.games||0}</div><div class="stat-card-label-new">Trận</div></div>
+          <div class="stat-card-new"><div class="stat-card-value-new">${user.wins||0}</div><div class="stat-card-label-new">Thắng</div></div>
+          <div class="stat-card-new"><div class="stat-card-value-new">${winRate}%</div><div class="stat-card-label-new">Tỷ lệ</div></div>
         </div>`
       }
-      <div style="text-align:left;font-size:12px;font-weight:bold;margin-top:8px">Chọn Avatar:</div>
-      <div class="avatar-picker">
-        ${avatars.map(a => `<div class="avatar-opt ${user.avatar===a?'selected':''}" onclick="UI.pickAvatar('${a}')">${a}</div>`).join('')}
-      </div>
-      <button class="btn-o" onclick="UI.closeModal()">Đóng</button>
+      <button class="btn-o" onclick="UI.openAvatarPicker()">🖼️ Đổi Avatar</button>
       ${user.isGuest ? '' : '<button class="btn-danger" onclick="UI.doLogout()">Đăng Xuất</button>'}
     `);
   },
 
-  pickAvatar(emoji){
+  openAvatarPicker(){
+    const user = this.currentUser();
+    if(!user) return;
+    const opts = AVATARS.map(a => {
+      const isImg = a.startsWith('http');
+      const sel = user.avatar === a ? 'selected' : '';
+      return `<div class="avatar-opt ${sel}" onclick="UI.pickAvatar('${a}')">${isImg ? `<img src="${a}" alt="avatar">` : a}</div>`;
+    }).join('');
+    this.openModal('avatar', `
+      <h2>Chọn Avatar</h2>
+      <p style="font-size:12px">Chọn icon hoặc ảnh</p>
+      <div class="avatar-picker-new">${opts}</div>
+      <button class="btn-o" onclick="UI.openProfile()">Quay Lại</button>
+    `);
+  },
+
+  pickAvatar(avatar){
     const user = this.currentUser();
     if(!user) return;
     if(user.isGuest){
       const g = Auth.guest();
-      g.avatar = emoji;
-      localStorage.setItem(Auth.GUEST_KEY, JSON.stringify({name:g.name, avatar:emoji}));
-    } else { Auth.setAvatar(emoji); }
-    document.getElementById('topbarAvatar').textContent = emoji;
-    document.querySelectorAll('.avatar-opt').forEach(el => el.classList.toggle('selected', el.textContent === emoji));
+      localStorage.setItem(Auth.GUEST_KEY, JSON.stringify({name:g.name, avatar}));
+    } else {
+      Auth.setAvatar(avatar);
+    }
+    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(avatar, 62);
+    this.toast('Đã đổi avatar');
+    setTimeout(() => this.openProfile(), 200);
   },
 
   doLogout(){
@@ -1520,6 +1608,191 @@ const UI = {
     this.showScreen('sc-auth');
   },
 
+  /* ===== FRIENDS (fixed search) ===== */
+  openFriends(){
+    const user = this.currentUser();
+    if(!user || user.isGuest){ this.toast('Cần đăng nhập để dùng bạn bè'); return; }
+    this._friendsTab = this._friendsTab || 'list';
+    const accs = Auth.all();
+    const friends = Social.getFriends(user.username);
+    const incoming = Social.incoming(user.username);
+    const outgoing = Social.outgoing(user.username);
+    let content = '';
+    
+    if(this._friendsTab === 'list'){
+      if(friends.length === 0){
+        content = `<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">Chưa có bạn bè. Hãy tìm và kết bạn!</div></div>`;
+      } else {
+        content = friends.map(f => {
+          const a = accs[f];
+          const av = a?.avatar || '🐱';
+          return `<div class="friend-item">
+            <div class="av">${renderAvatarHTML(av, 36)}</div>
+            <div class="nm">${this.escapeHtml(f)}</div>
+            <div class="actions">
+              <button class="btn-danger" onclick="UI.friendRemove('${this.escapeHtml(f)}')">Xóa</button>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    } else if(this._friendsTab === 'add'){
+      content = `
+        <div class="search-row">
+          <input type="text" id="friendSearchInput" placeholder="Nhập tên user cần kết bạn..." maxlength="20" onkeypress="if(event.key==='Enter')UI.friendSearch()">
+          <button class="btn-p" onclick="UI.friendSearch()">Tìm & Kết Bạn</button>
+        </div>
+        <div id="friendSearchResult" style="min-height:20px;font-size:12px;padding:8px;border-radius:8px"></div>
+        <div style="font-size:11px;color:var(--c-text3);margin-top:8px;text-align:left">
+          💡 Nhập đúng tên user (không phân biệt hoa thường). Hỏi bạn bè tên đăng nhập của họ.
+        </div>
+      `;
+    } else if(this._friendsTab === 'incoming'){
+      if(incoming.length === 0) content = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Không có lời mời</div></div>`;
+      else content = incoming.map(r => {
+        const a = accs[r.from];
+        return `<div class="friend-item">
+          <div class="av">${renderAvatarHTML(a?.avatar || '🐱', 36)}</div>
+          <div class="nm">${this.escapeHtml(r.from)}</div>
+          <div class="actions">
+            <button class="btn-p" onclick="UI.friendAccept(${r.ts})">✓</button>
+            <button class="btn-danger" onclick="UI.friendReject(${r.ts})">×</button>
+          </div>
+        </div>`;
+      }).join('');
+    } else if(this._friendsTab === 'outgoing'){
+      if(outgoing.length === 0) content = `<div class="empty-state"><div class="empty-state-icon">📮</div><div class="empty-state-text">Không có lời mời đã gửi</div></div>`;
+      else content = outgoing.map(r => `
+        <div class="friend-item">
+          <div class="av">⏳</div>
+          <div class="nm">${this.escapeHtml(r.to)}</div>
+          <div class="actions"><span style="font-size:11px;color:var(--c-text3)">Đang chờ</span></div>
+        </div>
+      `).join('');
+    }
+    
+    this.openModal('friends', `
+      <h2>Bạn Bè</h2>
+      <div class="friend-tabs">
+        <button class="friend-tab ${this._friendsTab==='list'?'active':''}" onclick="UI.friendsSwitch('list')">Danh Sách</button>
+        <button class="friend-tab ${this._friendsTab==='add'?'active':''}" onclick="UI.friendsSwitch('add')">+ Kết Bạn</button>
+        <button class="friend-tab ${this._friendsTab==='incoming'?'active':''}" onclick="UI.friendsSwitch('incoming')">Đến (${incoming.length})</button>
+        <button class="friend-tab ${this._friendsTab==='outgoing'?'active':''}" onclick="UI.friendsSwitch('outgoing')">Đi (${outgoing.length})</button>
+      </div>
+      <div style="max-height:50vh;overflow-y:auto;text-align:left">${content}</div>
+    `);
+  },
+
+  friendsSwitch(tab){ this._friendsTab = tab; this.openFriends(); },
+
+  friendSearch(){
+    const input = document.getElementById('friendSearchInput');
+    const result = document.getElementById('friendSearchResult');
+    if(!input || !result) return;
+    const val = input.value.trim();
+    if(!val){ result.textContent = '⚠️ Nhập tên user!'; result.style.color = '#ff8a7a'; result.style.background = 'rgba(255,59,48,0.15)'; return; }
+    const user = this.currentUser();
+    if(!user) return;
+    const realName = Auth.findUser(val);
+    if(!realName){
+      result.textContent = `❌ Không tìm thấy user "${val}". Kiểm tra lại tên!`;
+      result.style.color = '#ff8a7a'; result.style.background = 'rgba(255,59,48,0.15)';
+      return;
+    }
+    const res = Social.sendRequest(user.username, realName);
+    if(res.ok){
+      result.textContent = `✅ Đã gửi lời mời tới "${realName}"!`;
+      result.style.color = '#8affa8'; result.style.background = 'rgba(80,200,100,0.15)';
+      setTimeout(() => this.openFriends(), 800);
+    } else {
+      result.textContent = `⚠️ ${res.msg}`;
+      result.style.color = '#ffc766'; result.style.background = 'rgba(255,180,0,0.15)';
+    }
+  },
+
+  friendAccept(ts){
+    Social.accept(ts);
+    this.toast('Đã chấp nhận');
+    this.openFriends();
+  },
+  friendReject(ts){
+    Social.reject(ts);
+    this.toast('Đã từ chối');
+    this.openFriends();
+  },
+  friendRemove(name){
+    const user = this.currentUser();
+    if(!user) return;
+    if(!confirm(`Xóa "${name}" khỏi danh sách bạn bè?`)) return;
+    Social.removeFriend(user.username, name);
+    this.toast('Đã xóa bạn');
+    this.openFriends();
+  },
+
+  /* ===== HOW TO PLAY (with X) ===== */
+  openHowToPlay(){
+    const tabs = `
+      <div class="info-tabs">
+        <button class="info-tab active" onclick="UI.htpSwitch('rules')">Luật</button>
+        <button class="info-tab" onclick="UI.htpSwitch('cards')">Lá Bài</button>
+      </div>
+    `;
+    const rules = `
+      <div class="rules-section">
+        <h3>🎯 Mục tiêu</h3>
+        <p>Sống sót đến cuối cùng. Người cuối cùng không bị nổ là người thắng!</p>
+        <h3>🎮 Cách chơi</h3>
+        <ul>
+          <li>Mỗi lượt bạn có thể đánh <b>nhiều lá bài</b> hoặc <b>rút 1 lá</b> để kết thúc lượt.</li>
+          <li>Nếu rút trúng <b>Mèo Nổ</b>, bạn phải có <b>Gỡ Bom</b> để sống. Không có → bị loại!</li>
+          <li>Khi đánh bài có thể bị đối thủ <b>NOPE</b> để hủy.</li>
+          <li>Bom được giấu lại bộ bài ở vị trí bạn chọn sau khi gỡ.</li>
+        </ul>
+        <h3>🐱 Mèo Thường (Combo)</h3>
+        <p><b>Quan trọng:</b> Chỉ ghép được các lá Mèo <b>CÙNG LOẠI</b>:</p>
+        <ul>
+          <li>Mèo Thường 1 chỉ ghép với Mèo Thường 1</li>
+          <li>Mèo Thường 2 chỉ ghép với Mèo Thường 2</li>
+          <li>...tương tự cho 3, 4, 5</li>
+        </ul>
+        <p>Đánh <b>2 lá cùng loại</b>: cướp 1 lá ngẫu nhiên từ đối thủ.</p>
+        <p>Đánh <b>3 lá cùng loại</b>: gọi tên 1 lá, nếu đối thủ có thì lấy.</p>
+        <h3>💡 Mẹo</h3>
+        <ul>
+          <li>Giữ NOPE cho tình huống nguy hiểm</li>
+          <li>Dùng Nhìn Trước trước khi rút</li>
+          <li>Dùng Biến Đổi để đẩy Bom cho người sau</li>
+        </ul>
+      </div>
+    `;
+    const cards = `
+      <div class="card-list-grid">
+        ${Object.entries(CARD_TYPES).map(([k, info]) => {
+          const sample = makeCard(k);
+          return `<div class="card-list-item">
+            <div class="card-list-thumb"><img src="${cardImage(sample)}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'card-fallback\\' style=\\'display:flex\\'>${info.short}</div>'" alt=""></div>
+            <div class="card-list-body">
+              <div class="card-list-name">${info.name}</div>
+              <div class="card-list-desc">${info.desc}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+    this.openModal('htp', `
+      <h2>Hướng Dẫn Chơi</h2>
+      ${tabs}
+      <div id="htpContent">${rules}</div>
+      <button class="btn-p" onclick="UI.closeModal()">Đã Hiểu</button>
+    `);
+    this._htpData = {rules, cards};
+  },
+  htpSwitch(tab){
+    document.querySelectorAll('.info-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tab === 'rules' ? 'luật' : 'lá')));
+    const c = document.getElementById('htpContent');
+    if(c && this._htpData) c.innerHTML = this._htpData[tab];
+  },
+
+  /* ===== ADMIN ===== */
   openAdminPanel(){
     const user = this.currentUser();
     if(!user || !user.isAdmin) return;
@@ -1548,11 +1821,12 @@ const UI = {
     this.openAdminPanel();
   },
 
+  /* ===== SOLO ===== */
   openSoloModal(){
     this.openModal('solo', `
       <h2>Solo với Bot</h2>
       <p>Chọn số người & độ khó</p>
-      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--text-2)">Số người:</label>
+      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--c-text2)">Số người:</label>
       <select id="soloCount" style="margin-bottom:8px">
         <option value="2">2 người</option>
         <option value="3" selected>3 người</option>
@@ -1560,7 +1834,7 @@ const UI = {
         <option value="5">5 người</option>
         <option value="6">6 người</option>
       </select>
-      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--text-2)">Độ khó Bot:</label>
+      <label style="text-align:left;font-size:12px;font-weight:bold;color:var(--c-text2)">Độ khó Bot:</label>
       <select id="soloBotMode">
         <option value="normal">Bình thường</option>
         <option value="smart" selected>Thông minh</option>
@@ -1595,6 +1869,7 @@ const UI = {
     this.enterGame(true);
   },
 
+  /* ===== JOIN ROOM ===== */
   openJoinRoomModal(){
     this._codeInput = '';
     this.openModal('join', `
@@ -1643,6 +1918,7 @@ const UI = {
     this.doJoinRoom(code);
   },
 
+  /* ===== CREATE / JOIN ROOM ===== */
   createRoom(){
     const user = this.currentUser();
     if(!user) return;
@@ -1679,7 +1955,7 @@ const UI = {
   setupNet(host){
     if(Net.peer) Net.close();
     if(host){
-      Net.onHostReady = () => { document.getElementById('lobbyStatus').innerHTML = 'Phòng sẵn sàng · Chia sẻ mã!'; };
+      Net.onHostReady = () => { document.getElementById('lobbyStatus').innerHTML = '✅ Phòng sẵn sàng · Chia sẻ mã!'; };
       Net.onNewCode = (newCode) => {
         this.roomCode = newCode;
         document.getElementById('lobbyCode').textContent = newCode;
@@ -1735,7 +2011,7 @@ const UI = {
       Net.onLobby = (players) => {
         this.lobbyPlayers = players;
         this.renderLobby();
-        document.getElementById('lobbyStatus').innerHTML = 'Đã kết nối';
+        document.getElementById('lobbyStatus').innerHTML = '✅ Đã kết nối';
       };
       Net.onStart = (state) => { Engine.state = state; this.enterGame(false); };
       Net.onState = (state) => { Engine.state = state; this.render(); this.updateModals(); };
@@ -1767,13 +2043,15 @@ const UI = {
   renderLobby(){
     const box = document.getElementById('lobbyPlayers');
     if(this.lobbyPlayers.length === 0){ box.innerHTML = '<div class="plist-empty">Đang chờ...</div>'; return; }
-    box.innerHTML = this.lobbyPlayers.map(p => `
-      <div class="pitem">
-        <div class="av">${p.isBot?'🤖':'👤'}</div>
+    const accs = Auth.all();
+    box.innerHTML = this.lobbyPlayers.map(p => {
+      const av = accs[p.name]?.avatar || (p.isBot?'🤖':'👤');
+      return `<div class="pitem">
+        <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 36)}</div>
         <div class="nm">${this.escapeHtml(p.name)}${p.id===this.myId?' (bạn)':''}</div>
         <div class="st">${p.isHost?'HOST':(p.isBot?'BOT':'OK')}</div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   },
 
   addBot(){
@@ -1791,13 +2069,11 @@ const UI = {
     const user = this.currentUser();
     if(!user || user.isGuest) return this.toast('Cần đăng nhập');
     const friends = Social.getFriends(user.username);
+    const accs = Auth.all();
     if(friends.length === 0){
       this.openModal('invite', `
         <h2>Mời Bạn Bè</h2>
-        <div class="empty-state">
-          <div class="empty-state-icon">👥</div>
-          <div class="empty-state-text">Chưa có bạn bè. Kết bạn trước nhé!</div>
-        </div>
+        <div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">Chưa có bạn bè. Kết bạn trước nhé!</div></div>
         <button class="btn-p" onclick="UI.closeModal(); UI.openFriends()">Mở Bạn Bè</button>
       `);
       return;
@@ -1807,11 +2083,9 @@ const UI = {
       <p style="font-size:12px">Chọn bạn để mời vào phòng <b>${this.roomCode}</b></p>
       <div style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;text-align:left">
         ${friends.map(f => {
-          const accs = Auth.all();
-          const fAcc = accs[f];
-          const av = fAcc?.avatar || '🐱';
+          const av = accs[f]?.avatar || '🐱';
           return `<div class="friend-item">
-            <div class="av">${av}</div>
+            <div class="av">${renderAvatarHTML(av, 36)}</div>
             <div class="nm">${this.escapeHtml(f)}</div>
             <button class="btn-p" onclick="UI.sendTeamInvite('${this.escapeHtml(f)}')">Mời</button>
           </div>`;
@@ -1837,6 +2111,12 @@ const UI = {
     this.enterGame(true);
   },
 
+  copyCode(){
+    if(!this.roomCode) return;
+    navigator.clipboard?.writeText(this.roomCode).then(() => this.toast('Đã copy mã: ' + this.roomCode)).catch(()=>{});
+  },
+
+  /* ===== GAME ENTRY ===== */
   enterGame(asHost){
     this.isHost = asHost;
     this._statsRecorded = false;
@@ -1871,16 +2151,19 @@ const UI = {
     this.selectedCatIndices = [];
     this.pendingCatPlay = null;
     this.botScheduled = false;
-    this.nopeSkippedFor = null;
     this._lastPendingTs = null;
     this._animatedDrawId = null;
     this._animatedStealId = null;
     this._alterCards = null;
     this._alterOriginal = null;
+    this._cardSelectionMode = false;
+    this._namedCatType = null;
     document.getElementById('chatFab').classList.remove('on');
     this.closeModal();
     const nc = document.getElementById('nopeContainer');
     if(nc) nc.remove();
+    const showcase = document.getElementById('playedShowcase');
+    if(showcase) showcase.classList.remove('show');
     this.enterMenu(this.currentUser());
   },
 
@@ -1906,6 +2189,8 @@ const UI = {
     if(!ok && this.isHost) Net.send({type:'state', state:U.clone(Engine.state)});
   },
 
+  me(){ return Engine.state?.players.find(p => p.id === this.myId); },
+
   onEngineChange(meta){
     const me = this.me();
     const sig = me ? me.hand.join('|') : '';
@@ -1918,28 +2203,112 @@ const UI = {
     this.updateModals();
     this.renderVFX();
     if(this.isHost) this.processBots();
-    
+    this._handleNotifications(meta);
+  },
+
+  /* ===== NOTIFICATIONS (bottom-center) ===== */
+  _handleNotifications(meta){
     const s = Engine.state;
-    if(s?.pending && s.pending.playerId !== this.myId && s.pending.timestamp !== this._lastPendingTs){
-      this._lastPendingTs = s.pending.timestamp;
-      const opp = Engine.byId(s.pending.playerId);
-      if(opp) this.showOpponentAction(opp.name, s.pending.primaryType);
+    if(!s) return;
+    const lastLog = s.logs[s.logs.length-1] || '';
+    
+    if(meta?.type === 'play' && s.lastPlay){
+      const player = Engine.byId(s.lastPlay.playerId);
+      const info = CARD_TYPES[cardType(s.lastPlay.card)];
+      if(player && info){
+        this.showPlayedCard(s.lastPlay.card, player.name, info.short);
+        let notifType = 'info';
+        let label = info.short;
+        if(cardType(s.lastPlay.card) === 'ATTACK') notifType = 'attack';
+        else if(cardType(s.lastPlay.card) === 'SKIP') notifType = 'skip';
+        else if(cardType(s.lastPlay.card) === 'FAVOR') notifType = 'nope';
+        this.showBottomNotification({
+          type: notifType,
+          title: player.name + ' vừa dùng',
+          body: info.name,
+          card: label
+        });
+      }
+    }
+    if(meta?.type === 'nope'){
+      const lastPlayer = s.pending ? Engine.byId(s.pending.playerId) : null;
+      this.showBottomNotification({
+        type: 'nope',
+        title: 'NOPE!',
+        body: 'Hành động bị chặn'
+      });
+    }
+    if(meta?.type === 'defuse-prompt'){
+      const p = Engine.byId(meta.playerId);
+      if(p) this.showBottomNotification({
+        type: 'defuse',
+        title: p.name,
+        body: 'Gỡ Bom thành công!',
+        card: 'Chọn vị trí giấu bom'
+      });
+    }
+    if(meta?.type === 'defuse-done'){
+      this.showBottomNotification({
+        type: 'defuse',
+        title: 'Đã gỡ bom',
+        body: 'Bom được giấu lại'
+      });
+    }
+    if(meta?.type === 'win' && meta.winner){
+      this.showBottomNotification({
+        type: 'defuse',
+        title: '🏆 CHIẾN THẮNG',
+        body: meta.winner.name
+      });
+    }
+    if(lastLog.includes('BỊ LOẠI')){
+      this.showBottomNotification({
+        type: 'boom',
+        title: '💥 MÈO NỔ!',
+        body: lastLog.replace('BỊ LOẠI!','đã bị loại!')
+      });
+    }
+    if(s.pending?.primaryType === 'SKIP' && s.pending.playerId === this.myId){
+      // Handled by play action already
     }
   },
 
-  showOpponentAction(name, cardTypeStr){
-    const info = CARD_TYPES[cardTypeStr];
-    if(!info) return;
+  showBottomNotification({type='info', title='', body='', card=''}){
     const el = document.createElement('div');
-    el.className = 'opp-action-toast';
+    el.className = 'action-notification ' + type;
     el.innerHTML = `
-      <div class="opp-action-name">${this.escapeHtml(name)} vừa dùng</div>
-      <div class="opp-action-card">${info.short}</div>
+      ${title ? `<div class="an-title">${this.escapeHtml(title)}</div>` : ''}
+      <div class="an-body">${this.escapeHtml(body)}</div>
+      ${card ? `<div class="an-card">${this.escapeHtml(card)}</div>` : ''}
     `;
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3200);
+    setTimeout(() => el.remove(), 2900);
   },
 
+  showPlayedCard(card, playerName, actionText){
+    const showcase = document.getElementById('playedShowcase');
+    const cardEl = document.getElementById('psCard');
+    const nameEl = document.getElementById('psName');
+    const actEl = document.getElementById('psAction');
+    if(!showcase) return;
+    
+    const img = cardImage(card);
+    const info = cardInfo(card);
+    cardEl.innerHTML = `<img src="${img}" onerror="this.parentElement.innerHTML='<div style=&quot;padding:20px;font-size:22px;font-weight:900;color:#fff;text-align:center;line-height:1.4&quot;>${info.short}</div>'" alt="">`;
+    nameEl.textContent = playerName;
+    actEl.textContent = actionText;
+    
+    showcase.classList.remove('show');
+    void showcase.offsetWidth;
+    showcase.classList.add('show');
+    
+    clearTimeout(this._showcaseTimeout);
+    this._showcaseTimeout = setTimeout(() => {
+      showcase.classList.remove('show');
+    }, 2200);
+  },
+
+  /* ===== VFX ===== */
   renderVFX(){
     const s = Engine.state; if(!s) return;
     const lastLog = s.logs[s.logs.length-1] || '';
@@ -1960,25 +2329,23 @@ const UI = {
         }
       }
     }
-    
     if(s.lastDraw && s.lastDraw.id !== this._animatedDrawId){
       this._animatedDrawId = s.lastDraw.id;
       const isMe = s.lastDraw.playerId === this.myId;
       this.animateDraw(s.lastDraw.playerId, s.lastDraw.card, isMe, s.lastDraw.fromBottom);
     }
-    
     if(s.lastSteal && s.lastSteal.id !== this._animatedStealId){
       this._animatedStealId = s.lastSteal.id;
       this.animateSteal(s.lastSteal);
     }
   },
 
-  animateDraw(playerId, cardTypeStr, isMe, fromBottom = false){
+  /* ===== DRAW ANIMATION (SLOWER) ===== */
+  animateDraw(playerId, card, isMe, fromBottom = false){
     const deckEl = document.getElementById('deckPile');
     if(!deckEl) return;
     const s = Engine.state;
     const startRect = deckEl.getBoundingClientRect();
-    
     let endEl;
     if(isMe){
       endEl = document.getElementById('handArea');
@@ -1993,16 +2360,12 @@ const UI = {
     const flyer = document.createElement('div');
     flyer.className = 'anim-card';
     if(isMe){
-      const img = cardImage(cardTypeStr);
-      const info = cardInfo(cardTypeStr);
-      flyer.innerHTML = `
-        <img class="anim-card-img" src="${img}" onerror="this.closest('.anim-card').classList.add('no-img')" alt="">
-        <div class="anim-card-fallback">${info.short}</div>
-      `;
+      const img = cardImage(card);
+      const info = cardInfo(card);
+      flyer.innerHTML = `<img class="anim-card-img" src="${img}" onerror="this.closest('.anim-card').classList.add('no-img')" alt=""><div class="anim-card-fallback">${info.short}</div>`;
     } else {
       flyer.innerHTML = '<div class="anim-card-back">?</div>';
     }
-    
     const startX = startRect.left;
     const startY = startRect.top;
     flyer.style.left = startX + 'px';
@@ -2011,863 +2374,559 @@ const UI = {
     flyer.style.height = '130px';
     document.body.appendChild(flyer);
     
-    const centerX = window.innerWidth / 2 - startX - 90;
-    const centerY = window.innerHeight / 2 - startY - 100;
-    const endX = endRect.left + endRect.width / 2 - startX - 45;
-    const endY = endRect.top + endRect.height / 2 - startY - 65;
+    const endX = endRect.left + endRect.width/2 - startX - 45;
+    const endY = endRect.top + endRect.height/2 - startY - 65;
     
+    // SLOWER: 1200ms instead of 500ms
     flyer.animate([
-      { transform: 'translate(0, 0) scale(0.6)', opacity: 0 },
-      { transform: `translate(${centerX}px, ${centerY}px) scale(2.4)`, opacity: 1, offset: 0.3 },
-      { transform: `translate(${centerX}px, ${centerY}px) scale(2.4)`, opacity: 1, offset: 0.7 },
-      { transform: `translate(${endX}px, ${endY}px) scale(0.5)`, opacity: 0 }
-    ], { duration: 1900, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }).onfinish = () => flyer.remove();
+      { transform:'translate(0,0) rotate(0) scale(1)', opacity: 1 },
+      { transform:`translate(${endX*0.4}px,${endY*0.4 - 60}px) rotate(-15deg) scale(1.15)`, opacity: 1, offset: 0.5 },
+      { transform:`translate(${endX}px,${endY}px) rotate(0) scale(0.8)`, opacity: 0.9 }
+    ], { duration: 1200, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }).onfinish = () => {
+      flyer.remove();
+    };
   },
 
   animateSteal(steal){
     const s = Engine.state;
-    let startEl, endEl;
-    if(steal.victimId === this.myId){
-      startEl = document.getElementById('handArea');
-    } else {
-      const opps = document.querySelectorAll('.opp');
-      const oppIdx = s.players.filter(p => p.id !== this.myId).findIndex(p => p.id === steal.victimId);
-      startEl = opps[oppIdx];
-    }
-    if(steal.thiefId === this.myId){
-      endEl = document.getElementById('handArea');
-    } else {
-      const opps = document.querySelectorAll('.opp');
-      const oppIdx = s.players.filter(p => p.id !== this.myId).findIndex(p => p.id === steal.thiefId);
-      endEl = opps[oppIdx];
-    }
-    if(!startEl || !endEl) return;
-    const startRect = startEl.getBoundingClientRect();
-    const endRect = endEl.getBoundingClientRect();
-    const isMeVictim = steal.victimId === this.myId;
-    
-    const flyer = document.createElement('div');
-    flyer.className = 'anim-card';
-    if(isMeVictim){
-      const img = cardImage(steal.card);
-      const info = cardInfo(steal.card);
-      flyer.innerHTML = `
-        <img class="anim-card-img" src="${img}" onerror="this.closest('.anim-card').classList.add('no-img')" alt="">
-        <div class="anim-card-fallback">${info.short}</div>
-      `;
-    } else {
-      flyer.innerHTML = '<div class="anim-card-back">?</div>';
-    }
-    
-    const startX = startRect.left;
-    const startY = startRect.top;
-    flyer.style.left = startX + 'px';
-    flyer.style.top = startY + 'px';
-    flyer.style.width = '90px';
-    flyer.style.height = '130px';
-    document.body.appendChild(flyer);
-    
-    const centerX = window.innerWidth / 2 - startX - 90;
-    const centerY = window.innerHeight / 2 - startY - 100;
-    const endX = endRect.left + endRect.width / 2 - startX - 45;
-    const endY = endRect.top + endRect.height / 2 - startY - 65;
-    
-    flyer.animate([
-      { transform: 'translate(0, 0) scale(0.6)', opacity: 0 },
-      { transform: `translate(${centerX}px, ${centerY}px) scale(2)`, opacity: 1, offset: 0.4 },
-      { transform: `translate(${endX}px, ${endY}px) scale(0.5)`, opacity: 0 }
-    ], { duration: 1400, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }).onfinish = () => flyer.remove();
+    const thief = Engine.byId(steal.thiefId);
+    const victim = Engine.byId(steal.victimId);
+    if(!thief || !victim) return;
+    // Simple floating notification
+    this.showBottomNotification({
+      type: 'nope',
+      title: 'Cướp bài',
+      body: `${thief.name} lấy ${CARD_TYPES[cardType(steal.card)].name} từ ${victim.name}`
+    });
   },
 
-  processBots(){
-    if(!this.isHost || this.botScheduled) return;
-    const s = Engine.state;
-    if(!s || s.phase !== 'playing') return;
-
-    if(s.peekFor && Engine.byId(s.peekFor.playerId)?.isBot && !s.pending && !s.awaitingChoice){
-      this.botScheduled = true;
-      setTimeout(() => {
-        this.botScheduled = false;
-        if(Engine.state?.peekFor) Engine.clearPeek(Engine.state.peekFor.playerId);
-      }, 500);
-      return;
-    }
-
-    if(s.alterFor && Engine.byId(s.alterFor.playerId)?.isBot && !s.pending){
-      this.botScheduled = true;
-      setTimeout(() => {
-        this.botScheduled = false;
-        if(!Engine.state?.alterFor) return;
-        const cards = [...Engine.state.alterFor.cards];
-        if(cards.length > 1 && Math.random() < 0.5) {
-          for(let i = cards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [cards[i], cards[j]] = [cards[j], cards[i]];
-          }
-        }
-        Engine.applyAlterFuture(Engine.state.alterFor.playerId, cards);
-      }, 800);
-      return;
-    }
-
-    if(s.awaitingChoice){
-      const p = Engine.byId(s.awaitingChoice.playerId || s.awaitingChoice.targetId);
-      if(p?.isBot){
-        this.botScheduled = true;
-        setTimeout(() => {
-          this.botScheduled = false;
-          const ch = Engine.state.awaitingChoice;
-          if(!ch) return;
-          if(ch.type==='defuse' && ch.playerId===p.id){
-            const pos = Math.random()<0.3?'top':(Math.random()<0.5?'random':'bottom');
-            Engine.placeDefuse(p.id, pos);
-          } else if(ch.type==='favor' && ch.targetId===p.id){
-            Engine.resolveFavor(p.id, Math.floor(Math.random()*p.hand.length));
-          }
-        }, 500);
-        return;
-      }
-      return;
-    }
-
-    if(s.pending){
-      this.botScheduled = true;
-      setTimeout(() => { this.botScheduled = false; this.botNopeCheck(); }, 500);
-      return;
-    }
-
-    if(Engine.cur()?.isBot){
-      this.botScheduled = true;
-      setTimeout(() => { this.botScheduled = false; this.runBotTurn(); }, 800);
-    }
-  },
-
-  botNopeCheck(){
-    const s = Engine.state;
-    if(!s || !s.pending) return;
-    const pending = s.pending;
-    const mode = BOT_MODES[s.botMode] || BOT_MODES.smart;
-    for(const p of s.players){
-      if(!p.isBot || !p.alive) continue;
-      if(!p.hand.some(c => cardType(c) === 'NOPE')) continue;
-      if(p.id===pending.playerId && pending.nopeCount===0) continue;
-      let prob = mode.nopeProb;
-      const isTarget = pending.targetId === p.id;
-      if(pending.primaryType==='ATTACK') prob *= 1.5;
-      if(pending.primaryType==='FAVOR' && isTarget) prob = Math.min(0.95, prob*3);
-      if(CATS.includes(pending.primaryType) && isTarget) prob = Math.min(0.9, prob*2.5);
-      if(pending.nopeCount>0) prob *= 0.6;
-      if(Math.random()<prob){ Engine.playNope(p.id); return; }
-    }
-  },
-
-  runBotTurn(){
-    const s = Engine.state;
-    if(!s || s.phase!=='playing') return;
-    const bot = Engine.cur();
-    if(!bot?.isBot) return;
-    const mode = BOT_MODES[s.botMode] || BOT_MODES.smart;
-    const hand = bot.hand;
-    const hasType = t => hand.some(c => cardType(c) === t);
-    const cardsOfType = t => hand.filter(c => cardType(c) === t);
-    const opponents = s.players.filter(p => p.alive && p.id !== bot.id);
-
-    if(Math.random() > mode.playProb) return Engine.drawCard(bot.id);
-
-    let target = null;
-    if(opponents.length){
-      if(mode.smartTarget){
-        const withCards = opponents.filter(o=>o.hand.length>0);
-        target = withCards.length
-          ? withCards.reduce((a,b)=>a.hand.length<b.hand.length?a:b)
-          : U.pick(opponents);
-      } else target = U.pick(opponents);
-    }
-
-    if(s.turnsLeft >= 2 && hasType('ATTACK') && Math.random() < mode.attackProb){
-      return this.botPlay([cardsOfType('ATTACK')[0]]);
-    }
-
-    const catCards = cardsOfType('CAT');
-    if(catCards.length >= 3 && target && target.hand.length>0 && Math.random() < mode.catProb){
-      const named = U.pick(['SKIP','ATTACK','NOPE','FAVOR','SEE_FUTURE','SHUFFLE','ALTER_FUTURE','RUT_TU_DAY','CAT']);
-      return this.botPlay([catCards[0], catCards[1], catCards[2]], target.id, {namedType:named});
-    }
-    if(catCards.length >= 2 && target && target.hand.length>0 && Math.random() < mode.catProb){
-      return this.botPlay([catCards[0], catCards[1]], target.id);
-    }
-    if(hasType('FAVOR') && target && target.hand.length>=2 && Math.random() < mode.catProb){
-      return this.botPlay([cardsOfType('FAVOR')[0]], target.id);
-    }
-    if(hasType('SKIP') && Math.random() < mode.skipProb){
-      return this.botPlay([cardsOfType('SKIP')[0]]);
-    }
-    if(mode===BOT_MODES.ultimate && hasType('SEE_FUTURE') && Math.random()<0.4){
-      return this.botPlay([cardsOfType('SEE_FUTURE')[0]]);
-    }
-    if(hasType('ALTER_FUTURE') && Math.random()<0.3){
-      return this.botPlay([cardsOfType('ALTER_FUTURE')[0]]);
-    }
-
-    Engine.drawCard(bot.id);
-  },
-
-  botPlay(cards, targetId, extra){
-    Engine.playCards(Engine.cur().id, cards, targetId||null, extra||{});
-  },
-
+  /* ===== RENDER ===== */
   render(){
-    const s = Engine.state; if(!s) return;
-    const me = this.me(); if(!me) return;
-
+    const s = Engine.state;
+    if(!s) return;
     document.getElementById('uiAlive').textContent = s.players.filter(p => p.alive).length;
     document.getElementById('uiDeck').textContent = s.deck.length;
     document.getElementById('deckBadge').textContent = s.deck.length;
-    document.getElementById('uiHandCount').textContent = me.hand.length;
-
-    const cur = s.players[s.turnIdx];
-    document.getElementById('uiTurn').innerHTML = s.phase==='ended' ? 'Kết thúc' : `Lượt: ${this.escapeHtml(cur.name)}`;
-
+    const cur = Engine.cur();
+    document.getElementById('uiTurn').textContent = 'Lượt: ' + (cur?.name || '?');
     const tEl = document.getElementById('uiTurnsLeft');
-    if(s.turnsLeft > 1){ tEl.style.display='inline-block'; tEl.textContent = `×${s.turnsLeft}`; }
+    if(s.turnsLeft > 1){ tEl.style.display='inline-block'; tEl.textContent = '×' + s.turnsLeft; }
     else tEl.style.display = 'none';
-
-    document.getElementById('opponentsArea').innerHTML = s.players.filter(p => p.id !== me.id)
-      .map(p => `
-        <div class="glass opp ${cur.id===p.id?'turn':''} ${!p.alive?'dead':''}">
-          <div class="av">${p.isBot?'🤖':'👤'}</div>
-          <div class="nm">${this.escapeHtml(p.name)}</div>
-          <div class="cnt">Bài: ${p.hand.length}</div>
-        </div>
-      `).join('');
-
-    const disc = document.getElementById('discardPile');
-    if(s.discard.length > 0){
-      const top = s.discard[s.discard.length-1];
-      const img = cardImage(top);
-      const info = cardInfo(top);
-      disc.innerHTML = `<img src="${img}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'card-fallback\\' style=\\'display:flex;width:100%;height:100%;font-size:11px\\'>${info.short}</div>'" alt="">`;
-    } else disc.innerHTML = '-';
-
-    const myTurn = cur.id === me.id && s.phase === 'playing';
-    const canPlay = myTurn && !s.pending && !s.awaitingChoice && !s.alterFor;
-    const deckEl = document.getElementById('deckPile');
-    deckEl.classList.toggle('can', canPlay);
-    deckEl.classList.toggle('locked', !canPlay);
-
-    let newDrawIdx = -1;
-    if(s.lastDraw && s.lastDraw.playerId === me.id && s.lastDraw.id !== this._animatedDrawId){
-      // skip marking as new since we handle animation separately
-    }
-
-    const handBox = document.getElementById('handArea');
-    const isDealing = this._dealing;
-    handBox.innerHTML = [...me.hand].map((c, idx) => {
-      const t = cardType(c);
-      const info = cardInfo(c);
-      const img = cardImage(c);
-      const playable = canPlay && !['EK','DEFUSE','NOPE'].includes(t)
-        && (CATS.includes(t) ? me.hand.filter(x => cardType(x) === t).length>=2 : true);
-      const isSel = this.selectedCatIndices.includes(idx);
-      const dealClass = isDealing ? 'deal-in' : '';
-      const dealDelay = isDealing ? `animation-delay: ${idx * 0.06}s;` : '';
-      return `
-        <div class="card ${playable?'':'dis'} ${isSel?'selected':''} ${dealClass}"
-          style="${dealDelay}"
-          onclick="UI.clickCard('${c}', ${idx})">
-          <img class="card-img" src="${img}" onerror="this.closest('.card').classList.add('no-img')" alt="">
-          <div class="card-fallback">${info.short}</div>
-        </div>
-      `;
+    
+    // Opponents
+    const me = this.me();
+    const opps = s.players.filter(p => p.id !== this.myId);
+    const oppsArea = document.getElementById('opponentsArea');
+    oppsArea.innerHTML = opps.map(p => {
+      const isTurn = p.id === cur?.id;
+      const acc = Auth.all()[p.name];
+      const av = acc?.avatar || (p.isBot?'🤖':'👤');
+      return `<div class="opp ${isTurn?'turn':''} ${p.alive?'':'dead'}">
+        <div class="av">${p.isBot ? '🤖' : renderAvatarHTML(av, 36)}</div>
+        <div class="nm">${this.escapeHtml(p.name)}</div>
+        <div class="cnt">🃏 ${p.hand.length}</div>
+      </div>`;
     }).join('');
-
+    
+    // Discard pile
+    const discPile = document.getElementById('discardPile');
+    if(s.discard.length > 0){
+      const last = s.discard[s.discard.length-1];
+      discPile.innerHTML = `<img src="${cardImage(last)}" onerror="this.parentElement.textContent='?'" alt="">`;
+    } else { discPile.textContent = '-'; }
+    
+    // Deck can draw
+    const deckEl = document.getElementById('deckPile');
+    const canDraw = cur?.id === this.myId && !s.pending && !s.awaitingChoice && !s.alterFor && s.phase === 'playing';
+    deckEl.classList.toggle('can', canDraw);
+    deckEl.classList.toggle('locked', !canDraw);
+    
+    // Game log
+    document.getElementById('gameLog').innerHTML = s.logs.slice(-3).join('<br>');
+    
+    // Hand
+    this.renderHand();
     this.renderHandActionBar();
-    document.getElementById('gameLog').innerHTML = s.logs.slice(-4).map(l => `• ${this.escapeHtml(l)}`).join('<br>');
-    this.updateNopeButton();
+  },
+
+  renderHand(){
+    const s = Engine.state;
+    const me = this.me();
+    if(!me) return;
+    document.getElementById('uiHandCount').textContent = me.hand.length;
+    const handArea = document.getElementById('handArea');
+    const cur = Engine.cur();
+    const isMyTurn = cur?.id === this.myId;
+    const canPlay = isMyTurn && !s.pending && !s.awaitingChoice && !s.alterFor && s.phase === 'playing';
+    
+    handArea.innerHTML = me.hand.map((card, idx) => {
+      const info = cardInfo(card);
+      const img = cardImage(card);
+      const dis = !canPlay ? 'dis' : '';
+      const isSelected = this.selectedCatIndices.includes(idx);
+      const selClass = isSelected ? 'selected' : '';
+      return `<div class="card ${dis} ${selClass}" data-idx="${idx}" onclick="UI.onCardClick(${idx})">
+        <img class="card-img" src="${img}" onerror="this.closest('.card').classList.add('no-img')" alt="">
+        <div class="card-fallback">${info.short}</div>
+      </div>`;
+    }).join('');
   },
 
   renderHandActionBar(){
     const bar = document.getElementById('handActionBar');
-    const n = this.selectedCatIndices.length;
-    if(n < 2){ bar.classList.remove('on'); bar.innerHTML = ''; return; }
-    const me = this.me();
-    if(!me){ bar.classList.remove('on'); return; }
-    const card = me.hand[this.selectedCatIndices[0]];
-    const info = cardInfo(card);
-    const totalOfType = me.hand.filter(c => cardType(c) === cardType(card)).length;
-    bar.classList.add('on');
-    bar.innerHTML = `
-      <span>Đã chọn <b>${n}</b> lá ${info.short}</span>
-      <button class="btn-p" onclick="UI.confirmCatSelection()">Chơi ${n} lá</button>
-      ${n===2 && totalOfType>=3 ? '<span style="font-size:10px;opacity:0.7">(thêm 1 để chơi 3)</span>' : ''}
-      <button class="btn-o" onclick="UI.cancelCatSelection()">Huỷ</button>
-    `;
-  },
-
-  updateNopeButton(){
     const s = Engine.state;
     const me = this.me();
-    let container = document.getElementById('nopeContainer');
-    if(this.nopeSkippedFor && (!s?.pending || s.pending.timestamp !== this.nopeSkippedFor)){
-      this.nopeSkippedFor = null;
+    if(!me || this.selectedCatIndices.length === 0){ bar.classList.remove('on'); bar.innerHTML = ''; return; }
+    
+    const cards = this.selectedCatIndices.map(i => me.hand[i]);
+    const types = cards.map(cardType);
+    const isCat = types.every(t => t === 'CAT');
+    const sameVariant = isCat && cards.every(c => c === cards[0]);
+    
+    if(isCat && !sameVariant){
+      bar.innerHTML = `<span style="color:#ff8a7a">⚠️ Phải chọn các lá Mèo CÙNG LOẠI (VD: Mèo 1 với Mèo 1)!</span>`;
+      bar.classList.add('on');
+      return;
     }
-    const show = s && me && me.alive && s.pending && s.pending.playerId !== me.id
-      && me.hand.some(c => cardType(c) === 'NOPE') && this.nopeSkippedFor !== s.pending.timestamp;
-    if(show && !container){
-      container = document.createElement('div');
-      container.id = 'nopeContainer';
-      container.className = 'nope-container';
-      container.innerHTML = `
-        <button class="nope-btn" onclick="UI.act('nope')">NOPE!</button>
-        <button class="nope-skip-btn" onclick="UI.skipNope()">Bỏ qua</button>
+    
+    if(isCat && sameVariant && (cards.length === 2 || cards.length === 3)){
+      const targets = s.players.filter(p => p.alive && p.id !== this.myId && p.hand.length > 0);
+      bar.innerHTML = `
+        <span>Mèo ×${cards.length} · Chọn đối thủ:</span>
+        ${targets.map(t => `<button class="btn-p" onclick="UI.playCat('${t.id}')">${this.escapeHtml(t.name)}</button>`).join('')}
+        <button class="btn-o" onclick="UI.clearSelection()">Hủy</button>
       `;
-      document.body.appendChild(container);
-    } else if(!show && container){
-      container.remove();
-    }
-  },
-
-  skipNope(){
-    const s = Engine.state;
-    if(!s?.pending) return;
-    this.nopeSkippedFor = s.pending.timestamp;
-    this.updateNopeButton();
-  },
-
-  openModal(type, html){
-    this.currentModal = type;
-    document.getElementById('modalContent').innerHTML = html;
-    document.getElementById('overlayModal').classList.add('on');
-  },
-  closeModal(){
-    this.currentModal = null;
-    document.getElementById('overlayModal').classList.remove('on');
-  },
-
-  updateModals(){
-    const s = Engine.state; if(!s) return;
-    const me = this.me(); if(!me) return;
-
-    if(s.awaitingChoice?.type==='defuse' && s.awaitingChoice.playerId===this.myId){
-      if(this.currentModal!=='defuse') this.showDefuseModal();
-      return;
-    }
-    if(s.awaitingChoice?.type==='favor' && s.awaitingChoice.targetId===this.myId){
-      if(this.currentModal!=='favor') this.showFavorModal();
-      return;
-    }
-    if(s.peekFor?.playerId===this.myId && !s.pending){
-      if(this.currentModal!=='peek') this.showPeekModal(s.peekFor.cards);
-      return;
-    }
-    if(s.alterFor?.playerId===this.myId && !s.pending){
-      if(this.currentModal!=='alter') this.showAlterModal(s.alterFor.cards);
-      return;
-    }
-    if(['defuse','favor','peek','alter'].includes(this.currentModal)) this.closeModal();
-    if(s.phase==='ended' && this.currentModal!=='win') this.showWinModal();
-  },
-
-  showDefuseModal(){
-    this.openModal('defuse', `
-      <h2>Bạn đã dùng GỠ BOM!</h2>
-      <p>Chọn vị trí giấu Mèo Nổ:</p>
-      <div class="mcol">
-        <button class="btn-danger" onclick="UI.act('defuse',{pos:'top'}); UI.closeModal();">Trên cùng (nguy hiểm)</button>
-        <button onclick="UI.act('defuse',{pos:'random'}); UI.closeModal();">Ngẫu nhiên</button>
-        <button class="btn-p" onclick="UI.act('defuse',{pos:'bottom'}); UI.closeModal();">Dưới cùng (an toàn)</button>
-      </div>
-    `);
-  },
-
-  showFavorModal(){
-    const me = this.me();
-    const s = Engine.state;
-    const req = s.players.find(p => p.id === s.awaitingChoice.fromId);
-    this.openModal('favor', `
-      <h2>${this.escapeHtml(req?.name||'Ai đó')} xin bài!</h2>
-      <p>Chọn 1 lá để đưa:</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
-        ${me.hand.map((c,i) => {
-          const info = cardInfo(c);
-          const img = cardImage(c);
-          return `
-            <div class="card" onclick="UI.act('favor',{idx:${i}}); UI.closeModal();">
-              <img class="card-img" src="${img}" onerror="this.closest('.card').classList.add('no-img')" alt="">
-              <div class="card-fallback">${info.short}</div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    `);
-  },
-
-  showPeekModal(cards){
-    this.openModal('peek', `
-      <h2>Nhìn Tương Lai</h2>
-      <p>3 lá trên cùng:</p>
-      <div style="display:flex;gap:10px;justify-content:center;margin:15px 0">
-        ${cards.map(c => {
-          const info = cardInfo(c);
-          const img = cardImage(c);
-          return `
-            <div class="card" style="width:76px;height:110px;cursor:default">
-              <img class="card-img" src="${img}" onerror="this.closest('.card').classList.add('no-img')" alt="">
-              <div class="card-fallback">${info.short}</div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-      <button class="btn-p" onclick="UI.act('clearPeek'); UI.closeModal();">Đã Hiểu</button>
-    `);
-  },
-
-  showAlterModal(cards){
-    this._alterCards = [...cards];
-    this._alterOriginal = [...cards];
-    this._renderAlterContent();
-  },
-
-  _renderAlterContent(){
-    const cards = this._alterCards;
-    const positions = ['Trên', 'Giữa', 'Dưới'];
-    const content = `
-      <h2>Biến Đổi Tương Lai</h2>
-      <p>Sắp xếp 3 lá trên cùng (Trên = rút trước):</p>
-      <div style="display:flex;flex-direction:column;gap:10px;margin:10px 0">
-        ${cards.map((c, i) => {
-          const info = cardInfo(c);
-          const img = cardImage(c);
-          return `
-            <div class="alter-slot">
-              <div class="alter-slot-label">${positions[i]}</div>
-              <div class="card" style="width:64px;height:92px;cursor:default">
-                <img class="card-img" src="${img}" onerror="this.closest('.card').classList.add('no-img')" alt="">
-                <div class="card-fallback">${info.short}</div>
-              </div>
-              <div class="alter-arrows">
-                <button ${i===0?'disabled':''} onclick="UI.moveAlter(${i}, -1)">▲</button>
-                <button ${i===cards.length-1?'disabled':''} onclick="UI.moveAlter(${i}, 1)">▼</button>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-      <button class="btn-p" onclick="UI.confirmAlter()">Xác Nhận</button>
-      <button class="btn-o" onclick="UI.cancelAlter()">Giữ Nguyên</button>
-    `;
-    this.openModal('alter', content);
-  },
-
-  moveAlter(idx, dir){
-    const newIdx = idx + dir;
-    if(newIdx < 0 || newIdx >= this._alterCards.length) return;
-    const cards = this._alterCards;
-    [cards[idx], cards[newIdx]] = [cards[newIdx], cards[idx]];
-    this._renderAlterContent();
-  },
-
-  confirmAlter(){
-    const order = this._alterCards;
-    this.closeModal();
-    this._alterCards = null;
-    this.act('alterFuture', {order});
-  },
-
-  cancelAlter(){
-    const order = this._alterOriginal;
-    this.closeModal();
-    this._alterCards = null;
-    this._alterOriginal = null;
-    this.act('alterFuture', {order});
-  },
-
-  showWinModal(reason){
-    const s = Engine.state;
-    if(!s) return;
-    const w = s.winner;
-    const isMeWinner = w && w.id === this.myId;
-    const user = this.currentUser();
-    if(w && s.phase === 'ended' && !this._statsRecorded && user && !user.isGuest){
-      this._statsRecorded = true;
-      Auth.updateStats(isMeWinner);
-    }
-    const rows = [...s.players].sort((a,b) => (a.alive===b.alive)?0:(a.alive?-1:1)).map(p => `
-      <div class="stat-row">
-        <span>${p.alive?'THẮNG':'LOẠI'} · ${this.escapeHtml(p.name)}</span>
-        <span style="font-size:11px">${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá</span>
-      </div>
-    `).join('');
-    this.openModal('win', `
-      <h1 style="font-size:32px;color:${isMeWinner?'#ffcc00':'#ff8a7a'}">${isMeWinner?'CHIẾN THẮNG!':'THUA CUỘC'}</h1>
-      ${reason ? `<p style="color:#ffcc00">${this.escapeHtml(reason)}</p>` : ''}
-      <div style="font-size:48px;margin:8px 0;font-weight:900;color:${isMeWinner?'#ffcc00':'#666'}">${isMeWinner?'WIN':'LOSE'}</div>
-      <h2>${this.escapeHtml(w?.name||'Không ai')}</h2>
-      <div style="text-align:left;margin:12px 0">${rows}</div>
-      <button class="btn-p" onclick="UI._statsRecorded=false; UI.leaveRoom()">Về Menu</button>
-    `);
-  },
-
-  clickCard(card, idx){
-    const s = Engine.state;
-    if(!s || s.phase!=='playing') return;
-    const me = this.me(); if(!me) return;
-    if(s.pending || s.awaitingChoice || s.alterFor) return this.toast('Đang chờ hành động...');
-    if(s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
-    if(!me.alive) return;
-    
-    const t = cardType(card);
-    if(CATS.includes(t)){
-      const count = me.hand.filter(x => cardType(x) === t).length;
-      if(count < 2) return this.toast('Cần ít nhất 2 lá cùng loại');
-      return this.toggleCatSelection(card, idx);
-    }
-    
-    this.selectedCatIndices = [];
-    
-    if(t === 'FAVOR'){
-      const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
-      if(!targets.length) return this.toast('Không có ai để xin');
-      this.openModal('target', `
-        <h2>Xin bài từ ai?</h2>
-        <div class="mcol">
-          ${targets.map(t2 => `<button onclick="UI.act('play',{cards:['${card}'],targetId:'${t2.id}'}); UI.closeModal();">${this.escapeHtml(t2.name)} (${t2.hand.length} lá)</button>`).join('')}
-        </div>
-        <button class="btn-o" onclick="UI.closeModal()">Hủy</button>
-      `);
-      return;
-    }
-    
-    if(['ATTACK','SKIP','SHUFFLE','SEE_FUTURE','ALTER_FUTURE','RUT_TU_DAY'].includes(t)){
-      this.act('play', {cards:[card]});
-      return;
-    }
-    
-    this.toast('Không thể đánh lá này');
-  },
-
-  toggleCatSelection(card, idx){
-    const me = this.me();
-    if(this.selectedCatIndices.length > 0){
-      const firstType = cardType(me.hand[this.selectedCatIndices[0]]);
-      if(firstType !== cardType(card)){
-        this.selectedCatIndices = [idx];
-        this.render();
-        return;
+    } else if(cards.length === 1){
+      const t = types[0];
+      const info = CARD_TYPES[t];
+      const nonCatPlayable = ['ATTACK','SKIP','SHUFFLE','SEE_FUTURE','ALTER_FUTURE','RUT_TU_DAY'].includes(t);
+      const needsTarget = ['FAVOR','CAT'].includes(t);
+      
+      if(nonCatPlayable){
+        bar.innerHTML = `
+          <span>${info.name}</span>
+          <button class="btn-p" onclick="UI.playSingle()">Đánh</button>
+          <button class="btn-o" onclick="UI.clearSelection()">Hủy</button>
+        `;
+      } else if(needsTarget){
+        const targets = s.players.filter(p => p.alive && p.id !== this.myId && p.hand.length > 0);
+        bar.innerHTML = `
+          <span>${info.name} · Chọn đối thủ:</span>
+          ${targets.map(t => `<button class="btn-p" onclick="UI.playSingle('${t.id}')">${this.escapeHtml(t.name)}</button>`).join('')}
+          <button class="btn-o" onclick="UI.clearSelection()">Hủy</button>
+        `;
+      } else {
+        bar.innerHTML = `<span>${info.name} không thể đánh trực tiếp</span><button class="btn-o" onclick="UI.clearSelection()">Hủy</button>`;
       }
+    } else {
+      bar.innerHTML = `<span>Chọn thêm lá bài</span><button class="btn-o" onclick="UI.clearSelection()">Hủy</button>`;
     }
+    bar.classList.add('on');
+  },
+
+  onCardClick(idx){
+    const s = Engine.state;
+    const me = this.me();
+    if(!me || !me.hand[idx]) return;
+    if(!Engine.canAct(this.myId, 'play')){ return; }
+    const card = me.hand[idx];
+    if(['EK','DEFUSE','NOPE'].includes(cardType(card))) return this.toast('Không thể đánh lá này trực tiếp');
+    
     if(this.selectedCatIndices.includes(idx)){
       this.selectedCatIndices = this.selectedCatIndices.filter(i => i !== idx);
-      this.render();
-      return;
-    }
-    if(this.selectedCatIndices.length >= 3) return;
-    this.selectedCatIndices.push(idx);
-    this.selectedCatIndices.sort((a,b) => a-b);
-    this.render();
-  },
-
-  cancelCatSelection(){
-    this.selectedCatIndices = [];
-    this.pendingCatPlay = null;
-    this.render();
-  },
-
-  confirmCatSelection(){
-    const me = this.me();
-    if(!me || this.selectedCatIndices.length < 2) return;
-    const cardTypeStr = cardType(me.hand[this.selectedCatIndices[0]]);
-    const count = this.selectedCatIndices.length;
-    if(!this.selectedCatIndices.every(i => cardType(me.hand[i]) === cardTypeStr)){
-      this.toast('Các lá phải cùng loại!');
-      this.cancelCatSelection();
-      return;
-    }
-    this.pendingCatPlay = {cardTypeStr, count, indices: [...this.selectedCatIndices]};
-    const s = Engine.state;
-    const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
-    if(!targets.length){
-      this.toast('Không có ai để combo');
-      this.cancelCatSelection();
-      return;
-    }
-    this.openModal('cattarget', `
-      <h2>${CARD_TYPES[cardTypeStr].short} ×${count}</h2>
-      <p>Chọn mục tiêu:</p>
-      <div class="mcol">
-        ${targets.map(t => `<button onclick="UI.chooseCatTarget('${t.id}')">${this.escapeHtml(t.name)} (${t.hand.length} lá)</button>`).join('')}
-      </div>
-      <button class="btn-o" onclick="UI.closeModal(); UI.cancelCatSelection();">Hủy</button>
-    `);
-  },
-
-  chooseCatTarget(targetId){
-    const me = this.me();
-    const {count, indices} = this.pendingCatPlay || {};
-    if(!count) return;
-    const cards = indices.map(i => me.hand[i]);
-    if(count === 3){
-      this.showCatName(cards, targetId);
     } else {
-      this.act('play', {cards, targetId});
-      this.closeModal();
-      this.cancelCatSelection();
+      const curType = cardType(card);
+      if(curType === 'CAT'){
+        const existingCats = this.selectedCatIndices.filter(i => cardType(me.hand[i]) === 'CAT');
+        if(existingCats.length > 0 && me.hand[existingCats[0]] !== card){
+          this.toast('Mèo phải cùng loại!');
+          return;
+        }
+      } else if(this.selectedCatIndices.length > 0){
+        this.toast('Không thể chọn lẫn lộn');
+        return;
+      }
+      this.selectedCatIndices.push(idx);
+    }
+    this.renderHand();
+    this.renderHandActionBar();
+  },
+  
+  clearSelection(){
+    this.selectedCatIndices = [];
+    this.renderHand();
+    this.renderHandActionBar();
+  },
+  
+  playSingle(targetId){
+    const me = this.me();
+    if(this.selectedCatIndices.length !== 1) return;
+    const card = me.hand[this.selectedCatIndices[0]];
+    const t = cardType(card);
+    this.selectedCatIndices = [];
+    if(t === 'FAVOR'){
+      this.act('play', {cards:[card], targetId});
+    } else {
+      this.act('play', {cards:[card]});
     }
   },
-
-  showCatName(cards, targetId){
-    const names = ['ATTACK','SKIP','FAVOR','SHUFFLE','SEE_FUTURE','ALTER_FUTURE','RUT_TU_DAY','NOPE','CAT'];
-    this.openModal('catname', `
-      <h2>Gọi tên lá muốn lấy</h2>
-      <div class="mgrid">
-        ${names.map(n => {
-          const info = CARD_TYPES[n];
-          return `<button onclick="UI.chooseCatName(${JSON.stringify(cards).replace(/"/g,'&quot;')}, '${targetId}', '${n}')">${info.name}</button>`;
+  
+  playCat(targetId){
+    const me = this.me();
+    const cards = this.selectedCatIndices.map(i => me.hand[i]);
+    const count = cards.length;
+    if(count === 2){
+      this.selectedCatIndices = [];
+      this.act('play', {cards, targetId});
+    } else if(count === 3){
+      // Named cat - show picker
+      this.showNamedCatPicker(cards, targetId);
+    }
+  },
+  
+  showNamedCatPicker(cards, targetId){
+    const catTypes = ['CAT'];
+    const catInfo = CARD_TYPES.CAT;
+    const variants = catInfo.images.map((_, i) => `CAT#${i}`);
+    this.openModal('named', `
+      <h2>Gọi Tên Lá</h2>
+      <p>Chọn loại lá muốn lấy từ đối thủ</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:50vh;overflow-y:auto">
+        ${Object.entries(CARD_TYPES).filter(([k]) => k !== 'EK').map(([k, info]) => {
+          const sample = makeCard(k);
+          return `<button class="btn-o" style="padding:10px;display:flex;align-items:center;gap:8px;justify-content:flex-start" onclick="UI.confirmNamedCat('${k}')">
+            <img src="${cardImage(sample)}" style="width:32px;height:46px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'" alt="">
+            <span style="font-size:12px;font-weight:900">${info.name}</span>
+          </button>`;
         }).join('')}
       </div>
-      <button class="btn-o" onclick="UI.closeModal(); UI.cancelCatSelection();">Hủy</button>
     `);
+    this._pendingCatCards = cards;
+    this._pendingCatTarget = targetId;
   },
-
-  chooseCatName(cards, targetId, namedType){
-    this.act('play', {cards, targetId, extra:{namedType}});
+  
+  confirmNamedCat(namedType){
     this.closeModal();
-    this.cancelCatSelection();
+    if(!this._pendingCatCards) return;
+    this.selectedCatIndices = [];
+    this.act('play', {cards: this._pendingCatCards, targetId: this._pendingCatTarget, extra: {namedType}});
+    this._pendingCatCards = null;
+    this._pendingCatTarget = null;
   },
 
   onDrawClick(){
     const s = Engine.state;
-    if(!s || s.phase!=='playing') return;
-    if(s.pending || s.awaitingChoice || s.alterFor) return;
-    const me = this.me();
-    if(!me || !me.alive) return;
-    if(s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
-    this.selectedCatIndices = [];
+    if(!s) return;
+    if(!Engine.canAct(this.myId, 'draw')) return;
     this.act('draw');
   },
 
-  openHowToPlay(){
-    this.openModal('howto', `
-      <h2>Hướng Dẫn</h2>
-      <div class="info-tabs">
-        <button class="info-tab active" onclick="UI.switchInfoTab('rules')">Luật Chơi</button>
-        <button class="info-tab" onclick="UI.switchInfoTab('cards')">Các Lá Bài</button>
-      </div>
-      <div id="infoContent"></div>
-    `);
-    this.switchInfoTab('rules');
-  },
-
-  switchInfoTab(tab){
-    document.querySelectorAll('.info-tab').forEach(t => {
-      const txt = t.textContent.toLowerCase();
-      t.classList.toggle('active', (tab === 'rules' && txt.includes('luật')) || (tab === 'cards' && txt.includes('bài')));
-    });
-    const content = document.getElementById('infoContent');
-    if(!content) return;
+  /* ===== MODALS (defuse, peek, alter, favor, nope) ===== */
+  updateModals(){
+    const s = Engine.state;
+    if(!s) return;
+    // Nope window
+    const nopeEl = document.getElementById('nopeContainer');
+    if(s.pending && s.pending.playerId !== this.myId && !s.pending.isOwn){
+      const me = this.me();
+      const hasNope = me && me.hand.some(c => cardType(c) === 'NOPE');
+      const isTarget = s.pending.targetId === this.myId;
+      if(hasNope && (isTarget || this._shouldShowNope(s.pending))){
+        if(!nopeEl){
+          const el = document.createElement('div');
+          el.id = 'nopeContainer';
+          el.className = 'nope-container';
+          el.innerHTML = `<button class="nope-btn" onclick="UI.doNope()">NOPE!</button><button class="nope-skip-btn" onclick="UI.skipNope()">Bỏ qua</button>`;
+          document.body.appendChild(el);
+          this._lastPendingTs = s.pending.timestamp;
+        }
+      } else if(nopeEl){ nopeEl.remove(); }
+    } else if(nopeEl){ nopeEl.remove(); }
     
-    if(tab === 'rules'){
-      content.innerHTML = `
-        <div class="rules-section">
-          <h3>Mục tiêu</h3>
-          <p>Là người <b>sống sót cuối cùng</b>. Ai bốc phải Mèo Nổ mà không có Gỡ Bom sẽ bị loại.</p>
-          <h3>Cách chơi</h3>
-          <ul>
-            <li>Đến lượt, bạn có thể <b>đánh lá bài</b> hoặc <b>bốc 1 lá</b> từ bộ bài.</li>
-            <li>Sau khi bốc bài, lượt kết thúc (trừ khi bốc trúng lá có hiệu ứng).</li>
-            <li>Bạn có thể đánh <b>nhiều lá</b> trước khi bốc.</li>
-            <li>Nếu bốc phải <b>Mèo Nổ</b>, phải có <b>Gỡ Bom</b> để tự cứu. Không có = bị loại.</li>
-            <li>Dùng <b>NOPE</b> để chặn hành động đối thủ trong 3.5 giây.</li>
-          </ul>
-          <h3>Combo Mèo</h3>
-          <p>Đánh <b>2 lá Mèo cùng loại</b>: cướp 1 lá ngẫu nhiên từ đối thủ.<br>
-          Đánh <b>3 lá Mèo cùng loại</b>: gọi tên 1 lá, nếu đối thủ có thì lấy.</p>
-          <h3>Chiến thắng</h3>
-          <p>Người cuối cùng còn sống thắng. Hoặc nếu đối thủ thoát trận, bạn thắng ngay.</p>
-          <h3>Mẹo</h3>
-          <ul>
-            <li>Giữ <b>Gỡ Bom</b> cho lúc nguy cấp</li>
-            <li>Dùng <b>Nhìn Trước</b> / <b>Biến Đổi</b> để kiểm soát bộ bài</li>
-            <li><b>Tấn Công</b> khi đối thủ yếu (ít bài)</li>
-            <li><b>Rút Từ Đáy</b> để né Mèo Nổ ở đỉnh</li>
-          </ul>
+    // Defuse choice
+    if(s.awaitingChoice?.type === 'defuse' && s.awaitingChoice.playerId === this.myId){
+      if(this.currentModal !== 'defuse'){
+        this.openModal('defuse', `
+          <h2>💥 Gỡ Bom!</h2>
+          <p>Chọn vị trí giấu bom trong bộ bài:</p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn-p" onclick="UI.doDefuse('top')">🔝 Trên cùng (người sau dễ trúng)</button>
+            <button class="btn-o" onclick="UI.doDefuse('middle')">↕️ Giữa (khó đoán)</button>
+            <button class="btn-o" onclick="UI.doDefuse('bottom')">🔽 Dưới cùng (an toàn)</button>
+          </div>
+        `);
+      }
+    } else if(this.currentModal === 'defuse'){ this.closeModal(); }
+    
+    // Peek
+    if(s.peekFor?.playerId === this.myId && this.currentModal !== 'peek'){
+      const cards = s.peekFor.cards;
+      this.openModal('peek', `
+        <h2>👁️ Nhìn Trước</h2>
+        <p>3 lá trên cùng (từ trên xuống):</p>
+        <div style="display:flex;justify-content:center;gap:10px;margin:12px 0;flex-wrap:wrap">
+          ${cards.map(c => `<div style="width:70px;height:100px;border-radius:8px;overflow:hidden;border:2px solid gold;background:#1a0f0d"><img src="${cardImage(c)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${cardInfo(c).short}';this.parentElement.style.color='#fff';this.parentElement.style.fontWeight='900';this.parentElement.style.fontSize='11px';this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center'" alt=""></div>`).join('')}
         </div>
-      `;
-    } else {
-      const order = ['EK','DEFUSE','NOPE','ATTACK','SKIP','SEE_FUTURE','ALTER_FUTURE','SHUFFLE','FAVOR','RUT_TU_DAY','CAT'];
-      content.innerHTML = `
-        <div class="card-list-grid">
-          ${order.map(key => {
-            const info = CARD_TYPES[key];
-            const sampleCard = makeCard(key);
-            const img = cardImage(sampleCard);
-            return `
-              <div class="card-list-item">
-                <div class="card-list-thumb" onclick="this.closest('.card-list-thumb').classList.toggle('no-img')">
-                  <img src="${img}" onerror="this.closest('.card-list-thumb').classList.add('no-img')" alt="">
-                  <div class="card-fallback" style="display:none">${info.short}</div>
-                </div>
-                <div class="card-list-body">
-                  <div class="card-list-name">${info.name}</div>
-                  <div class="card-list-desc">${info.how}</div>
-                </div>
-              </div>
-            `;
-          }).join('')}
+        <button class="btn-p" onclick="UI.doClearPeek()">Đã Xem</button>
+      `);
+    } else if(this.currentModal === 'peek' && !s.peekFor){ this.closeModal(); }
+    
+    // Alter future
+    if(s.alterFor?.playerId === this.myId && this.currentModal !== 'alter'){
+      if(!this._alterCards){
+        this._alterCards = [...s.alterFor.cards];
+        this._alterOriginal = [...s.alterFor.cards];
+      }
+      const renderAlter = () => this._alterCards.map((c, i) => `
+        <div class="alter-slot">
+          <div class="alter-slot-label">Vị trí ${i+1}</div>
+          <div class="card" style="width:64px;height:92px">
+            <img class="card-img" src="${cardImage(c)}" onerror="this.closest('.card').classList.add('no-img')" alt="">
+            <div class="card-fallback">${cardInfo(c).short}</div>
+          </div>
+          <div class="alter-arrows">
+            <button class="btn-o" onclick="UI.moveAlter(${i}, -1)" ${i===0?'disabled':''}>▲</button>
+            <button class="btn-o" onclick="UI.moveAlter(${i}, 1)" ${i===this._alterCards.length-1?'disabled':''}>▼</button>
+          </div>
         </div>
-      `;
-      // Handle thumb fallback
-      content.querySelectorAll('.card-list-thumb').forEach(el => {
-        el.style.cssText += 'position:relative';
-      });
+      `).join('');
+      this.openModal('alter', `
+        <h2>🔄 Biến Đổi Tương Lai</h2>
+        <p>Lá trên cùng ở trên. Sắp xếp lại:</p>
+        <div id="alterList" style="display:flex;flex-direction:column;gap:8px;margin:12px 0">${renderAlter()}</div>
+        <button class="btn-p" onclick="UI.doAlterFuture()">Xác Nhận</button>
+      `);
+    } else if(this.currentModal === 'alter' && !s.alterFor){ 
+      this.closeModal(); 
+      this._alterCards = null; 
+      this._alterOriginal = null;
+    }
+    
+    // Favor
+    if(s.awaitingChoice?.type === 'favor' && s.awaitingChoice.targetId === this.myId && this.currentModal !== 'favor'){
+      const me = this.me();
+      this.openModal('favor', `
+        <h2>🎁 Xin Bài</h2>
+        <p>Chọn 1 lá để đưa cho đối thủ:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:50vh;overflow-y:auto">
+          ${me.hand.map((c, i) => `
+            <div class="card" onclick="UI.doFavor(${i})" style="cursor:pointer">
+              <img class="card-img" src="${cardImage(c)}" onerror="this.closest('.card').classList.add('no-img')" alt="">
+              <div class="card-fallback">${cardInfo(c).short}</div>
+            </div>
+          `).join('')}
+        </div>
+      `);
+    } else if(this.currentModal === 'favor' && !s.awaitingChoice){ this.closeModal(); }
+    
+    // Win
+    if(s.phase === 'ended' && !this._statsRecorded){
+      this._statsRecorded = true;
+      const user = this.currentUser();
+      if(user && !user.isGuest && s.winner){
+        const won = s.winner.id === this.myId;
+        Auth.updateStats(won);
+      }
+      setTimeout(() => this.showWinModal(), 500);
     }
   },
 
-  openFriends(){
-    const user = this.currentUser();
-    if(!user) return;
-    if(user.isGuest){
-      this.openModal('friends', `
-        <h2>Bạn Bè</h2>
-        <div class="empty-state">
-          <div class="empty-state-icon">🔒</div>
-          <div class="empty-state-text">Cần đăng nhập để kết bạn và chơi đội!</div>
+  _shouldShowNope(pending){
+    return pending.primaryType !== 'FAVOR';
+  },
+
+  doNope(){ this.act('nope'); },
+  skipNope(){
+    const el = document.getElementById('nopeContainer');
+    if(el) el.remove();
+  },
+
+  doDefuse(pos){
+    this.closeModal();
+    this.act('defuse', {pos: pos === 'middle' ? 'random' : pos});
+  },
+
+  doClearPeek(){ this.act('clearPeek'); },
+
+  moveAlter(idx, dir){
+    if(!this._alterCards) return;
+    const newIdx = idx + dir;
+    if(newIdx < 0 || newIdx >= this._alterCards.length) return;
+    [this._alterCards[idx], this._alterCards[newIdx]] = [this._alterCards[newIdx], this._alterCards[idx]];
+    const list = document.getElementById('alterList');
+    if(list){
+      list.innerHTML = this._alterCards.map((c, i) => `
+        <div class="alter-slot">
+          <div class="alter-slot-label">Vị trí ${i+1}</div>
+          <div class="card" style="width:64px;height:92px">
+            <img class="card-img" src="${cardImage(c)}" onerror="this.closest('.card').classList.add('no-img')" alt="">
+            <div class="card-fallback">${cardInfo(c).short}</div>
+          </div>
+          <div class="alter-arrows">
+            <button class="btn-o" onclick="UI.moveAlter(${i}, -1)" ${i===0?'disabled':''}>▲</button>
+            <button class="btn-o" onclick="UI.moveAlter(${i}, 1)" ${i===this._alterCards.length-1?'disabled':''}>▼</button>
+          </div>
         </div>
-        <button class="btn-p" onclick="UI.closeModal(); UI.showScreen('sc-auth')">Đăng Nhập / Đăng Ký</button>
-      `);
+      `).join('');
+    }
+  },
+
+  doAlterFuture(){
+    if(!this._alterCards) return;
+    this.act('alterFuture', {order: this._alterCards});
+    this._alterCards = null;
+    this._alterOriginal = null;
+    this.closeModal();
+  },
+
+  doFavor(idx){
+    this.closeModal();
+    this.act('favor', {idx});
+  },
+
+  showWinModal(customMsg){
+    const s = Engine.state;
+    const winner = s?.winner;
+    const isMe = winner?.id === this.myId;
+    this.openModal('win', `
+      <div style="font-size:64px;margin:10px 0">${isMe?'🏆':'😿'}</div>
+      <h2>${isMe?'CHIẾN THẮNG!':'THUA RỒI'}</h2>
+      <p>${customMsg || (winner ? `${winner.name} là người sống sót cuối cùng!` : 'Không có người thắng')}</p>
+      <button class="btn-p" onclick="UI.leaveRoom()">Về Menu</button>
+    `);
+  },
+
+  /* ===== BOTS ===== */
+  processBots(){
+    if(!this.isHost) return;
+    if(!Engine.state || Engine.state.phase !== 'playing') return;
+    if(this.botScheduled) return;
+    this.botScheduled = true;
+    setTimeout(() => {
+      this.botScheduled = false;
+      this._runBotTurn();
+    }, 800 + Math.random() * 600);
+  },
+
+  _runBotTurn(){
+    const s = Engine.state;
+    if(!s || s.phase !== 'playing' || !this.isHost) return;
+    
+    // Handle bot defuse
+    if(s.awaitingChoice?.type === 'defuse' && s.awaitingChoice.playerId.startsWith('bot_')){
+      const positions = ['top', 'random', 'bottom'];
+      Engine.placeDefuse(s.awaitingChoice.playerId, U.pick(positions));
       return;
     }
-    this.openModal('friends', `
-      <h2>Bạn Bè</h2>
-      <div class="friend-tabs">
-        <button class="friend-tab active" onclick="UI.switchFriendsTab('list')">Bạn bè</button>
-        <button class="friend-tab" onclick="UI.switchFriendsTab('requests')">Yêu cầu</button>
-        <button class="friend-tab" onclick="UI.switchFriendsTab('add')">Thêm</button>
-      </div>
-      <div id="friendsContent"></div>
-      <button class="btn-o" onclick="UI.closeModal()">Đóng</button>
-    `);
-    this.switchFriendsTab('list');
-  },
-
-  switchFriendsTab(tab){
-    this._friendsTab = tab;
-    document.querySelectorAll('.friend-tab').forEach(t => {
-      const txt = t.textContent.toLowerCase();
-      t.classList.toggle('active',
-        (tab === 'list' && txt.includes('bạn')) ||
-        (tab === 'requests' && txt.includes('yêu')) ||
-        (tab === 'add' && txt.includes('thêm'))
-      );
-    });
-    const content = document.getElementById('friendsContent');
-    if(!content) return;
-    const user = this.currentUser();
-    if(!user) return;
+    // Handle bot favor
+    if(s.awaitingChoice?.type === 'favor' && s.awaitingChoice.targetId.startsWith('bot_')){
+      const target = Engine.byId(s.awaitingChoice.targetId);
+      if(target && target.hand.length > 0){
+        const idx = Math.floor(Math.random() * target.hand.length);
+        Engine.resolveFavor(s.awaitingChoice.targetId, idx);
+      }
+      return;
+    }
+    // Handle bot peek/alter
+    if(s.peekFor?.playerId.startsWith('bot_')){
+      setTimeout(() => { if(this.isHost) Engine.clearPeek(s.peekFor.playerId); }, 800);
+      return;
+    }
+    if(s.alterFor?.playerId.startsWith('bot_')){
+      const cards = [...s.alterFor.cards];
+      // 50% chance bot shuffles
+      if(Math.random() < 0.5) U.shuffle(cards);
+      Engine.applyAlterFuture(s.alterFor.playerId, cards);
+      return;
+    }
+    // Handle pending nope from bots
+    if(s.pending && s.pending.playerId !== this.myId && !s.pending.playerId.startsWith('bot_')){
+      // Other human played - bots may nope
+    }
+    if(s.pending) return;
+    if(s.awaitingChoice || s.alterFor) return;
     
-    if(tab === 'list'){
-      const friends = Social.getFriends(user.username);
-      if(friends.length === 0){
-        content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">Chưa có bạn bè. Thử tìm kiếm và kết bạn!</div></div>`;
+    const cur = Engine.cur();
+    if(!cur || !cur.isBot) return;
+    
+    const mode = BOT_MODES[s.botMode] || BOT_MODES.smart;
+    const p = cur;
+    const hand = p.hand;
+    
+    // Try to play a card
+    if(Math.random() < mode.playProb){
+      const playable = [];
+      // Check for pairs of same cat
+      const catCounts = {};
+      hand.forEach(c => {
+        if(cardType(c) === 'CAT'){
+          catCounts[c] = (catCounts[c] || 0) + 1;
+        }
+      });
+      Object.entries(catCounts).forEach(([card, count]) => {
+        if(count >= 2 && Math.random() < mode.catProb){
+          playable.push({cards: Array(count).fill(card), type:'CAT'});
+        }
+      });
+      
+      // Non-cat cards
+      hand.forEach(c => {
+        const t = cardType(c);
+        if(['ATTACK','SKIP','SHUFFLE','SEE_FUTURE','ALTER_FUTURE','RUT_TU_DAY','FAVOR'].includes(t)){
+          playable.push({cards:[c], type:t});
+        }
+      });
+      
+      if(playable.length > 0){
+        const choice = U.pick(playable);
+        let targetId = null;
+        if(choice.type === 'CAT' || choice.type === 'FAVOR'){
+          const targets = s.players.filter(x => x.alive && x.id !== p.id && x.hand.length > 0);
+          if(targets.length === 0) return this._botDraw(p);
+          // Smart target: pick player with fewest cards (or most cards for cat stealing)
+          if(mode.smartTarget){
+            targets.sort((a,b) => choice.type === 'CAT' ? b.hand.length - a.hand.length : a.hand.length - b.hand.length);
+            targetId = targets[0].id;
+          } else {
+            targetId = U.pick(targets).id;
+          }
+        }
+        if(choice.type === 'CAT'){
+          const extra = choice.cards.length === 3 ? {namedType: U.pick(['DEFUSE','NOPE','ATTACK','SKIP','FAVOR'])} : {};
+          Engine.playCards(p.id, choice.cards, targetId, extra);
+        } else {
+          Engine.playCards(p.id, choice.cards, targetId);
+        }
         return;
       }
-      const accs = Auth.all();
-      content.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow-y:auto">
-        ${friends.map(f => {
-          const fAcc = accs[f];
-          return `<div class="friend-item">
-            <div class="av">${fAcc?.avatar || '🐱'}</div>
-            <div class="nm">${this.escapeHtml(f)}</div>
-            <div class="actions">
-              <button class="btn-o" onclick="UI.removeFriend('${this.escapeHtml(f)}')" style="color:#ff8a7a">Xoá</button>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`;
-    } else if(tab === 'requests'){
-      const incoming = Social.incoming(user.username);
-      const outgoing = Social.outgoing(user.username);
-      content.innerHTML = `
-        <div style="max-height:40vh;overflow-y:auto">
-          <div style="font-size:12px;font-weight:bold;color:var(--text-2);margin:8px 0">Yêu cầu đến:</div>
-          ${incoming.length === 0 ? '<div class="empty-state" style="padding:12px"><div class="empty-state-text" style="font-size:11px">Không có</div></div>' :
-            incoming.map(r => `
-              <div class="friend-item">
-                <div class="av">📩</div>
-                <div class="nm">${this.escapeHtml(r.from)}</div>
-                <div class="actions">
-                  <button class="btn-p" style="padding:6px 10px" onclick="UI.acceptFriendReq(${r.ts})">✓</button>
-                  <button class="btn-danger" style="padding:6px 10px" onclick="UI.rejectFriendReq(${r.ts})">✗</button>
-                </div>
-              </div>
-            `).join('')
-          }
-          <div style="font-size:12px;font-weight:bold;color:var(--text-2);margin:12px 0 8px">Yêu cầu đã gửi:</div>
-          ${outgoing.length === 0 ? '<div class="empty-state" style="padding:12px"><div class="empty-state-text" style="font-size:11px">Không có</div></div>' :
-            outgoing.map(r => `
-              <div class="friend-item">
-                <div class="av">⏳</div>
-                <div class="nm">${this.escapeHtml(r.to)}</div>
-                <div style="font-size:11px;color:var(--text-3)">Đang chờ...</div>
-              </div>
-            `).join('')
-          }
-        </div>
-      `;
-    } else {
-      content.innerHTML = `
-        <div style="padding:8px 0">
-          <input type="text" id="searchFriendInput" placeholder="Nhập username cần kết bạn..." maxlength="20">
-          <button class="btn-p" style="width:100%;margin-top:8px" onclick="UI.sendFriendReq()">Gửi Yêu Cầu</button>
-        </div>
-      `;
     }
+    
+    // Draw
+    this._botDraw(p);
   },
 
-  sendFriendReq(){
-    const user = this.currentUser();
-    if(!user) return;
-    const input = document.getElementById('searchFriendInput');
-    const target = input.value.trim();
-    if(!target) return this.toast('Nhập username');
-    const res = Social.sendRequest(user.username, target);
-    if(!res.ok) return this.toast(res.msg);
-    this.toast(`Đã gửi yêu cầu tới ${target}`);
-    input.value = '';
-    this.switchFriendsTab('requests');
+  _botDraw(p){
+    // Small chance to skip if has skip
+    Engine.drawCard(p.id);
   },
 
-  acceptFriendReq(ts){
-    Social.accept(ts);
-    this.toast('Đã chấp nhận');
-    this._pollSocial();
-    this.switchFriendsTab('list');
-    this.enterMenu(this.currentUser());
-  },
-  rejectFriendReq(ts){ Social.reject(ts); this.toast('Đã từ chối'); this.switchFriendsTab('requests'); },
-  removeFriend(f){
-    const user = this.currentUser();
-    if(!user) return;
-    if(!confirm(`Xoá ${f} khỏi bạn bè?`)) return;
-    Social.removeFriend(user.username, f);
-    this.toast('Đã xoá bạn');
-    this.switchFriendsTab('list');
-    this.enterMenu(this.currentUser());
-  },
-
+  /* ===== CHAT ===== */
   toggleChat(){
     document.getElementById('chatPanel').classList.toggle('on');
     document.getElementById('chatOverlay').classList.toggle('on');
   },
   sendChat(){
-    const inp = document.getElementById('chatInput');
-    const txt = inp.value.trim();
-    if(!txt) return;
-    inp.value = '';
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text) return;
     const user = this.currentUser();
-    const name = user?.username || 'Player';
-    this.addChatMsg(name, txt);
-    if(Net.peer) Net.send({type:'chat', name, text:txt});
+    if(!user) return;
+    input.value = '';
+    if(Net.peer){
+      Net.send({type:'chat', name:user.username, text});
+    } else {
+      this.addChatMsg(user.username, text);
+    }
   },
   addChatMsg(name, text){
     const box = document.getElementById('chatMsgs');
@@ -2877,32 +2936,17 @@ const UI = {
     box.scrollTop = box.scrollHeight;
   },
 
-  currentUser(){
-    const acc = Auth.current();
-    if(acc) return acc;
-    return Auth.guest();
-  },
-  showScreen(id){
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-    document.getElementById(id).classList.add('on');
-  },
+  /* ===== TOAST ===== */
   toast(msg){
-    const t = document.createElement('div');
-    t.className = 'toast'; t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3200);
-  },
-  copyCode(){
-    try{navigator.clipboard.writeText(this.roomCode);this.toast('Đã copy: ' + this.roomCode)}
-    catch(e){this.toast('Mã: ' + this.roomCode)}
-  },
-  me(){return Engine.state?.players.find(p => p.id === this.myId)},
-  escapeHtml(s){
-    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => UI.init());
+window.addEventListener('DOMContentLoaded', () => UI.init());
 </script>
 </body>
 </html>
