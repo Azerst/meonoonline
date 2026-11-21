@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Exploding Kittens - Online Multiplayer</title>
-<!-- Thư viện PeerJS dùng để kết nối P2P qua Internet -->
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<!-- Thư viện PeerJS (Đã đổi sang CDN ổn định hơn) -->
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
   :root{--red:#d93828;--red-dark:#b52a1c;--bg-main:#eef2f6;--grid:rgba(0,0,0,0.07);
     --glass:rgba(255,255,255,0.45);--text:#2c1b18;--text-l:#5a4a48;--cut:20px}
@@ -199,14 +199,14 @@
     <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="15">
     
     <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-      <button class="btn-p" onclick="UI.createRoom()">Tạo Phòng Online</button>
+      <button class="btn-p" id="btnCreateRoom" onclick="UI.createRoom()">Tạo Phòng Online</button>
       <button class="btn-o" onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia Phòng</button>
     </div>
 
     <div id="joinArea" style="display:none; flex-direction:column; gap:8px; margin-top:8px;">
       <input type="tel" id="joinCode" placeholder="Mã phòng (6 số)" maxlength="6" inputmode="numeric" pattern="[0-9]*"
         style="font-family:monospace;letter-spacing:6px;text-align:center;font-size:18px;font-weight:bold">
-      <button onclick="UI.joinRoom()">Vào Phòng</button>
+      <button id="btnJoinRoom" onclick="UI.joinRoom()">Vào Phòng</button>
     </div>
 
     <hr style="border:0;border-top:1px solid rgba(0,0,0,.1); margin: 15px 0;">
@@ -694,19 +694,37 @@ const Engine = {
 /* ========== NET (PEERJS P2P) ========== */
 const Net = {
   peer: null,
-  conn: null, // Dành cho client kết nối tới host
-  conns: [], // Dành cho host quản lý nhiều client
+  conn: null, 
+  conns: [], 
   isHost: false,
   roomCode: null,
-  onJoin:null, onAction:null, onChat:null, onState:null, onLobby:null, onStart:null, onHostLeft:null, onError:null,
+  onHostReady:null, onClientDisconnect:null, onJoin:null, onAction:null, onChat:null, onState:null, onLobby:null, onStart:null, onHostLeft:null, onError:null,
 
   host(code){
     this.roomCode = code; 
     this.isHost = true;
-    this.peer = new Peer('ek_room_' + code);
     
-    this.peer.on('open', (id) => {
-      console.log('Host connected with ID:', id);
+    // Kiểm tra thư viện
+    if (typeof Peer === 'undefined') {
+      if (this.onError) this.onError('Không thể tải thư viện mạng (PeerJS). Vui lòng kiểm tra mạng hoặc tắt Adblock.');
+      return;
+    }
+
+    try {
+      // Thêm cấu hình STUN để xuyên qua NAT/Firewall tốt hơn
+      this.peer = new Peer('ek_room_' + code, {
+        config: {'iceServers': [
+          { url: 'stun:stun.l.google.com:19302' },
+          { url: 'stun:stun1.l.google.com:19302' }
+        ]}
+      });
+    } catch(e) {
+      if (this.onError) this.onError('Lỗi khởi tạo PeerJS');
+      return;
+    }
+
+    this.peer.on('open', () => {
+      if (this.onHostReady) this.onHostReady();
     });
 
     this.peer.on('connection', (c) => {
@@ -714,15 +732,11 @@ const Net = {
       c.on('data', (data) => this.route(data, c));
       c.on('close', () => {
         this.conns = this.conns.filter(x => x !== c);
-        // Nếu client ngắt kết nối, thông báo cho UI (dùng tạm hàm onJoin với action rời)
-        if (data => data.type === 'join') {
-           // Sẽ xử lý ở UI
-        }
+        if (this.onClientDisconnect) this.onClientDisconnect(c);
       });
     });
 
     this.peer.on('error', (err) => {
-      console.error('Peer error:', err);
       if(this.onError) this.onError('Lỗi máy chủ: ' + err.type);
     });
   },
@@ -730,10 +744,28 @@ const Net = {
   join(code){
     this.roomCode = code; 
     this.isHost = false;
-    this.peer = new Peer();
+
+    if (typeof Peer === 'undefined') {
+      if (this.onError) this.onError('Không thể tải thư viện mạng (PeerJS). Vui lòng kiểm tra mạng hoặc tắt Adblock.');
+      return;
+    }
+
+    try {
+      this.peer = new Peer({
+        config: {'iceServers': [
+          { url: 'stun:stun.l.google.com:19302' },
+          { url: 'stun:stun1.l.google.com:19302' }
+        ]}
+      });
+    } catch(e) {
+      if (this.onError) this.onError('Lỗi khởi tạo PeerJS');
+      return;
+    }
     
     this.peer.on('open', () => {
-      this.conn = this.peer.connect('ek_room_' + code);
+      // Kết nối tới Host
+      this.conn = this.peer.connect('ek_room_' + code, { reliable: true });
+      
       this.conn.on('open', () => {
         if(this.onConnectSuccess) this.onConnectSuccess();
       });
@@ -747,7 +779,6 @@ const Net = {
     });
 
     this.peer.on('error', (err) => {
-      console.error('Peer error:', err);
       if(err.type === 'peer-unavailable') {
         if(this.onError) this.onError('Không tìm thấy phòng ' + code);
       } else {
@@ -787,7 +818,7 @@ const Net = {
           break;
         case 'chat': 
           if(this.onChat) this.onChat(msg.name, msg.text); 
-          this.send({type:'chat', name:msg.name, text:msg.text}); // Broadcast
+          this.send({type:'chat', name:msg.name, text:msg.text}); 
           break;
       }
     } else {
@@ -829,7 +860,7 @@ const UI = {
     const t = document.createElement('div');
     t.className = 'toast'; t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2400);
+    setTimeout(() => t.remove(), 3000);
   },
   copyCode(){
     try{navigator.clipboard.writeText(this.roomCode);this.toast('✅ Đã copy mã phòng')}
@@ -844,49 +875,67 @@ const UI = {
 
   /* ---------- CREATE ROOM ---------- */
   createRoom(){
+    // 1. Kiểm tra thư viện mạng trước
+    if (typeof Peer === 'undefined') {
+      return this.toast('Lỗi: Không thể tải thư viện mạng. Vui lòng tải lại trang hoặc tắt Adblock.');
+    }
+    
+    const btn = document.getElementById('btnCreateRoom');
+    if(btn) btn.disabled = true;
+
     this.roomCode = U.code();
     this.isHost = true;
     this.lobbyPlayers = [{ id:this.myId, name:this.getMyName(), isHost:true, isBot:false }];
     
-    this.setupNet(true);
+    // 2. Chuyển màn hình ngay lập tức để tránh cảm giác "nút bị liệt"
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
-    document.getElementById('lobbyStatus').innerHTML = 'Đang khởi tạo phòng...';
+    document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang khởi tạo phòng...';
     document.getElementById('hostControls').style.display = 'flex';
     document.getElementById('btnStart').style.display = 'block';
     this.renderLobby();
 
-    // Đợi PeerJS kết nối xong mới báo thành công
+    // 3. Bắt đầu kết nối mạng
     setTimeout(() => {
-      if (Net.peer && !Net.peer.destroyed) {
-        document.getElementById('lobbyStatus').innerHTML = '✅ Phòng đã sẵn sàng · Chia sẻ mã cho bạn bè';
-      }
-    }, 2000);
+      this.setupNet(true);
+    }, 100);
   },
 
   /* ---------- JOIN ROOM ---------- */
   joinRoom(){
+    if (typeof Peer === 'undefined') {
+      return this.toast('Lỗi: Không thể tải thư viện mạng. Vui lòng tải lại trang hoặc tắt Adblock.');
+    }
+
     const raw = document.getElementById('joinCode').value.trim();
     if(!/^\d{6}$/.test(raw)) return this.toast('Mã phòng phải là 6 chữ số');
+
+    const btn = document.getElementById('btnJoinRoom');
+    if(btn) btn.disabled = true;
 
     this.roomCode = raw;
     this.isHost = false;
     this.lobbyPlayers = [];
 
-    this.setupNet(false);
     this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
     document.getElementById('lobbyStatus').innerHTML = '<span class="connecting"></span>Đang kết nối tới phòng...';
     document.getElementById('hostControls').style.display = 'none';
     document.getElementById('btnStart').style.display = 'none';
     this.renderLobby();
+
+    setTimeout(() => {
+      this.setupNet(false);
+    }, 100);
   },
 
   setupNet(host){
     if(Net.peer) Net.close();
     
     if(host){
-      Net.host(this.roomCode);
+      Net.onHostReady = () => {
+        document.getElementById('lobbyStatus').innerHTML = '✅ Phòng đã sẵn sàng · Chia sẻ mã cho bạn bè';
+      };
       
       Net.onError = (msg) => {
         this.toast(msg);
@@ -902,16 +951,20 @@ const UI = {
             Net.send({ type:'error', message:'Phòng đã đầy!' }, conn);
             return;
         }
-        player.conn = conn; // Lưu conn lại để chat riêng nếu cần
+        player.conn = conn; 
         this.lobbyPlayers.push(player);
         this.broadcastLobby();
         this.renderLobby();
       };
 
-      // Khi client ngắt kết nối (đóng tab)
-      Net.peer.on('disconnected', () => {
-         // Xử lý nếu cần
-      });
+      Net.onClientDisconnect = (conn) => {
+         const idx = this.lobbyPlayers.findIndex(p => p.conn === conn);
+         if (idx > -1) {
+             this.lobbyPlayers.splice(idx, 1);
+             this.broadcastLobby();
+             this.renderLobby();
+         }
+      };
 
       Net.onAction = (pid, action, payload) => {
         try{ this.hostAction(pid, action, payload); }
@@ -920,9 +973,9 @@ const UI = {
       
       Net.onChat = (name, text) => this.addChatMsg(name, text);
 
+      Net.host(this.roomCode);
+
     } else {
-      Net.join(this.roomCode);
-      
       Net.onConnectSuccess = () => {
         Net.send({ type:'join', player: { id:this.myId, name:this.getMyName() } });
       };
@@ -955,12 +1008,13 @@ const UI = {
         this.toast('Chủ phòng đã rời đi!');
         setTimeout(() => this.leaveRoom(), 1000);
       };
+
+      Net.join(this.roomCode);
     }
   },
 
   broadcastLobby(){ 
     if(this.isHost) {
-        // Xóa data conn trước khi gửi để tránh lỗi vòng lặp JSON
         const safePlayers = this.lobbyPlayers.map(p => ({id:p.id, name:p.name, isBot:p.isBot, isHost:p.isHost}));
         Net.send({ type:'lobby', players: safePlayers }); 
     }
@@ -1026,12 +1080,8 @@ const UI = {
     const botMode = document.getElementById('lobbyBotMode')?.value || 'smart';
     const players = this.lobbyPlayers.map(p => ({ id:p.id, name:p.name, isBot:p.isBot }));
     
-    // Tạo game ở phía Host
     Engine.createGame(players, this.myId, botMode);
-    
-    // Gửi state tới tất cả Client
     Net.send({ type:'start', state: U.clone(Engine.state) });
-    
     this.enterGame(true);
   },
 
@@ -1059,13 +1109,17 @@ const UI = {
     document.getElementById('chatFab').classList.remove('on');
     this.closeModal();
     this.showScreen('sc-home');
+    
+    // Reset lại nút
+    const btnC = document.getElementById('btnCreateRoom');
+    if(btnC) btnC.disabled = false;
+    const btnJ = document.getElementById('btnJoinRoom');
+    if(btnJ) btnJ.disabled = false;
   },
 
   /* ---------- ACTIONS ---------- */
   act(action, payload = {}){
     if(!Engine.state) return;
-    
-    // Chặn thao tác nếu không phải lượt hoặc đang bận
     if(this.isHost) {
         this.hostAction(this.myId, action, payload);
     } else {
@@ -1085,8 +1139,6 @@ const UI = {
         case 'clearPeek': ok = Engine.clearPeek(playerId); break;
       }
     }catch(e){ console.error('[EK] Engine error:', e); }
-    
-    // Nếu action thất bại, đồng bộ lại state cho client
     if(!ok && this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
   },
 
@@ -1097,10 +1149,7 @@ const UI = {
       this.selectedCatIndices = [];
       this._handSig = sig;
     }
-    
-    // Host gửi state mới đi
     if(this.isHost) Net.send({ type:'state', state: U.clone(Engine.state) });
-    
     this.render();
     this.updateModals();
     this.renderVFX();
@@ -1119,7 +1168,6 @@ const UI = {
       }
     }
     
-    // Hiệu ứng xáo bài
     if(lastLog.includes('xáo bài')){
         if(!this.isShuffling){
             this.isShuffling = true;
