@@ -3,1119 +3,1489 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Exploding Kittens - Liquid Glass</title>
-
+<title>Exploding Kittens - Full Rewrite</title>
 <style>
-  /* ================= LIQUID GLASS THEME ================= */
   :root{
-    --red:#d93828;
-    --red-dark:#b52a1c;
-    --bg-main:#eef2f6;
-    --grid-color:rgba(0,0,0,0.07);
-    --glass-bg:rgba(255, 255, 255, 0.45);
-    --glass-border:rgba(255, 255, 255, 0.8);
-    --text-main:#2c1b18;
-    --text-light:#5a4a48;
-    --cut:20px;
+    --red:#d93828; --red-dark:#b52a1c; --bg-main:#eef2f6; --grid:rgba(0,0,0,0.07);
+    --glass:rgba(255,255,255,0.45); --glass-b:rgba(255,255,255,0.8);
+    --text:#2c1b18; --text-l:#5a4a48; --cut:20px;
   }
-
-  *,*::before,*::after{ margin:0; padding:0; box-sizing:border-box; }
-  
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background-color:var(--bg-main);
-    background-image:
-      linear-gradient(var(--grid-color) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-    background-size:32px 32px;
-    background-position:center top;
-    color:var(--text-main);
-    height:100vh;
-    overflow:hidden;
-    -webkit-font-smoothing:antialiased;
-    user-select: none;
-  }
-
-  /* Glow Background */
-  .glow{
-    position:fixed; inset:0; z-index:-1; pointer-events:none;
-    background:
-      radial-gradient(ellipse at 20% 20%, rgba(255,122,92,0.4) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(217,56,40,0.4) 0%, transparent 50%);
-    filter:blur(50px);
-    animation:pulseGlow 6s ease-in-out infinite alternate;
-  }
-  @keyframes pulseGlow{ 0%{ transform:scale(0.95); opacity:0.6; } 100%{ transform:scale(1.05); opacity:1; } }
-
-  /* ================= GLASS COMPONENTS ================= */
-  .glass-panel {
-    position: relative;
-    background: var(--glass-bg);
-    backdrop-filter: blur(30px) saturate(180%);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
-    clip-path: polygon(
-      var(--cut) 0, 100% 0,
-      100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%,
-      0 100%, 0 var(--cut)
-    );
-    box-shadow: 0 1.5px 0 rgba(255,255,255,0.9) inset, 0 0 30px -10px rgba(255,255,255,0.5) inset, 0 10px 30px rgba(0,0,0,0.1);
-    border: 1px solid rgba(255,255,255,0.4);
-    transition: transform 0.3s ease;
-  }
-  .glass-panel::before {
-    content:""; position:absolute; top:0; left:5%; right:5%; height:2px;
-    background:linear-gradient(90deg, transparent, #fff, transparent);
-    z-index:10; pointer-events:none;
-  }
-
-  /* ================= UI ELEMENTS ================= */
-  button {
-    font-family: inherit; font-weight: 700; font-size: 16px;
-    padding: 12px 24px; border: none; border-radius: 8px;
-    cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
-    color: var(--red-dark);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,1) inset;
-    position: relative; overflow: hidden;
-  }
-  button:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
-  button:active { transform: translateY(1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: grayscale(1); }
-  
-  .btn-primary { background: linear-gradient(180deg, #ff6b6b 0%, var(--red) 100%); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-  .btn-primary:hover { background: linear-gradient(180deg, #ff7b7b 0%, var(--red-dark) 100%); }
-  .btn-danger { background: linear-gradient(180deg, #ff9800 0%, #e65100 100%); color: #fff; }
-  
-  input {
-    width: 100%; padding: 14px 16px; border-radius: 8px;
-    border: 2px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.5);
-    font-family: inherit; font-size: 16px; color: var(--text-main);
-    outline: none; transition: all 0.2s;
-  }
-  input:focus { background: #fff; border-color: var(--red); box-shadow: 0 0 0 4px rgba(217,56,40,0.2); }
-
-  /* ================= SCREENS ================= */
-  .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; flex-direction: column; }
-  .screen.active { display: flex; }
-
-  /* 1. Home Screen */
-  #screen-home { justify-content: center; align-items: center; padding: 20px; }
-  .home-box { width: 100%; max-width: 400px; padding: 40px 30px; display: flex; flex-direction: column; gap: 20px; text-align: center; }
-  .home-title { font-size: 36px; font-weight: 900; color: var(--red-dark); letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(255,255,255,0.8); }
-  .home-subtitle { font-size: 14px; color: var(--text-light); margin-top: -10px; margin-bottom: 10px; }
-  
-  /* 2. Lobby Screen */
-  #screen-lobby { justify-content: center; align-items: center; padding: 20px; }
-  .lobby-box { width: 100%; max-width: 500px; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
-  .room-code { font-size: 32px; font-weight: 900; letter-spacing: 4px; color: var(--red); text-align: center; cursor: pointer; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.4); }
-  .player-list { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; }
-  .player-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; background: rgba(255,255,255,0.5); border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); }
-  .player-item .avatar { font-size: 24px; }
-  .player-item .name { flex: 1; font-weight: bold; }
-  .player-item .status { font-size: 12px; font-weight: bold; color: var(--red); }
-
-  /* 3. Game Screen */
-  #screen-game { display: none; flex-direction: column; height: 100%; padding: 10px; overflow: hidden; }
-  #screen-game.active { display: flex; }
-  
-  .game-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; margin-bottom: 10px; font-weight: bold; font-size: 14px; flex-shrink: 0; }
-  .header-badge { background: rgba(255,255,255,0.6); padding: 5px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-  
-  .opponents-area { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; flex-shrink: 0; }
-  .opp-card { display: flex; flex-direction: column; align-items: center; padding: 10px 15px; min-width: 80px; transition: 0.3s; position: relative; }
-  .opp-card.active-turn { box-shadow: 0 0 20px var(--red); border: 2px solid var(--red); transform: scale(1.05); }
-  .opp-card.dead { opacity: 0.4; filter: grayscale(1); }
-  .opp-card.dead::after { content: '💀'; position: absolute; font-size: 40px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-  .opp-avatar { font-size: 32px; margin-bottom: 5px; }
-  .opp-name { font-size: 12px; font-weight: bold; margin-bottom: 2px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .opp-cards { font-size: 12px; color: var(--red-dark); font-weight: bold; }
-
-  .board-center { flex: 1; display: flex; justify-content: center; align-items: center; gap: 30px; position: relative; min-height: 0; }
-  .pile { width: 100px; height: 140px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; flex-shrink: 0; }
-  .deck-pile { background: linear-gradient(135deg, var(--red), var(--red-dark)); cursor: pointer; box-shadow: 0 10px 20px rgba(217,56,40,0.4); border: 3px solid #fff; }
-  .deck-pile:hover { transform: translateY(-5px) scale(1.02); }
-  .deck-pile.glow { animation: deckPulse 1.5s infinite; }
-  @keyframes deckPulse { 0%,100% { box-shadow: 0 0 15px rgba(217,56,40,0.6); } 50% { box-shadow: 0 0 35px rgba(217,56,40,1); } }
-  .discard-pile { background: rgba(255,255,255,0.3); border: 2px dashed rgba(255,255,255,0.8); }
-  .badge { position: absolute; bottom: -10px; right: -10px; background: #fff; color: var(--red); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-
-  .game-log { position: absolute; top: 10px; left: 10px; font-size: 12px; background: rgba(0,0,0,0.5); color: #fff; padding: 10px; border-radius: 8px; pointer-events: none; max-width: 200px; backdrop-filter: blur(5px); }
-
-  .hand-area { padding: 15px; min-height: 170px; display: flex; flex-direction: column; flex-shrink: 0; }
-  .hand-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; align-items: center; scrollbar-width: thin; }
-  
-  /* Cards */
-  .card {
-    width: 90px; height: 130px; border-radius: 10px; flex-shrink: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    padding: 8px 5px; cursor: pointer; position: relative;
-    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    border: 2px solid #fff; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    overflow: hidden;
-  }
-  .card:hover:not(.disabled) { transform: translateY(-15px) scale(1.05); z-index: 10; box-shadow: 0 15px 25px rgba(0,0,0,0.3); border-color: var(--red); }
-  .card.disabled { opacity: 0.4; filter: grayscale(0.8); cursor: not-allowed; }
-  .card-icon { font-size: 36px; margin-top: 5px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
-  .card-title { font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1.1; color: #333; }
-  .card-desc { font-size: 8px; text-align: center; color: #666; line-height: 1.1; }
-  
-  /* Card Colors */
-  .c-EK { background: linear-gradient(135deg, #ffcccc, #ff9999); border-color: #ff4d4d; }
-  .c-DEFUSE { background: linear-gradient(135deg, #ccffcc, #99ff99); border-color: #4dff4d; }
-  .c-NOPE { background: linear-gradient(135deg, #ffe6cc, #ffcc99); border-color: #ff9933; }
-  .c-ATTACK { background: linear-gradient(135deg, #ffcccc, #ff6666); border-color: #cc0000; color: #fff; }
-  .c-ATTACK .card-title, .c-ATTACK .card-desc { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-  .c-SKIP { background: linear-gradient(135deg, #cce6ff, #99ccff); border-color: #3399ff; }
-  .c-SEE_FUTURE { background: linear-gradient(135deg, #e6ccff, #cc99ff); border-color: #9933ff; }
-  .c-SHUFFLE { background: linear-gradient(135deg, #ccffff, #99ffff); border-color: #33ffff; }
-  .c-FAVOR { background: linear-gradient(135deg, #ffccff, #ff99ff); border-color: #ff33ff; }
-  .c-CAT { background: linear-gradient(135deg, #fff2cc, #ffe699); border-color: #ffcc00; }
-
-  /* Chat System */
-  .chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: none; backdrop-filter: blur(2px); }
-  .chat-overlay.active { display: block; }
-  .chat-panel { position: fixed; right: 20px; top: 50%; transform: translateY(-50%) translateX(120%); width: 320px; height: 400px; display: flex; flex-direction: column; z-index: 201; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background: rgba(255, 255, 255, 0.85); }
-  .chat-panel.open { transform: translateY(-50%) translateX(0); }
-  .chat-header { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-  .chat-close { cursor: pointer; font-size: 20px; color: var(--red); font-weight: bold; padding: 0 5px; }
-  .chat-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
-  .chat-msg .usr { color: var(--red); font-weight: bold; }
-  .chat-input-area { display: flex; padding: 15px; gap: 8px; border-top: 1px solid rgba(0,0,0,0.1); }
-  .chat-input-area input { padding: 8px; font-size: 14px; }
-  .chat-input-area button { padding: 8px 15px; font-size: 14px; }
-  .chat-fab { position: fixed; right: 20px; bottom: 200px; z-index: 100; padding: 10px 15px; border-radius: 20px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; font-weight: bold; }
-  .chat-fab:hover { transform: scale(1.05); }
-
-  /* ================= OVERLAYS & VFX ================= */
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 999; opacity: 0; pointer-events: none; transition: 0.3s; }
-  .overlay.active { opacity: 1; pointer-events: auto; }
-  .modal-box { width: 90%; max-width: 500px; padding: 30px; display: flex; flex-direction: column; gap: 20px; text-align: center; transform: scale(0.9); transition: 0.3s; }
-  .overlay.active .modal-box { transform: scale(1); }
-
-  .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-  @keyframes shake { 10%, 90% { transform: translate3d(-4px, 0, 0); } 20%, 80% { transform: translate3d(6px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
-  .flash-red { animation: flashRed 0.5s ease-out; }
-  @keyframes flashRed { 0% { box-shadow: inset 0 0 0 100vw rgba(255,0,0,0.8); } 100% { box-shadow: inset 0 0 0 100vw rgba(255,0,0,0); } }
-  .particle { position: absolute; border-radius: 50%; pointer-events: none; z-index: 1000; }
-  
-  .nope-btn { position: fixed; bottom: 50%; left: 50%; transform: translate(-50%, 50%); z-index: 200; padding: 15px 40px; font-size: 24px; background: linear-gradient(135deg, #ff0000, #ff6b6b); color: #fff; border-radius: 50px; box-shadow: 0 0 20px rgba(255,0,0,0.5); animation: pulseNope 0.5s infinite alternate; border: 3px solid #fff; cursor: pointer; }
-  @keyframes pulseNope { from { transform: translate(-50%, 50%) scale(1); } to { transform: translate(-50%, 50%) scale(1.1); } }
-
-  @media (max-width: 600px) {
-    .card { width: 70px; height: 105px; }
-    .card-icon { font-size: 28px; }
-    .card-title { font-size: 8px; }
-    .card-desc { display: none; }
-    .pile { width: 80px; height: 115px; font-size: 30px; }
-    .chat-panel { width: 100%; right: 0; height: 50vh; top: auto; bottom: 0; transform: translateY(100%); border-radius: 20px 20px 0 0; }
-    .chat-panel.open { transform: translateY(0); }
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:32px 32px;color:var(--text);height:100vh;overflow:hidden;
+    -webkit-font-smoothing:antialiased;user-select:none}
+  .glow{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(ellipse at 20% 20%,rgba(255,122,92,0.4) 0%,transparent 50%),
+      radial-gradient(ellipse at 80% 80%,rgba(217,56,40,0.4) 0%,transparent 50%);
+    filter:blur(50px);animation:pulseGlow 6s ease-in-out infinite alternate}
+  @keyframes pulseGlow{0%{transform:scale(.95);opacity:.6}100%{transform:scale(1.05);opacity:1}}
+  .glass{position:relative;background:var(--glass);backdrop-filter:blur(30px) saturate(180%);
+    -webkit-backdrop-filter:blur(30px) saturate(180%);
+    clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut));
+    box-shadow:0 1.5px 0 rgba(255,255,255,.9) inset,0 10px 30px rgba(0,0,0,.1);
+    border:1px solid rgba(255,255,255,.4);transition:transform .3s}
+  button{font-family:inherit;font-weight:700;font-size:15px;padding:12px 20px;border:none;border-radius:8px;
+    cursor:pointer;transition:all .2s;background:linear-gradient(180deg,#fff,#f0f0f0);color:var(--red-dark);
+    box-shadow:0 4px 10px rgba(0,0,0,.1),0 1px 0 rgba(255,255,255,1) inset}
+  button:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(0,0,0,.15)}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:grayscale(1)}
+  .btn-p{background:linear-gradient(180deg,#ff6b6b,var(--red));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .btn-d{background:linear-gradient(180deg,#ff9800,#e65100);color:#fff}
+  .btn-o{background:transparent;border:1.5px solid rgba(0,0,0,.2);color:var(--text-l)}
+  input{width:100%;padding:13px 15px;border-radius:8px;border:2px solid rgba(255,255,255,.6);
+    background:rgba(255,255,255,.5);font-family:inherit;font-size:15px;color:var(--text);outline:none;transition:all .2s}
+  input:focus{background:#fff;border-color:var(--red);box-shadow:0 0 0 4px rgba(217,56,40,.2)}
+  .screen{display:none;width:100%;height:100%;position:absolute;top:0;left:0;flex-direction:column}
+  .screen.on{display:flex}
+  #sc-home{justify-content:center;align-items:center;padding:20px}
+  .home-box{width:100%;max-width:400px;padding:40px 30px;display:flex;flex-direction:column;gap:16px;text-align:center}
+  .home-title{font-size:34px;font-weight:900;color:var(--red-dark);letter-spacing:1px;text-transform:uppercase}
+  .home-sub{font-size:12px;color:var(--text-l)}
+  #sc-lobby{justify-content:center;align-items:center;padding:20px}
+  .lobby-box{width:100%;max-width:500px;padding:30px;display:flex;flex-direction:column;gap:16px}
+  .room-code{font-size:32px;font-weight:900;letter-spacing:4px;color:var(--red);text-align:center;
+    cursor:pointer;padding:12px;border-radius:8px;background:rgba(255,255,255,.4);font-family:monospace}
+  .plist{display:flex;flex-direction:column;gap:8px;max-height:250px;overflow-y:auto}
+  .pitem{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.5);
+    border-radius:8px;border:1px solid rgba(255,255,255,.8)}
+  .pitem .av{font-size:22px} .pitem .nm{flex:1;font-weight:bold}
+  .pitem .st{font-size:11px;font-weight:bold;color:var(--red);text-transform:uppercase}
+  #sc-game{display:none;flex-direction:column;height:100%;padding:8px;overflow:hidden;gap:8px}
+  #sc-game.on{display:flex}
+  .ghead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-weight:bold;font-size:13px;flex-shrink:0}
+  .badge{background:rgba(255,255,255,.6);padding:5px 12px;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,.05)}
+  .badge.hot{background:var(--red);color:#fff;animation:pulseBadge 1.5s infinite}
+  @keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .opps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+  .opp{display:flex;flex-direction:column;align-items:center;padding:8px 12px;min-width:76px;transition:.3s;position:relative}
+  .opp.turn{box-shadow:0 0 20px var(--red);border:2px solid var(--red);transform:scale(1.05)}
+  .opp.dead{opacity:.4;filter:grayscale(1)}
+  .opp.dead::after{content:'💀';position:absolute;font-size:36px;top:50%;left:50%;transform:translate(-50%,-50%)}
+  .opp .av{font-size:28px;margin-bottom:2px}
+  .opp .nm{font-size:11px;font-weight:bold;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+  .opp .cnt{font-size:11px;color:var(--red-dark);font-weight:bold}
+  .opp .turns{font-size:9px;color:#fff;background:var(--red);padding:1px 6px;border-radius:10px;margin-top:2px;font-weight:bold}
+  .board{flex:1;display:flex;justify-content:center;align-items:center;gap:30px;position:relative;min-height:0}
+  .pile{width:96px;height:134px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:38px;position:relative;flex-shrink:0;transition:transform .2s}
+  .deck{background:linear-gradient(135deg,var(--red),var(--red-dark));cursor:pointer;
+    box-shadow:0 10px 20px rgba(217,56,40,.4);border:3px solid #fff}
+  .deck:hover{transform:translateY(-5px) scale(1.02)}
+  .deck.can{animation:deckPulse 1.5s infinite}
+  @keyframes deckPulse{0%,100%{box-shadow:0 0 15px rgba(217,56,40,.6)}50%{box-shadow:0 0 35px rgba(217,56,40,1)}}
+  .deck.locked{opacity:.6;cursor:not-allowed;filter:grayscale(.5)}
+  .disc{background:rgba(255,255,255,.3);border:2px dashed rgba(255,255,255,.8)}
+  .badge-p{position:absolute;bottom:-8px;right:-8px;background:#fff;color:var(--red);min-width:28px;height:28px;
+    padding:0 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-weight:bold;font-size:13px;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+  .glog{position:absolute;top:5px;left:5px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;
+    padding:8px 10px;border-radius:8px;pointer-events:none;max-width:220px;backdrop-filter:blur(5px);line-height:1.4}
+  .hand-area{padding:12px;min-height:160px;display:flex;flex-direction:column;flex-shrink:0}
+  .hand-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 0 12px;align-items:center;scrollbar-width:thin}
+  .card{width:86px;height:124px;border-radius:10px;flex-shrink:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:space-between;padding:6px 4px;cursor:pointer;position:relative;
+    background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.15);border:2px solid #fff;transition:all .2s;overflow:hidden}
+  .card:hover:not(.dis){transform:translateY(-12px) scale(1.05);z-index:10;
+    box-shadow:0 15px 25px rgba(0,0,0,.3);border-color:var(--red)}
+  .card.dis{opacity:.35;filter:grayscale(.8);cursor:not-allowed}
+  .card .ic{font-size:32px;margin-top:4px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+  .card .tt{font-size:9px;font-weight:900;text-transform:uppercase;text-align:center;line-height:1.1;color:#333}
+  .card .ds{font-size:7px;text-align:center;color:#666;line-height:1.1}
+  .c-EK{background:linear-gradient(135deg,#ffcccc,#ff9999);border-color:#ff4d4d}
+  .c-DEFUSE{background:linear-gradient(135deg,#ccffcc,#99ff99);border-color:#4dff4d}
+  .c-NOPE{background:linear-gradient(135deg,#ffe6cc,#ffcc99);border-color:#ff9933}
+  .c-ATTACK{background:linear-gradient(135deg,#ffcccc,#ff6666);border-color:#cc0000}
+  .c-ATTACK .tt,.c-ATTACK .ds{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .c-SKIP{background:linear-gradient(135deg,#cce6ff,#99ccff);border-color:#3399ff}
+  .c-SEE_FUTURE{background:linear-gradient(135deg,#e6ccff,#cc99ff);border-color:#9933ff}
+  .c-SHUFFLE{background:linear-gradient(135deg,#ccffff,#99ffff);border-color:#33ffff}
+  .c-FAVOR{background:linear-gradient(135deg,#ffccff,#ff99ff);border-color:#ff33ff}
+  .c-CAT{background:linear-gradient(135deg,#fff2cc,#ffe699);border-color:#ffcc00}
+  .chat-ov{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;backdrop-filter:blur(2px)}
+  .chat-ov.on{display:block}
+  .chat-p{position:fixed;right:20px;top:50%;transform:translateY(-50%) translateX(120%);width:320px;height:400px;
+    display:flex;flex-direction:column;z-index:201;transition:transform .3s;background:rgba(255,255,255,.9)}
+  .chat-p.on{transform:translateY(-50%) translateX(0)}
+  .chat-h{padding:14px;border-bottom:1px solid rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:center;font-weight:bold}
+  .chat-x{cursor:pointer;font-size:20px;color:var(--red);padding:0 5px}
+  .chat-m{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+  .chat-m .u{color:var(--red);font-weight:bold}
+  .chat-i{display:flex;padding:12px;gap:8px;border-top:1px solid rgba(0,0,0,.1)}
+  .chat-i input{padding:8px;font-size:14px} .chat-i button{padding:8px 14px;font-size:14px}
+  .chat-f{position:fixed;right:20px;bottom:190px;z-index:100;padding:10px 14px;border-radius:20px;
+    background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border:1px solid #fff;
+    box-shadow:0 4px 10px rgba(0,0,0,.1);cursor:pointer;font-weight:bold;font-size:14px;display:none}
+  .chat-f.on{display:block}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(10px);display:flex;
+    justify-content:center;align-items:center;z-index:999;opacity:0;pointer-events:none;transition:.3s;padding:20px}
+  .ov.on{opacity:1;pointer-events:auto}
+  .modal{width:100%;max-width:500px;padding:26px;display:flex;flex-direction:column;gap:14px;
+    text-align:center;transform:scale(.9);transition:.3s;max-height:90vh;overflow-y:auto}
+  .ov.on .modal{transform:scale(1)}
+  .modal h2{font-size:22px;color:var(--red-dark)}
+  .modal p{font-size:14px;color:var(--text-l)}
+  .mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .mcol{display:flex;flex-direction:column;gap:8px}
+  .shake{animation:shake .5s cubic-bezier(.36,.07,.19,.97) both}
+  @keyframes shake{10%,90%{transform:translate3d(-4px,0,0)}20%,80%{transform:translate3d(6px,0,0)}
+    30%,50%,70%{transform:translate3d(-8px,0,0)}40%,60%{transform:translate3d(8px,0,0)}}
+  .flash{animation:flashRed .6s ease-out}
+  @keyframes flashRed{0%{box-shadow:inset 0 0 0 100vw rgba(255,0,0,.8)}100%{box-shadow:inset 0 0 0 100vw rgba(255,0,0,0)}}
+  .particle{position:absolute;border-radius:50%;pointer-events:none;z-index:1000}
+  .nope-btn{position:fixed;bottom:40%;left:50%;transform:translate(-50%,50%);z-index:200;
+    padding:14px 36px;font-size:22px;background:linear-gradient(135deg,#ff0000,#ff6b6b);
+    color:#fff;border-radius:50px;box-shadow:0 0 20px rgba(255,0,0,.6);border:3px solid #fff;cursor:pointer;
+    animation:pulseNope .6s infinite alternate}
+  @keyframes pulseNope{from{transform:translate(-50%,50%) scale(1)}to{transform:translate(-50%,50%) scale(1.08)}}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);
+    color:#fff;padding:12px 24px;border-radius:30px;font-weight:bold;z-index:10000;
+    animation:toastIn .3s ease-out;font-size:14px}
+  @keyframes toastIn{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  .stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.1);font-size:13px}
+  .stat-row:last-child{border:none}
+  @media (max-width:600px){
+    .card{width:66px;height:98px}
+    .card .ic{font-size:26px} .card .tt{font-size:8px} .card .ds{display:none}
+    .pile{width:78px;height:110px;font-size:28px}
+    .chat-p{width:100%;right:0;height:50vh;top:auto;bottom:0;transform:translateY(100%);border-radius:20px 20px 0 0}
+    .chat-p.on{transform:translateY(0)}
+    .glog{max-width:150px;font-size:10px}
   }
 </style>
 </head>
 <body>
-
 <div class="glow"></div>
 
-<!-- SCREEN: HOME -->
-<div id="screen-home" class="screen active">
-  <div class="glass-panel home-box">
+<!-- ============ HOME ============ -->
+<div id="sc-home" class="screen on">
+  <div class="glass home-box">
     <h1 class="home-title">Mèo Nổ</h1>
-    <p class="home-subtitle">Exploding Kittens - Liquid Glass</p>
-    <input type="text" id="playerName" placeholder="Nhập tên của bạn..." maxlength="15" value="">
-    <button class="btn-primary" onclick="UI.createRoom()">Tạo Phòng (Online)</button>
-    <button onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia Phòng</button>
-    <div id="joinArea" style="display:none; flex-direction:column; gap:10px;">
-      <input type="text" id="joinCode" placeholder="Mã phòng (6 ký tự)" maxlength="6" style="text-transform:uppercase">
-      <button onclick="UI.joinRoom()">Vào</button>
+    <p class="home-sub">Exploding Kittens · Full Rules</p>
+    <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="15">
+    <button class="btn-p" onclick="UI.createRoom()">Tạo Phòng (BroadcastChannel)</button>
+    <button class="btn-o" onclick="document.getElementById('joinArea').style.display='flex'">Tham Gia</button>
+    <div id="joinArea" style="display:none; flex-direction:column; gap:8px;">
+      <input type="text" id="joinCode" placeholder="Mã phòng" maxlength="6" style="text-transform:uppercase">
+      <button onclick="UI.joinRoom()">Vào Phòng</button>
     </div>
-    <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:10px 0;">
-    <button onclick="UI.startSolo()">Chơi với Bot AI</button>
+    <hr style="border:0;border-top:1px solid rgba(0,0,0,.1)">
+    <button onclick="UI.startSolo()">🎮 Chơi với Bot (3 người)</button>
   </div>
 </div>
 
-<!-- SCREEN: LOBBY -->
-<div id="screen-lobby" class="screen">
-  <div class="glass-panel lobby-box">
-    <h2 style="text-align:center; color:var(--red-dark)">Phòng Chờ</h2>
-    <div class="room-code" id="lobbyCode" onclick="navigator.clipboard.writeText(this.innerText); alert('Đã copy mã phòng!')">------</div>
-    <div style="text-align:center; font-size:12px; color:#666; margin-top:-10px">Nhấn vào mã để copy</div>
-    <div class="player-list" id="lobbyPlayers"></div>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button id="btnAddBot" style="display:none" onclick="UI.addBot()">+ Thêm Bot</button>
-      <button class="btn-primary" id="btnStart" style="display:none" onclick="UI.startMultiplayerGame()">Bắt Đầu</button>
-      <button class="btn-danger" onclick="UI.leaveLobby()">Rời Phòng</button>
+<!-- ============ LOBBY ============ -->
+<div id="sc-lobby" class="screen">
+  <div class="glass lobby-box">
+    <h2 style="text-align:center;color:var(--red-dark)">Phòng Chờ</h2>
+    <div class="room-code" id="lobbyCode" onclick="navigator.clipboard.writeText(this.innerText); UI.toast('Đã copy!')">------</div>
+    <div style="text-align:center;font-size:11px;color:#666">Nhấn mã để copy · Chia sẻ mã cho bạn bè</div>
+    <div class="plist" id="lobbyPlayers"></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button id="btnAddBot" style="display:none" onclick="UI.addBot()" class="btn-o">+ Bot</button>
+      <button class="btn-p" id="btnStart" style="display:none" onclick="UI.startMultiplayerGame()">Bắt Đầu</button>
+      <button class="btn-d" onclick="UI.leaveRoom()">Rời</button>
     </div>
   </div>
 </div>
 
-<!-- SCREEN: GAME -->
-<div id="screen-game" class="screen">
-  <div class="glass-panel game-header" style="--cut:15px">
-    <div class="header-badge">Sống: <span id="uiAlive">0</span></div>
-    <div class="header-badge" id="uiTurn" style="color:var(--red); font-weight:900;">Lượt: ...</div>
-    <div class="header-badge">Bài: <span id="uiDeck">0</span></div>
-    <button onclick="UI.leaveLobby()" style="padding: 5px 15px; font-size: 12px; background: transparent; border: 1px solid var(--red); color: var(--red);">Thoát</button>
+<!-- ============ GAME ============ -->
+<div id="sc-game" class="screen">
+  <div class="glass ghead" style="--cut:14px">
+    <div class="badge">Sống: <span id="uiAlive">0</span></div>
+    <div class="badge hot" id="uiTurn">Lượt: ...</div>
+    <div class="badge">Bài: <span id="uiDeck">0</span></div>
+    <div class="badge" id="uiTurnsLeft" style="display:none;background:var(--red);color:#fff;">×1</div>
+    <button onclick="UI.leaveRoom()" style="padding:5px 12px;font-size:11px;background:transparent;border:1px solid var(--red);color:var(--red)">Thoát</button>
   </div>
-
-  <div class="opponents-area" id="opponentsArea"></div>
-
-  <div class="board-center">
-    <div class="game-log" id="gameLog"></div>
-    <div class="pile discard-pile" id="discardPile"></div>
-    <div class="pile deck-pile" id="deckPile" onclick="Game.drawCard()">
-      🂠 <div class="badge" id="deckBadge">0</div>
+  <div class="opps" id="opponentsArea"></div>
+  <div class="board">
+    <div class="glog" id="gameLog"></div>
+    <div class="pile disc" id="discardPile">🗑️</div>
+    <div class="pile deck" id="deckPile" onclick="UI.onDrawClick()">
+      🂠 <div class="badge-p" id="deckBadge">0</div>
     </div>
   </div>
-
-  <div class="glass-panel hand-area" style="--cut:15px">
-    <div style="font-size:12px; font-weight:bold; color:var(--text-light); margin-bottom:5px;">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
+  <div class="glass hand-area" style="--cut:14px">
+    <div style="font-size:11px;font-weight:bold;color:var(--text-l);margin-bottom:4px;">Bài Trên Tay (<span id="uiHandCount">0</span>)</div>
     <div class="hand-scroll" id="handArea"></div>
   </div>
 </div>
 
-<!-- CHAT SYSTEM -->
-<div class="chat-overlay" id="chatOverlay" onclick="UI.toggleChat()"></div>
-<div class="chat-panel" id="chatPanel">
-  <div class="chat-header">
-    <span>💬 Trò Chuyện</span>
-    <span class="chat-close" onclick="UI.toggleChat()">✖</span>
-  </div>
-  <div class="chat-msgs" id="chatMsgs"></div>
-  <div class="chat-input-area">
-    <input type="text" id="chatInput" onkeypress="if(event.key==='Enter')UI.sendChat()">
+<!-- ============ CHAT ============ -->
+<div class="chat-ov" id="chatOverlay" onclick="UI.toggleChat()"></div>
+<div class="chat-p" id="chatPanel">
+  <div class="chat-h"><span>💬 Chat</span><span class="chat-x" onclick="UI.toggleChat()">✖</span></div>
+  <div class="chat-m" id="chatMsgs"></div>
+  <div class="chat-i">
+    <input type="text" id="chatInput" onkeypress="if(event.key==='Enter')UI.sendChat()" placeholder="Nhập...">
     <button onclick="UI.sendChat()">Gửi</button>
   </div>
 </div>
-<div class="chat-fab" id="chatFab" onclick="UI.toggleChat()" style="display: none;">💬 Chat</div>
+<div class="chat-f" id="chatFab" onclick="UI.toggleChat()">💬</div>
 
-<!-- MODALS -->
-<div class="overlay" id="overlayModal">
-  <div class="glass-panel modal-box" id="modalContent"></div>
+<!-- ============ MODAL ============ -->
+<div class="ov" id="overlayModal">
+  <div class="glass modal" id="modalContent"></div>
 </div>
 
 <script>
-/* ================= GAME DATA ================= */
-const CARD_TYPES = {
-  EK: { name: 'Mèo Nổ', icon: '💥', desc: 'Rút trúng là nổ!', class: 'EK' },
-  DEFUSE: { name: 'Gỡ Bom', icon: '🧯', desc: 'Cứu mạng khi trúng bom', class: 'DEFUSE' },
-  NOPE: { name: 'Không', icon: '🙅', desc: 'Hủy hành động đối thủ', class: 'NOPE' },
-  ATTACK: { name: 'Tấn Công', icon: '⚔️', desc: 'Bắt người sau đi 2 lượt', class: 'ATTACK' },
-  SKIP: { name: 'Bỏ Lượt', icon: '⏭️', desc: 'Kết thúc lượt không rút', class: 'SKIP' },
-  SEE_FUTURE: { name: 'Nhìn Trước', icon: '🔮', desc: 'Xem 3 lá trên cùng', class: 'SEE_FUTURE' },
-  SHUFFLE: { name: 'Xáo Bài', icon: '🔀', desc: 'Xáo trộn bộ bài', class: 'SHUFFLE' },
-  FAVOR: { name: 'Xin Bài', icon: '🫴', desc: 'Lấy 1 bài ngẫu nhiên', class: 'FAVOR' },
-  CAT_TACO: { name: 'Mèo Taco', icon: '🌮', desc: 'Combo', class: 'CAT' },
-  CAT_RAINBOW: { name: 'Mèo Cầu Vồng', icon: '🌈', desc: 'Combo', class: 'CAT' },
-  CAT_BEARD: { name: 'Mèo Râu', icon: '🧔', desc: 'Combo', class: 'CAT' },
-  CAT_POTATO: { name: 'Mèo Khoai', icon: '🥔', desc: 'Combo', class: 'CAT' },
-  CAT_HAIRY: { name: 'Mèo Lông', icon: '🐈', desc: 'Combo', class: 'CAT' }
+/* ==================================================================
+   CONSTANTS
+   ================================================================== */
+const CARDS = {
+  EK:          { name:'Mèo Nổ',       icon:'💥', class:'EK',         desc:'Rút trúng là nổ' },
+  DEFUSE:      { name:'Gỡ Bom',       icon:'🧯', class:'DEFUSE',     desc:'Cứu mạng' },
+  NOPE:        { name:'Nope',         icon:'🙅', class:'NOPE',       desc:'Chặn hành động' },
+  ATTACK:      { name:'Tấn Công',     icon:'⚔️', class:'ATTACK',     desc:'+2 lượt cho người sau' },
+  SKIP:        { name:'Bỏ Lượt',      icon:'⏭️', class:'SKIP',       desc:'Kết thúc không rút' },
+  SEE_FUTURE:  { name:'Nhìn Trước',   icon:'🔮', class:'SEE_FUTURE', desc:'Xem 3 lá đầu' },
+  SHUFFLE:     { name:'Xáo Bài',      icon:'🔀', class:'SHUFFLE',    desc:'Xáo trộn bộ bài' },
+  FAVOR:       { name:'Xin Bài',      icon:'🫴', class:'FAVOR',      desc:'Xin 1 lá' },
+  CAT_TACO:    { name:'Mèo Taco',     icon:'🌮', class:'CAT' },
+  CAT_RAINBOW: { name:'Mèo Cầu Vồng', icon:'🌈', class:'CAT' },
+  CAT_BEARD:   { name:'Mèo Râu',      icon:'🧔', class:'CAT' },
+  CAT_POTATO:  { name:'Mèo Khoai',    icon:'🥔', class:'CAT' },
+  CAT_HAIRY:   { name:'Mèo Lông',     icon:'🐈', class:'CAT' }
 };
-const CATS = ['CAT_TACO', 'CAT_RAINBOW', 'CAT_BEARD', 'CAT_POTATO', 'CAT_HAIRY'];
+const CATS = ['CAT_TACO','CAT_RAINBOW','CAT_BEARD','CAT_POTATO','CAT_HAIRY'];
+const NOPE_WINDOW = 3500; // ms
 
-const Utils = {
-  uid: () => Math.random().toString(36).substring(2, 9),
-  shuffle: (a) => { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; },
-  code: () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
+/* ==================================================================
+   UTILS
+   ================================================================== */
+const U = {
+  uid: () => Math.random().toString(36).slice(2,10),
+  shuffle: a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; },
+  code: () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; },
+  clone: o => JSON.parse(JSON.stringify(o)),
+  pick: arr => arr[Math.floor(Math.random()*arr.length)]
 };
 
-/* ================= SOUND ENGINE ================= */
+/* ==================================================================
+   SOUND
+   ================================================================== */
 const Sound = {
-  ctx: null, muted: false,
-  init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-  play(type) {
-    if(this.muted) return;
-    try {
-      this.init();
-      if(this.ctx.state === 'suspended') this.ctx.resume();
+  ctx:null,
+  init(){ if(!this.ctx) try { this.ctx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} },
+  play(type){
+    try{
+      this.init(); if(!this.ctx) return;
+      if(this.ctx.state==='suspended') this.ctx.resume();
+      const t = this.ctx.currentTime;
       const o = this.ctx.createOscillator(), g = this.ctx.createGain();
       o.connect(g); g.connect(this.ctx.destination);
-      
-      const now = this.ctx.currentTime;
-      if(type === 'draw') { o.type='sine'; o.frequency.setValueAtTime(400, now); o.frequency.exponentialRampToValueAtTime(600, now+0.1); g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.1); o.start(now); o.stop(now+0.1); }
-      else if(type === 'play') { o.type='triangle'; o.frequency.setValueAtTime(300, now); o.frequency.exponentialRampToValueAtTime(100, now+0.2); g.gain.setValueAtTime(0.2, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.2); o.start(now); o.stop(now+0.2); }
-      else if(type === 'boom') { o.type='sawtooth'; o.frequency.setValueAtTime(100, now); o.frequency.exponentialRampToValueAtTime(20, now+0.5); g.gain.setValueAtTime(0.4, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.5); o.start(now); o.stop(now+0.5); }
-      else if(type === 'defuse') { o.type='sine'; o.frequency.setValueAtTime(800, now); o.frequency.linearRampToValueAtTime(1200, now+0.2); g.gain.setValueAtTime(0.2, now); g.gain.linearRampToValueAtTime(0, now+0.2); o.start(now); o.stop(now+0.2); }
-      else if(type === 'nope') { o.type='square'; o.frequency.setValueAtTime(200, now); o.frequency.linearRampToValueAtTime(150, now+0.15); g.gain.setValueAtTime(0.15, now); g.gain.linearRampToValueAtTime(0, now+0.15); o.start(now); o.stop(now+0.15); }
-    } catch(e) {}
+      const cfg = {
+        draw:   { f:380, f2:620, dur:.1,  wave:'sine',     vol:.08 },
+        play:   { f:340, f2:120, dur:.18, wave:'triangle', vol:.12 },
+        boom:   { f:110, f2:25,  dur:.5,  wave:'sawtooth', vol:.28 },
+        defuse: { f:700, f2:1200,dur:.25, wave:'sine',     vol:.15 },
+        nope:   { f:220, f2:150, dur:.15, wave:'square',   vol:.12 },
+        win:    { f:500, f2:800, dur:.4,  wave:'sine',     vol:.2 }
+      }[type];
+      if(!cfg) return;
+      o.type = cfg.wave;
+      o.frequency.setValueAtTime(cfg.f, t);
+      o.frequency.exponentialRampToValueAtTime(cfg.f2, t+cfg.dur);
+      g.gain.setValueAtTime(cfg.vol, t);
+      g.gain.exponentialRampToValueAtTime(.001, t+cfg.dur);
+      o.start(t); o.stop(t+cfg.dur);
+    } catch(e){}
   }
 };
 
-/* ================= VFX ENGINE ================= */
+/* ==================================================================
+   VFX
+   ================================================================== */
 const VFX = {
-  shake() {
-    const el = document.body;
-    el.classList.add('shake');
-    setTimeout(() => el.classList.remove('shake'), 500);
-  },
-  flash() {
-    const el = document.getElementById('screen-game');
-    el.classList.add('flash-red');
-    setTimeout(() => el.classList.remove('flash-red'), 500);
-  },
-  explode(x, y) {
-    this.shake();
-    this.flash();
-    Sound.play('boom');
-    for(let i=0; i<30; i++) {
+  shake(){ document.body.classList.add('shake'); setTimeout(()=>document.body.classList.remove('shake'),500); },
+  flash(){ const el = document.getElementById('sc-game'); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),600); },
+  explode(x,y){
+    this.shake(); this.flash(); Sound.play('boom');
+    for(let i=0;i<35;i++){
       const p = document.createElement('div');
       p.className = 'particle';
-      const size = Math.random() * 20 + 10;
-      p.style.width = size + 'px'; p.style.height = size + 'px';
-      p.style.left = x + 'px'; p.style.top = y + 'px';
-      p.style.background = `hsl(${Math.random()*40}, 100%, 50%)`;
+      const s = Math.random()*18+8;
+      p.style.cssText = `width:${s}px;height:${s}px;left:${x}px;top:${y}px;background:hsl(${Math.random()*40},100%,55%)`;
       document.body.appendChild(p);
-      
-      const angle = Math.random() * Math.PI * 2;
-      const velocity = Math.random() * 150 + 50;
-      const tx = Math.cos(angle) * velocity;
-      const ty = Math.sin(angle) * velocity;
-      
+      const a = Math.random()*Math.PI*2, v = Math.random()*160+50;
       p.animate([
-        { transform: `translate(0, 0) scale(1)`, opacity: 1 },
-        { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
-      ], { duration: 600 + Math.random()*400, easing: 'cubic-bezier(0, .9, .57, 1)' }).onfinish = () => p.remove();
+        { transform:'translate(0,0) scale(1)', opacity:1 },
+        { transform:`translate(${Math.cos(a)*v}px,${Math.sin(a)*v}px) scale(0)`, opacity:0 }
+      ], { duration:600+Math.random()*400, easing:'cubic-bezier(0,.9,.57,1)' }).onfinish = () => p.remove();
     }
   }
 };
 
-/* ================= GAME LOGIC ENGINE ================= */
-const Game = {
+/* ==================================================================
+   ENGINE — pure game logic (runs only on HOST)
+   ================================================================== */
+const Engine = {
   state: null,
-  isHost: false,
-  myId: null,
-  botTimer: null,
+  hostId: null,
+  pendingTimer: null,
+  onChange: null,        // callback khi state đổi
+  onChangeMeta: null,    // callback với meta {type, data}
 
-  init(players, isHost = true) {
-    this.isHost = isHost;
-    this.myId = UI.myId; // Gắn ID người chơi hiện tại
+  /* ---------- INIT ---------- */
+  createGame(players, hostId) {
+    this.hostId = hostId;
     this.state = {
-      players: players.map((p, i) => ({ ...p, hand: [], alive: true, index: i })),
-      deck: [], discard: [], logs: [],
-      turnIdx: 0, turnsLeft: 1, phase: 'playing',
-      pending: null, peekData: null, winner: null
+      phase: 'playing',
+      players: players.map(p => ({
+        id: p.id, name: p.name, isBot: !!p.isBot,
+        hand: [], alive: true,
+        stats: { turns: 0, cardsPlayed: 0, defuses: 0 }
+      })),
+      deck: [], discard: [],
+      turnIdx: 0, turnsLeft: 1,
+      pending: null,       // { playerId, primary, cards, targetId, payload, nopeCount }
+      peekFor: null,       // { playerId, cards }
+      awaitingChoice: null,// { type:'defuse'|'favor', playerId/targetId }
+      winner: null,
+      logs: []
     };
-    this.buildDeck();
-    this.deal();
-    this.log(`Trận đấu bắt đầu! Đến lượt ${this.currentPlayer.name}`);
+    this.setupDeck();
+    this.state.turnIdx = Math.floor(Math.random() * players.length);
+    this.state.players[this.state.turnIdx].stats.turns = 1;
+    this.log(`🎲 ${this.state.players[this.state.turnIdx].name} đi trước!`);
+    this.notify();
   },
 
-  get players() { return this.state.players; },
-  get currentPlayer() { return this.state.players[this.state.turnIdx]; },
-  get myPlayer() { return this.state.players.find(p => p.id === this.myId); },
+  setupDeck() {
+    const n = this.state.players.length;
+    const deck = this.state.deck;
 
-  buildDeck() {
-    const d = [];
-    const n = this.players.length;
-    for(let i=0; i<n+2; i++) d.push('DEFUSE');
-    for(let i=0; i<4; i++) d.push('ATTACK');
-    for(let i=0; i<4; i++) d.push('SKIP');
-    for(let i=0; i<4; i++) d.push('FAVOR');
-    for(let i=0; i<4; i++) d.push('SHUFFLE');
-    for(let i=0; i<5; i++) d.push('SEE_FUTURE');
-    for(let i=0; i<5; i++) d.push('NOPE');
-    for(let c of CATS) { for(let i=0; i<4; i++) d.push(c); }
-    this.state.deck = Utils.shuffle(d);
-  },
+    // Basic cards
+    for (let i=0;i<4;i++) deck.push('ATTACK');
+    for (let i=0;i<4;i++) deck.push('SKIP');
+    for (let i=0;i<4;i++) deck.push('FAVOR');
+    for (let i=0;i<4;i++) deck.push('SHUFFLE');
+    for (let i=0;i<5;i++) deck.push('SEE_FUTURE');
+    for (let i=0;i<5;i++) deck.push('NOPE');
+    for (const c of CATS) for (let i=0;i<4;i++) deck.push(c);
+    // Extra defuses (6 total, 1 per player, rest into deck)
+    for (let i=0;i<Math.max(0, 6-n);i++) deck.push('DEFUSE');
 
-  deal() {
-    for(let p of this.players) {
-      const idx = this.state.deck.indexOf('DEFUSE');
-      if(idx > -1) { this.state.deck.splice(idx, 1); p.hand.push('DEFUSE'); }
-    }
-    for(let i=0; i<7; i++) {
-      for(let p of this.players) {
-        if(this.state.deck.length) p.hand.push(this.state.deck.pop());
-      }
-    }
-    for(let i=0; i<this.players.length-1; i++) this.state.deck.push('EK');
-    this.state.deck = Utils.shuffle(this.state.deck);
-    
-    // Đảm bảo 3 lá đầu không phải EK
-    for(let k=0; k<3; k++) {
-      let idx = this.state.deck.length - 1 - k;
-      if(this.state.deck[idx] === 'EK') {
-        let swapIdx = Math.floor(Math.random() * (this.state.deck.length/2));
-        if(this.state.deck[swapIdx] !== 'EK') {
-          [this.state.deck[idx], this.state.deck[swapIdx]] = [this.state.deck[swapIdx], this.state.deck[idx]];
+    U.shuffle(deck);
+
+    // Deal 7 each + 1 Defuse
+    for (let i=0;i<7;i++) for (const p of this.state.players) p.hand.push(deck.pop());
+    for (const p of this.state.players) p.hand.push('DEFUSE');
+
+    // Add n-1 EKs
+    for (let i=0;i<n-1;i++) deck.push('EK');
+    U.shuffle(deck);
+
+    // Avoid instant death: top 3 not EK
+    for (let i=0;i<3 && i<deck.length;i++){
+      const idx = deck.length - 1 - i;
+      if (deck[idx] === 'EK'){
+        for (let j=0;j<deck.length-3;j++){
+          if (deck[j] !== 'EK'){ [deck[idx],deck[j]] = [deck[j],deck[idx]]; break; }
         }
       }
     }
-    this.state.turnIdx = Math.floor(Math.random() * this.players.length);
   },
 
-  log(msg) {
-    if(!this.state) return;
-    this.state.logs.push(msg);
-    if(this.state.logs.length > 20) this.state.logs.shift();
-    UI.renderLog();
+  /* ---------- HELPERS ---------- */
+  cur(){ return this.state.players[this.state.turnIdx]; },
+  byId(id){ return this.state.players.find(p => p.id === id); },
+  alive(){ return this.state.players.filter(p => p.alive); },
+  log(msg){ this.state.logs.push(msg); if (this.state.logs.length > 30) this.state.logs.shift(); },
+  notify(meta){
+    if (this.onChange) this.onChange(meta);
   },
 
-  nextTurn() {
+  /* ---------- TURN ---------- */
+  endTurn(){
     this.state.pending = null;
-    this.state.peekData = null;
-    UI.closeModal();
-    
-    do {
-      this.state.turnIdx = (this.state.turnIdx + 1) % this.players.length;
-    } while(!this.currentPlayer.alive);
+    this.state.peekFor = null;
+    clearTimeout(this.pendingTimer);
+    let idx = this.state.turnIdx;
+    do { idx = (idx + 1) % this.state.players.length; } while (!this.state.players[idx].alive);
+    this.state.turnIdx = idx;
     this.state.turnsLeft = 1;
-    this.log(`Đến lượt ${this.currentPlayer.name}`);
-    
-    UI.renderGame();
-    if(this.isHost) UI.syncState();
-    this.checkBots();
+    this.cur().stats.turns++;
+    this.log(`→ Lượt của ${this.cur().name}`);
+    this.notify({ type:'turn' });
   },
 
-  checkWin() {
-    const alive = this.players.filter(p => p.alive);
-    if(alive.length <= 1) {
-      this.state.phase = 'ended';
-      this.state.winner = alive[0];
-      this.log(`🏆 ${alive[0]?.name} CHIẾN THẮNG!`);
-      UI.showWin(alive[0]);
-      if(this.isHost) UI.syncState();
-      return true;
+  advanceTo(turns){
+    this.state.pending = null;
+    this.state.peekFor = null;
+    clearTimeout(this.pendingTimer);
+    let idx = this.state.turnIdx;
+    do { idx = (idx + 1) % this.state.players.length; } while (!this.state.players[idx].alive);
+    this.state.turnIdx = idx;
+    this.state.turnsLeft = turns;
+    this.cur().stats.turns++;
+    this.log(`→ Lượt của ${this.cur().name} (${turns} lượt)`);
+    this.notify({ type:'turn' });
+  },
+
+  /* ---------- VALIDATION ---------- */
+  canAct(playerId, action){
+    if (this.state.phase !== 'playing') return false;
+    const p = this.byId(playerId);
+    if (!p || !p.alive) return false;
+
+    if (action === 'nope') {
+      return !!this.state.pending && p.hand.includes('NOPE');
     }
-    return false;
-  },
-
-  playCard(cardType, targetId = null) {
-    if(this.state.pending) return;
-    const me = this.myPlayer;
-    if(!me || me.id !== this.currentPlayer.id) return;
-
-    const idx = me.hand.indexOf(cardType);
-    if(idx === -1) return;
-    
-    if(CATS.includes(cardType)) {
-      const idx2 = me.hand.indexOf(cardType, idx + 1);
-      if(idx2 === -1) return alert('Cần 2 lá mèo giống nhau!');
-      me.hand.splice(idx2, 1);
+    if (action === 'clearPeek') {
+      return this.state.peekFor?.playerId === playerId;
     }
-    
-    me.hand.splice(idx, 1);
-    this.state.discard.push(cardType);
-    
-    this.state.pending = { playerId: me.id, cardType, targetId, nopes: 0 };
-    Sound.play('play');
-    this.log(`${me.name} đánh ${CARD_TYPES[cardType].name}`);
-    
-    UI.renderGame();
-    if(this.isHost) UI.syncState();
+    if (action === 'defuse') {
+      return this.state.awaitingChoice?.type === 'defuse' && this.state.awaitingChoice.playerId === playerId;
+    }
+    if (action === 'favor') {
+      return this.state.awaitingChoice?.type === 'favor' && this.state.awaitingChoice.targetId === playerId;
+    }
 
-    setTimeout(() => {
-      if(this.state.pending) {
-        this.resolvePending();
-        if(this.isHost) UI.syncState();
-      }
-    }, 2500);
+    // Normal turn actions
+    if (this.state.awaitingChoice) return false;
+    if (this.state.pending) return false;
+    if (this.cur().id !== playerId) return false;
+    return true;
   },
 
-  useNope(playerId) {
-    if(!this.state.pending) return;
-    const p = this.players.find(x => x.id === playerId);
-    if(!p || !p.hand.includes('NOPE')) return;
+  /* ---------- PLAY CARD ---------- */
+  playCards(playerId, cardTypes, targetId, payload = {}) {
+    if (!this.canAct(playerId, 'play')) return false;
+    const p = this.byId(playerId);
+
+    // Check hand has all cards
+    const hand = [...p.hand];
+    for (const c of cardTypes) {
+      const idx = hand.indexOf(c);
+      if (idx === -1) return false;
+      hand.splice(idx, 1);
+    }
+
+    const primary = cardTypes[0];
+    if (primary === 'EK' || primary === 'DEFUSE' || primary === 'NOPE') return false;
+
+    if (CATS.includes(primary)) {
+      if (cardTypes.length !== 2 && cardTypes.length !== 3) return false;
+      if (!cardTypes.every(c => c === primary)) return false;
+      const t = this.byId(targetId);
+      if (!t || !t.alive || t.id === playerId) return false;
+    }
+    if (primary === 'FAVOR') {
+      const t = this.byId(targetId);
+      if (!t || !t.alive || t.id === playerId || t.hand.length === 0) return false;
+    }
+
+    // Consume cards
+    for (const c of cardTypes) {
+      p.hand.splice(p.hand.indexOf(c), 1);
+      this.state.discard.push(c);
+    }
+    p.stats.cardsPlayed += cardTypes.length;
+
+    // Setup pending
+    this.state.pending = {
+      playerId, primary, cards: cardTypes, targetId, payload,
+      nopeCount: 0, timestamp: Date.now()
+    };
+    this.log(`${p.name} đánh ${CARDS[primary].name}${cardTypes.length > 1 ? ' ×'+cardTypes.length : ''}`);
+
+    this.scheduleResolve();
+    this.notify({ type:'play', playerId });
+    return true;
+  },
+
+  scheduleResolve(){
+    clearTimeout(this.pendingTimer);
+    const pending = this.state.pending;
+    this.pendingTimer = setTimeout(() => {
+      if (this.state.pending === pending) this.resolvePending();
+    }, NOPE_WINDOW);
+  },
+
+  /* ---------- NOPE ---------- */
+  playNope(playerId){
+    if (!this.state.pending) return false;
+    const p = this.byId(playerId);
+    if (!p || !p.alive || !p.hand.includes('NOPE')) return false;
 
     p.hand.splice(p.hand.indexOf('NOPE'), 1);
     this.state.discard.push('NOPE');
-    this.state.pending.nopes++;
+    p.stats.cardsPlayed++;
+    this.state.pending.nopeCount++;
+    this.log(`${p.name} hô NOPE! (×${this.state.pending.nopeCount})`);
     Sound.play('nope');
-    this.log(`${p.name} dùng NOPE!`);
-    
-    UI.renderGame();
-    if(this.isHost) UI.syncState();
+
+    this.scheduleResolve();
+    this.notify({ type:'nope' });
+    return true;
   },
 
-  resolvePending() {
-    const { playerId, cardType, targetId, nopes } = this.state.pending;
+  resolvePending(){
+    clearTimeout(this.pendingTimer);
+    const pending = this.state.pending;
+    if (!pending) return;
     this.state.pending = null;
-    const p = this.players.find(x => x.id === playerId);
 
-    if(nopes % 2 !== 0) {
-      this.log(`Hành động của ${p.name} bị hủy bởi NOPE!`);
-      UI.renderGame();
+    if (pending.nopeCount % 2 === 1) {
+      this.log(`❌ Hành động bị NOPE hủy!`);
+      this.notify({ type:'resolve', cancelled:true });
       return;
     }
 
-    switch(cardType) {
-      case 'ATTACK':
-        this.state.turnsLeft += 1;
-        this.log(`${p.name} dùng ATTACK!`);
-        this.nextTurn();
-        break;
-      case 'SKIP':
+    const p = this.byId(pending.playerId);
+    if (!p || !p.alive) {
+      this.notify({ type:'resolve', cancelled:true });
+      return;
+    }
+
+    switch (pending.primary) {
+      case 'ATTACK': {
+        const nextTurns = this.state.turnsLeft + 1;
+        this.log(`⚔️ ${p.name} tấn công! Người sau phải đi ${nextTurns} lượt.`);
+        this.advanceTo(nextTurns);
+        return;
+      }
+      case 'SKIP': {
         this.state.turnsLeft--;
-        this.log(`${p.name} dùng SKIP.`);
-        if(this.state.turnsLeft <= 0) this.nextTurn();
-        else UI.renderGame();
+        this.log(`⏭️ ${p.name} bỏ lượt.`);
+        if (this.state.turnsLeft <= 0) this.endTurn();
+        else this.notify({ type:'resolve' });
+        return;
+      }
+      case 'SHUFFLE': {
+        U.shuffle(this.state.deck);
+        this.log(`🔀 ${p.name} xáo bài.`);
         break;
-      case 'SHUFFLE':
-        this.state.deck = Utils.shuffle(this.state.deck);
-        this.log(`${p.name} xáo bài.`);
-        UI.renderGame();
+      }
+      case 'SEE_FUTURE': {
+        const top = [];
+        for (let i=0;i<3 && i<this.state.deck.length;i++){
+          top.push(this.state.deck[this.state.deck.length-1-i]);
+        }
+        this.state.peekFor = { playerId: pending.playerId, cards: top };
+        this.log(`🔮 ${p.name} xem tương lai.`);
         break;
-      case 'SEE_FUTURE':
-        this.log(`${p.name} xem tương lai.`);
-        if(this.myId === p.id) {
-          UI.showPeekModal(this.state.deck.slice(-3).reverse());
+      }
+      case 'FAVOR': {
+        const t = this.byId(pending.targetId);
+        if (t && t.alive && t.hand.length > 0) {
+          this.log(`🫴 ${p.name} xin bài từ ${t.name}.`);
+          this.state.awaitingChoice = { type:'favor', fromId: pending.playerId, targetId: t.id };
         } else {
-          UI.renderGame();
+          this.log(`Không thể xin bài.`);
         }
         break;
-      case 'FAVOR':
-        const t = this.players.find(x => x.id === targetId);
-        if(t && t.hand.length) {
-          this.log(`${p.name} xin bài từ ${t.name}.`);
-          if(t.isBot) {
-            const stolen = t.hand.splice(Math.floor(Math.random()*t.hand.length), 1)[0];
-            p.hand.push(stolen);
-            UI.renderGame();
-          } else if(this.myId === t.id) {
-            UI.showFavorModal(p, t);
-          } else {
-            UI.renderGame();
-          }
-        }
-        break;
-      default:
-        if(CATS.includes(cardType)) {
-          const t = this.players.find(x => x.id === targetId);
-          if(t && t.hand.length) {
-            const stolen = t.hand.splice(Math.floor(Math.random()*t.hand.length), 1)[0];
-            p.hand.push(stolen);
-            this.log(`${p.name} cướp bài từ ${t.name}.`);
-            Sound.play('draw');
-          }
-        }
-        UI.renderGame();
+      }
+      default: {
+        if (CATS.includes(pending.primary)) this.doCatCombo(p, pending.targetId, pending.cards.length, pending.payload);
+      }
+    }
+    this.notify({ type:'resolve' });
+  },
+
+  doCatCombo(p, targetId, count, payload){
+    const t = this.byId(targetId);
+    if (!t || !t.alive || t.hand.length === 0) return;
+
+    if (count === 2) {
+      const idx = Math.floor(Math.random() * t.hand.length);
+      const stolen = t.hand.splice(idx, 1)[0];
+      p.hand.push(stolen);
+      this.log(`🐱 ${p.name} cướp ngẫu nhiên 1 lá từ ${t.name}.`);
+      Sound.play('draw');
+    } else if (count === 3) {
+      const wanted = payload.namedCard;
+      if (!wanted) return;
+      const idx = t.hand.indexOf(wanted);
+      if (idx > -1) {
+        t.hand.splice(idx, 1);
+        p.hand.push(wanted);
+        this.log(`🐱 ${p.name} lấy ${CARDS[wanted].name} từ ${t.name}.`);
+        Sound.play('draw');
+      } else {
+        this.log(`🐱 ${t.name} không có ${CARDS[wanted].name}. Mất lượt combo.`);
+      }
     }
   },
 
-  drawCard() {
-    if(this.state.pending) return;
-    const me = this.myPlayer;
-    if(!me || me.id !== this.currentPlayer.id) return;
+  /* ---------- DRAW ---------- */
+  drawCard(playerId){
+    if (!this.canAct(playerId, 'draw')) return false;
+    const p = this.byId(playerId);
 
-    Sound.play('draw');
+    if (this.state.deck.length === 0) {
+      this.log(`Bộ bài trống, ${p.name} không rút được.`);
+      this.endTurn();
+      return true;
+    }
+
     const card = this.state.deck.pop();
-    
-    if(card === 'EK') {
-      this.log(`${me.name} rút trúng MÈO NỔ!`);
-      const el = document.getElementById('deckPile');
-      if(el) {
-        const rect = el.getBoundingClientRect();
-        VFX.explode(rect.left + rect.width/2, rect.top + rect.height/2);
-      }
-      
-      if(me.hand.includes('DEFUSE')) {
-        Sound.play('defuse');
-        me.hand.splice(me.hand.indexOf('DEFUSE'), 1);
-        this.log(`${me.name} dùng DEFUSE để cứu mạng!`);
-        if(this.myId === me.id) {
-          UI.showDefuseModal();
-        } else {
-          setTimeout(() => {
-            this.resolveDefuse('random');
-            if(this.isHost) UI.syncState();
-          }, 1000);
-        }
-      } else {
-        me.alive = false;
-        this.log(`💥 ${me.name} đã bị nổ!`);
-        this.state.discard.push('EK');
-        if(this.checkWin()) return;
-        setTimeout(() => this.nextTurn(), 1500);
-        UI.renderGame();
-        if(this.isHost) UI.syncState();
+    Sound.play('draw');
+    this.log(`${p.name} rút 1 lá...`);
+
+    if (card === 'EK') {
+      this.handleEK(p);
+    } else {
+      p.hand.push(card);
+      this.state.turnsLeft--;
+      if (this.state.turnsLeft <= 0) this.endTurn();
+      else this.notify({ type:'draw' });
+    }
+    return true;
+  },
+
+  handleEK(p){
+    this.state.discard.push('EK');
+    this.log(`💥 ${p.name} rút trúng MÈO NỔ!`);
+    const defIdx = p.hand.indexOf('DEFUSE');
+
+    if (defIdx === -1) {
+      p.alive = false;
+      this.state.discard.push(...p.hand);
+      p.hand = [];
+      this.log(`☠️ ${p.name} BỊ LOẠI!`);
+      if (this.checkWin()) return;
+      this.state.turnsLeft = 0;
+      this.endTurn();
+    } else {
+      p.hand.splice(defIdx, 1);
+      p.stats.defuses++;
+      this.state.discard.push('DEFUSE');
+      this.log(`🧯 ${p.name} dùng DEFUSE!`);
+      Sound.play('defuse');
+      this.state.awaitingChoice = { type:'defuse', playerId: p.id };
+      this.notify({ type:'defuse-prompt', playerId: p.id });
+    }
+  },
+
+  placeDefuse(playerId, pos){
+    if (!this.state.awaitingChoice || this.state.awaitingChoice.type !== 'defuse') return false;
+    if (this.state.awaitingChoice.playerId !== playerId) return false;
+
+    let idx;
+    if (pos === 'top') idx = this.state.deck.length;
+    else if (pos === 'bottom') idx = 0;
+    else if (typeof pos === 'number') idx = Math.max(0, Math.min(this.state.deck.length, pos));
+    else idx = Math.floor(Math.random() * (this.state.deck.length + 1));
+
+    this.state.deck.splice(idx, 0, 'EK');
+    this.state.awaitingChoice = null;
+    this.log(`Bom được giấu lại.`);
+
+    // Drawing ends 1 turn
+    this.state.turnsLeft--;
+    if (this.state.turnsLeft <= 0) this.endTurn();
+    else this.notify({ type:'defuse-done' });
+    return true;
+  },
+
+  /* ---------- FAVOR RESOLUTION ---------- */
+  resolveFavor(targetId, cardIdx){
+    if (!this.state.awaitingChoice || this.state.awaitingChoice.type !== 'favor') return false;
+    const { fromId, targetId: expectedTarget } = this.state.awaitingChoice;
+    if (targetId !== expectedTarget) return false;
+
+    const target = this.byId(targetId);
+    const from = this.byId(fromId);
+    if (!target || !from) return false;
+    if (cardIdx < 0 || cardIdx >= target.hand.length) return false;
+
+    const card = target.hand.splice(cardIdx, 1)[0];
+    from.hand.push(card);
+    this.log(`🫴 ${from.name} nhận ${CARDS[card].name} từ ${target.name}.`);
+    this.state.awaitingChoice = null;
+    this.notify({ type:'favor-done' });
+    return true;
+  },
+
+  clearPeek(playerId){
+    if (this.state.peekFor?.playerId !== playerId) return false;
+    this.state.peekFor = null;
+    this.notify({ type:'peek-cleared' });
+    return true;
+  },
+
+  /* ---------- WIN ---------- */
+  checkWin(){
+    const alive = this.alive();
+    if (alive.length <= 1) {
+      this.state.phase = 'ended';
+      this.state.winner = alive[0] || null;
+      this.state.awaitingChoice = null;
+      this.state.pending = null;
+      clearTimeout(this.pendingTimer);
+      if (alive[0]) this.log(`🏆 ${alive[0].name} CHIẾN THẮNG!`);
+      Sound.play('win');
+      this.notify({ type:'win', winner: this.state.winner });
+      return true;
+    }
+    return false;
+  }
+};
+
+/* ==================================================================
+   NET — BroadcastChannel wrapper (host = authority)
+   ================================================================== */
+const Net = {
+  ch: null,
+  isHost: false,
+  roomCode: null,
+  onJoin: null,
+  onAction: null,
+  onChat: null,
+  onState: null,
+  onLobby: null,
+  onStart: null,
+  onHostLeft: null,
+
+  host(roomCode){
+    this.roomCode = roomCode;
+    this.isHost = true;
+    this.ch = new BroadcastChannel('ek_room_' + roomCode);
+    this.ch.onmessage = e => this.route(e.data);
+  },
+  join(roomCode){
+    this.roomCode = roomCode;
+    this.isHost = false;
+    this.ch = new BroadcastChannel('ek_room_' + roomCode);
+    this.ch.onmessage = e => this.route(e.data);
+  },
+  close(){ if (this.ch) { try { this.ch.close(); } catch(e){} this.ch = null; } },
+  send(msg){ if (this.ch) { try { this.ch.postMessage(msg); } catch(e){} } },
+
+  route(msg){
+    if (this.isHost) {
+      switch (msg.type) {
+        case 'join':    this.onJoin?.(msg.player); break;
+        case 'action':  this.onAction?.(msg.playerId, msg.action, msg.payload); break;
+        case 'chat':
+          this.onChat?.(msg.name, msg.text);
+          this.send({ type:'chat', name:msg.name, text:msg.text });
+          break;
+        case 'leave':   this.onJoin?.(msg.playerId, 'leave'); break;
       }
     } else {
-      me.hand.push(card);
-      this.state.turnsLeft--;
-      if(this.state.turnsLeft <= 0) {
-        this.nextTurn();
-      } else {
-        UI.renderGame();
-        if(this.isHost) UI.syncState();
-      }
-    }
-  },
-
-  resolveDefuse(pos) {
-    let idx = pos === 'top' ? this.state.deck.length : (pos === 'bottom' ? 0 : Math.floor(Math.random() * this.state.deck.length));
-    this.state.deck.splice(idx, 0, 'EK');
-    this.log(`${this.myPlayer.name} giấu Mèo Nổ vào bộ bài.`);
-    UI.closeModal();
-    this.nextTurn();
-  },
-
-  resolveFavor(cardIdx) {
-    const from = this.state.pending?.playerId || this.currentPlayer.id;
-    const f = this.players.find(x => x.id === from);
-    const t = this.myPlayer;
-    
-    if(t && f && cardIdx >= 0 && cardIdx < t.hand.length) {
-      const stolen = t.hand.splice(cardIdx, 1)[0];
-      f.hand.push(stolen);
-      this.log(`${t.name} đưa 1 lá cho ${f.name}.`);
-    }
-    UI.closeModal();
-    UI.renderGame();
-    if(this.isHost) UI.syncState();
-  },
-
-  // BOT LOGIC
-  checkBots() {
-    if(!this.isHost) return;
-    clearTimeout(this.botTimer);
-    if(!this.currentPlayer || !this.currentPlayer.isBot || this.state.phase === 'ended') return;
-
-    this.botTimer = setTimeout(() => {
-      if(this.currentPlayer.id !== this.players[this.state.turnIdx].id) return;
-      this.runBotTurn();
-    }, 1500);
-  },
-
-  runBotTurn() {
-    const bot = this.currentPlayer;
-    const has = c => bot.hand.includes(c);
-
-    if(has('ATTACK') && Math.random() < 0.7) {
-      this.state.pending = { playerId: bot.id, cardType: 'ATTACK', nopes: 0 };
-      bot.hand.splice(bot.hand.indexOf('ATTACK'), 1);
-      this.state.discard.push('ATTACK');
-      this.log(`${bot.name} đánh ATTACK`);
-      UI.renderGame();
-      if(this.isHost) UI.syncState();
-      setTimeout(() => {
-        if(this.state.pending) {
-          this.resolvePending();
-          if(this.isHost) UI.syncState();
-        }
-      }, 2000);
-    } 
-    else if(has('SKIP') && Math.random() < 0.6) {
-      this.state.pending = { playerId: bot.id, cardType: 'SKIP', nopes: 0 };
-      bot.hand.splice(bot.hand.indexOf('SKIP'), 1);
-      this.state.discard.push('SKIP');
-      this.log(`${bot.name} đánh SKIP`);
-      UI.renderGame();
-      if(this.isHost) UI.syncState();
-      setTimeout(() => {
-        if(this.state.pending) {
-          this.resolvePending();
-          if(this.isHost) UI.syncState();
-        }
-      }, 2000);
-    }
-    else {
-      for(let c of CATS) {
-        if(bot.hand.filter(x => x === c).length >= 2) {
-          const targets = this.players.filter(p => p.alive && p.id !== bot.id);
-          if(targets.length) {
-            this.state.pending = { playerId: bot.id, cardType: c, targetId: targets[0].id, nopes: 0 };
-            bot.hand.splice(bot.hand.indexOf(c), 1);
-            bot.hand.splice(bot.hand.indexOf(c), 1);
-            this.state.discard.push(c);
-            this.log(`${bot.name} dùng combo mèo`);
-            UI.renderGame();
-            if(this.isHost) UI.syncState();
-            setTimeout(() => {
-              if(this.state.pending) {
-                this.resolvePending();
-                if(this.isHost) UI.syncState();
-              }
-            }, 2000);
-            return;
-          }
-        }
-      }
-      
-      // Rút bài
-      const card = this.state.deck.pop();
-      if(card === 'EK') {
-        this.log(`${bot.name} rút trúng MÈO NỔ!`);
-        if(bot.hand.includes('DEFUSE')) {
-          bot.hand.splice(bot.hand.indexOf('DEFUSE'), 1);
-          this.log(`${bot.name} dùng DEFUSE!`);
-          this.state.deck.splice(Math.floor(Math.random() * this.state.deck.length), 0, 'EK');
-          this.nextTurn();
-        } else {
-          bot.alive = false;
-          this.log(`💥 ${bot.name} đã bị nổ!`);
-          if(!this.checkWin()) this.nextTurn();
-        }
-      } else {
-        bot.hand.push(card);
-        this.state.turnsLeft--;
-        if(this.state.turnsLeft <= 0) this.nextTurn();
-        else {
-          UI.renderGame();
-          if(this.isHost) UI.syncState();
-          this.checkBots();
-        }
+      switch (msg.type) {
+        case 'lobby':   this.onLobby?.(msg.players); break;
+        case 'state':   this.onState?.(msg.state); break;
+        case 'start':   this.onStart?.(msg.state); break;
+        case 'chat':    this.onChat?.(msg.name, msg.text); break;
+        case 'host_left': this.onHostLeft?.(); break;
+        case 'kicked':  this.onHostLeft?.(); break;
       }
     }
   }
 };
 
-/* ================= UI CONTROLLER ================= */
+/* ==================================================================
+   UI — Controller
+   ================================================================== */
 const UI = {
-  myId: Utils.uid(),
+  myId: null,
   roomCode: null,
   isHost: false,
-  lobbyData: [],
-  net: null,
+  lobbyPlayers: [],
+  catFlow: null,
+  botScheduled: false,
+  currentModal: null,
+  awaitingDefuse: false,
 
-  init() {
-    document.getElementById('playerName').value = 'Player_' + Math.floor(Math.random()*1000);
+  init(){
+    // Persist identity
+    this.myId = localStorage.getItem('ek_myId') || U.uid();
+    localStorage.setItem('ek_myId', this.myId);
+
+    const savedName = localStorage.getItem('ek_name') || 'Player_' + Math.floor(Math.random()*1000);
+    document.getElementById('playerName').value = savedName;
+
+    // Setup engine callback
+    Engine.onChange = (meta) => this.onEngineChange(meta);
   },
 
-  showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+  /* ---------- NAV ---------- */
+  showScreen(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+    document.getElementById(id).classList.add('on');
+  },
+  toast(msg){
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2200);
   },
 
-  getPlayerName() {
-    return document.getElementById('playerName').value.trim() || 'Player_' + Math.floor(Math.random()*100);
+  getMyName(){
+    const v = document.getElementById('playerName').value.trim();
+    localStorage.setItem('ek_name', v || 'Player');
+    return v || 'Player';
   },
 
-  toggleChat() {
-    const panel = document.getElementById('chatPanel');
-    const overlay = document.getElementById('chatOverlay');
-    panel.classList.toggle('open');
-    overlay.classList.toggle('active');
-  },
+  me(){ return Engine.state?.players.find(p => p.id === this.myId); },
 
-  createRoom() {
-    this.roomCode = Utils.code();
+  /* ---------- ROOM ---------- */
+  createRoom(){
+    this.roomCode = U.code();
     this.isHost = true;
-    this.lobbyData = [{ id: this.myId, name: this.getPlayerName(), isHost: true, isBot: false }];
-    
-    this.setupNet();
-    this.showScreen('screen-lobby');
+    this.lobbyPlayers = [{ id: this.myId, name: this.getMyName(), isHost: true, isBot: false }];
+    this.setupNet(true);
+    this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
-    document.getElementById('btnAddBot').style.display = 'block';
-    document.getElementById('btnStart').style.display = 'block';
+    document.getElementById('btnAddBot').style.display = 'inline-block';
+    document.getElementById('btnStart').style.display = 'inline-block';
     this.renderLobby();
   },
 
-  joinRoom() {
+  joinRoom(){
     const code = document.getElementById('joinCode').value.toUpperCase().trim();
-    if(code.length !== 6) return alert('Mã phòng phải 6 ký tự');
-    
+    if (code.length !== 6) return this.toast('Mã phòng phải 6 ký tự');
+
     this.roomCode = code;
     this.isHost = false;
-    this.setupNet();
-    this.net.postMessage({ type: 'join', player: { id: this.myId, name: this.getPlayerName() } });
-    
-    this.showScreen('screen-lobby');
+    this.setupNet(false);
+    Net.send({ type:'join', player: { id: this.myId, name: this.getMyName() } });
+    this.showScreen('sc-lobby');
     document.getElementById('lobbyCode').innerText = this.roomCode;
-    document.getElementById('btnAddBot').style.display = 'none';
-    document.getElementById('btnStart').style.display = 'none';
   },
 
-  startSolo() {
-    this.isHost = true;
-    const players = [
-      { id: this.myId, name: this.getPlayerName(), isBot: false },
-      { id: 'bot1', name: 'Mèo Béo', isBot: true },
-      { id: 'bot2', name: 'Mèo Ngáo', isBot: true }
-    ];
-    Game.init(players, true);
-    this.enterGame();
-  },
-
-  leaveLobby() {
-    if(this.net) {
-      if(this.isHost) this.net.postMessage({ type: 'host_left' });
-      this.net.close();
-      this.net = null;
+  setupNet(host){
+    if (Net.ch) Net.close();
+    if (host) {
+      Net.host(this.roomCode);
+      Net.onJoin = (player, action) => {
+        if (action === 'leave') {
+          this.lobbyPlayers = this.lobbyPlayers.filter(p => p.id !== player);
+        } else {
+          if (!this.lobbyPlayers.find(p => p.id === player.id)) this.lobbyPlayers.push(player);
+        }
+        this.broadcastLobby();
+        this.renderLobby();
+      };
+      Net.onAction = (pid, action, payload) => this.hostAction(pid, action, payload);
+      Net.onChat = (name, text) => this.addChatMsg(name, text);
+    } else {
+      Net.join(this.roomCode);
+      Net.onLobby = (players) => { this.lobbyPlayers = players; this.renderLobby(); };
+      Net.onStart = (state) => {
+        Engine.state = state;
+        Engine.hostId = null;
+        this.enterGame(false);
+      };
+      Net.onState = (state) => { Engine.state = state; this.render(); this.updateModals(); };
+      Net.onChat = (name, text) => this.addChatMsg(name, text);
+      Net.onHostLeft = () => { this.toast('Host đã rời phòng'); setTimeout(() => this.leaveRoom(), 500); };
     }
-    Game.state = null;
-    Game.isHost = false;
-    Game.myId = null;
-    this.roomCode = null;
-    this.isHost = false;
-    this.lobbyData = [];
-    document.getElementById('chatFab').style.display = 'none';
-    this.showScreen('screen-home');
   },
 
-  addBot() {
-    if(this.lobbyData.length >= 5) return;
-    this.lobbyData.push({
-      id: 'bot_' + Utils.uid(),
-      name: ['Mèo Béo', 'Mèo Ngáo', 'Mèo Điên', 'Mèo Lười'][Math.floor(Math.random()*4)],
+  broadcastLobby(){
+    if (this.isHost) Net.send({ type:'lobby', players: this.lobbyPlayers });
+  },
+
+  renderLobby(){
+    const box = document.getElementById('lobbyPlayers');
+    box.innerHTML = this.lobbyPlayers.map(p => `
+      <div class="pitem">
+        <div class="av">${p.isBot ? '🤖' : '👤'}</div>
+        <div class="nm">${p.name}</div>
+        <div class="st">${p.isHost ? 'Host' : 'Ready'}</div>
+      </div>
+    `).join('');
+  },
+
+  addBot(){
+    if (this.lobbyPlayers.length >= 5) return this.toast('Tối đa 5 người');
+    this.lobbyPlayers.push({
+      id: 'bot_' + U.uid(),
+      name: U.pick(['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo Ngu']),
       isBot: true, isHost: false
     });
     this.broadcastLobby();
     this.renderLobby();
   },
 
-  startMultiplayerGame() {
-    if(this.lobbyData.length < 2) return alert('Cần ít nhất 2 người chơi!');
-    const players = this.lobbyData.map(p => ({ id: p.id, name: p.name, isBot: p.isBot }));
-    Game.init(players, true);
-    Game.myId = this.myId; // Đảm bảo Host cũng có ID
-    this.net.postMessage({ type: 'start', state: JSON.parse(JSON.stringify(Game.state)) });
-    this.enterGame();
+  startSolo(){
+    this.isHost = true;
+    const players = [
+      { id: this.myId, name: this.getMyName(), isBot: false },
+      { id: 'bot1', name: 'Mèo Béo', isBot: true },
+      { id: 'bot2', name: 'Mèo Ngáo', isBot: true }
+    ];
+    Engine.createGame(players, this.myId);
+    this.enterGame(true);
   },
 
-  enterGame() {
-    this.showScreen('screen-game');
-    document.getElementById('chatFab').style.display = 'block';
-    this.renderGame();
-    Game.checkBots();
+  startMultiplayerGame(){
+    if (this.lobbyPlayers.length < 2) return this.toast('Cần ít nhất 2 người!');
+    const players = this.lobbyPlayers.map(p => ({ id: p.id, name: p.name, isBot: p.isBot }));
+    Engine.createGame(players, this.myId);
+
+    // Give each client their own sanitized view
+    // (BroadcastChannel: everyone gets same message → send full state, hide in UI)
+    Net.send({ type:'start', state: U.clone(Engine.state) });
+    this.enterGame(true);
   },
 
-  renderLobby() {
-    document.getElementById('lobbyPlayers').innerHTML = this.lobbyData.map(p => `
-      <div class="player-item">
-        <div class="avatar">${p.isBot ? '🤖' : '👤'}</div>
-        <div class="name">${p.name}</div>
-        <div class="status">${p.isHost ? 'Chủ phòng' : 'Sẵn sàng'}</div>
-      </div>
-    `).join('');
+  enterGame(asHost){
+    this.isHost = asHost;
+    this.showScreen('sc-game');
+    document.getElementById('chatFab').classList.add('on');
+    this.render();
+    this.updateModals();
+    if (asHost) this.processBots();
   },
 
-  setupNet() {
-    this.net = new BroadcastChannel('ek_room_' + this.roomCode);
-    this.net.onmessage = (e) => {
-      const msg = e.data;
-      
-      if(this.isHost) {
-        if(msg.type === 'join') {
-          if(!this.lobbyData.find(p => p.id === msg.player.id)) {
-            this.lobbyData.push(msg.player);
-            this.broadcastLobby();
-            this.renderLobby();
-          }
-        }
-        else if(msg.type === 'action') {
-          if(msg.action === 'play') Game.playCard(msg.card, msg.target);
-          if(msg.action === 'draw') Game.drawCard();
-          if(msg.action === 'nope') Game.useNope(msg.pid);
-          if(msg.action === 'defuse') Game.resolveDefuse(msg.pos);
-          if(msg.action === 'favor') Game.resolveFavor(msg.idx);
-          this.syncState();
-        }
-        else if(msg.type === 'chat') {
-          this.addChatMsg(msg.name, msg.text);
-          this.net.postMessage({ type: 'chat', name: msg.name, text: msg.text });
-        }
-      }
-      else {
-        if(msg.type === 'lobby') {
-          this.lobbyData = msg.data;
-          this.renderLobby();
-        }
-        else if(msg.type === 'start') {
-          Game.state = msg.state;
-          Game.isHost = false;
-          Game.myId = this.myId; // Fix lỗi Client không có ID
-          this.enterGame();
-        }
-        else if(msg.type === 'state') {
-          Game.state = msg.state;
-          this.renderGame();
-        }
-        else if(msg.type === 'chat') {
-          this.addChatMsg(msg.name, msg.text);
-        }
-        else if(msg.type === 'host_left') {
-          alert('Chủ phòng đã thoát!');
-          this.leaveLobby();
-        }
-      }
-    };
-  },
-
-  broadcastLobby() { if(this.isHost && this.net) this.net.postMessage({ type: 'lobby', data: this.lobbyData }); },
-
-  syncState() {
-    if(!Game.state) return;
-    if(this.isHost) {
-      this.net?.postMessage({ type: 'state', state: JSON.parse(JSON.stringify(Game.state)) });
+  leaveRoom(){
+    if (Net.ch) {
+      if (this.isHost) Net.send({ type:'host_left' });
+      else Net.send({ type:'leave', playerId: this.myId });
+      Net.close();
     }
-    this.renderGame();
+    Engine.state = null;
+    this.isHost = false;
+    this.roomCode = null;
+    this.lobbyPlayers = [];
+    document.getElementById('chatFab').classList.remove('on');
+    this.closeModal();
+    this.showScreen('sc-home');
   },
 
-  sendAction(action, card, target) {
-    if(this.isHost) {
-      if(action === 'play') Game.playCard(card, target);
-      if(action === 'draw') Game.drawCard();
-      if(action === 'nope') Game.useNope(this.myId);
-      if(action === 'defuse') Game.resolveDefuse(target);
-      if(action === 'favor') Game.resolveFavor(target);
-      this.syncState();
+  /* ---------- ACTIONS (from UI clicks) ---------- */
+  act(action, payload = {}){
+    if (this.isHost) {
+      this.hostAction(this.myId, action, payload);
     } else {
-      this.net.postMessage({ type: 'action', pid: this.myId, action, card, target });
+      Net.send({ type:'action', playerId: this.myId, action, payload });
     }
   },
 
-  renderGame() {
-    const g = Game.state;
-    if(!g) return;
-    const me = g.players.find(p => p.id === Game.myId);
-    if(!me) return; // Nếu không tìm thấy bản thân, bỏ qua render để tránh crash
+  hostAction(playerId, action, payload){
+    let ok = false;
+    switch (action) {
+      case 'play':   ok = Engine.playCards(playerId, payload.cards, payload.targetId, payload.extra || {}); break;
+      case 'draw':   ok = Engine.drawCard(playerId); break;
+      case 'nope':   ok = Engine.playNope(playerId); break;
+      case 'defuse': ok = Engine.placeDefuse(playerId, payload.pos); break;
+      case 'favor':  ok = Engine.resolveFavor(playerId, payload.idx); break;
+      case 'clearPeek': ok = Engine.clearPeek(playerId); break;
+    }
+    // Engine.notify() handles the rest via onChange
+    if (!ok) {
+      // Send state anyway so client doesn't get stuck
+      if (!this.isHost) {
+        // no-op, just log
+      }
+    }
+  },
 
-    document.getElementById('uiAlive').innerText = g.players.filter(p=>p.alive).length;
-    document.getElementById('uiDeck').innerText = g.deck.length;
-    document.getElementById('deckBadge').innerText = g.deck.length;
-    document.getElementById('uiTurn').innerText = g.phase === 'ended' ? 'Kết thúc' : `Lượt: ${g.players[g.turnIdx].name}`;
+  /* ---------- ENGINE CHANGE (host only) ---------- */
+  onEngineChange(){
+    if (this.isHost) {
+      // Broadcast full state (BroadcastChannel limitation: can't send per-client)
+      // In production: use WebSocket with per-client filtering
+      Net.send({ type:'state', state: U.clone(Engine.state) });
+    }
+    this.render();
+    this.updateModals();
+
+    // Trigger VFX based on last log
+    this.renderVFX();
+
+    if (this.isHost) this.processBots();
+  },
+
+  renderVFX(){
+    const s = Engine.state;
+    if (!s) return;
+    const lastLog = s.logs[s.logs.length - 1] || '';
+
+    if (lastLog.includes('MÈO NỔ')) {
+      const deck = document.getElementById('deckPile');
+      if (deck) {
+        const r = deck.getBoundingClientRect();
+        setTimeout(() => VFX.explode(r.left + r.width/2, r.top + r.height/2), 100);
+      }
+    }
+    if (lastLog.includes('CHIẾN THẮNG')) {
+      this.showWinModal();
+    }
+  },
+
+  /* ---------- BOT PROCESSING (host only) ---------- */
+  processBots(){
+    if (!this.isHost || this.botScheduled) return;
+    const s = Engine.state;
+    if (!s || s.phase !== 'playing') return;
+
+    // Awaiting choice for a bot?
+    if (s.awaitingChoice) {
+      const p = Engine.byId(s.awaitingChoice.playerId || s.awaitingChoice.targetId);
+      if (p?.isBot) {
+        this.botScheduled = true;
+        setTimeout(() => {
+          this.botScheduled = false;
+          const ch = Engine.state.awaitingChoice;
+          if (!ch) return;
+          if (ch.type === 'defuse' && ch.playerId === p.id) {
+            const pos = Math.random() < 0.3 ? 'top' : (Math.random() < 0.5 ? 'random' : 'bottom');
+            Engine.placeDefuse(p.id, pos);
+          } else if (ch.type === 'favor' && ch.targetId === p.id) {
+            Engine.resolveFavor(p.id, Math.floor(Math.random() * p.hand.length));
+          }
+        }, 1200);
+        return;
+      }
+      return; // waiting for human
+    }
+
+    // Pending action → schedule bot nope check
+    if (s.pending) {
+      this.botScheduled = true;
+      setTimeout(() => {
+        this.botScheduled = false;
+        this.botNopeCheck();
+      }, 800);
+      return;
+    }
+
+    // Current player bot?
+    if (Engine.cur()?.isBot) {
+      this.botScheduled = true;
+      setTimeout(() => {
+        this.botScheduled = false;
+        this.runBotTurn();
+      }, 1400);
+    }
+  },
+
+  botNopeCheck(){
+    if (!this.isHost) return;
+    const s = Engine.state;
+    if (!s || !s.pending) return;
+    const pending = s.pending;
+
+    for (const p of s.players) {
+      if (!p.isBot || !p.alive) continue;
+      if (!p.hand.includes('NOPE')) continue;
+      if (p.id === pending.playerId && pending.nopeCount === 0) continue;
+
+      let prob = 0.05;
+      const isTarget = pending.targetId === p.id;
+      if (pending.primary === 'ATTACK') prob = 0.25;
+      if (pending.primary === 'FAVOR' && isTarget) prob = 0.7;
+      if (CATS.includes(pending.primary) && isTarget) prob = 0.55;
+      if (pending.nopeCount > 0) prob = 0.3;
+
+      if (Math.random() < prob) {
+        Engine.playNope(p.id);
+        return;
+      }
+    }
+  },
+
+  runBotTurn(){
+    const s = Engine.state;
+    if (!s || s.phase !== 'playing') return;
+    const bot = Engine.cur();
+    if (!bot?.isBot) return;
+
+    const hand = bot.hand;
+    const has = c => hand.includes(c);
+    const cnt = c => hand.filter(x => x === c).length;
+    const opponents = s.players.filter(p => p.alive && p.id !== bot.id);
+    const target = opponents.length ? U.pick(opponents) : null;
+
+    // 1. Play Attack if under attack (get out + pass on)
+    if (s.turnsLeft >= 2 && has('ATTACK')) {
+      this.botPlay(['ATTACK']);
+      return;
+    }
+
+    // 2. Cat 3-combo if possible and we know target has a card they want
+    for (const cat of CATS) {
+      if (cnt(cat) >= 3 && target && target.hand.length > 0) {
+        const named = U.pick(['SKIP','ATTACK','NOPE','FAVOR','SEE_FUTURE','SHUFFLE',...CATS]);
+        this.botPlay([cat, cat, cat], target.id, { namedCard: named });
+        return;
+      }
+    }
+
+    // 3. Cat 2-combo (steal random)
+    for (const cat of CATS) {
+      if (cnt(cat) >= 2 && target && target.hand.length > 0) {
+        this.botPlay([cat, cat], target.id);
+        return;
+      }
+    }
+
+    // 4. Favor if opponent rich
+    if (has('FAVOR') && target && target.hand.length > 3) {
+      this.botPlay(['FAVOR'], target.id);
+      return;
+    }
+
+    // 5. Skip if we have many cards (safe exit)
+    if (has('SKIP') && Math.random() < 0.6) {
+      this.botPlay(['SKIP']);
+      return;
+    }
+
+    // 6. Draw
+    Engine.drawCard(bot.id);
+  },
+
+  botPlay(cards, targetId, extra){
+    if (Engine.playCards(Engine.cur().id, cards, targetId || null, extra || {})) {
+      // onChange handles sync + next bot
+    }
+  },
+
+  /* ---------- RENDER ---------- */
+  render(){
+    const s = Engine.state;
+    if (!s) return;
+    const me = this.me();
+    if (!me) return;
+
+    document.getElementById('uiAlive').innerText = s.players.filter(p => p.alive).length;
+    document.getElementById('uiDeck').innerText = s.deck.length;
+    document.getElementById('deckBadge').innerText = s.deck.length;
     document.getElementById('uiHandCount').innerText = me.hand.length;
-    
-    document.getElementById('opponentsArea').innerHTML = g.players.filter(p => p.id !== me.id).map(p => `
-      <div class="glass-panel opp-card ${g.players[g.turnIdx].id === p.id ? 'active-turn' : ''} ${!p.alive ? 'dead' : ''}" style="--cut:12px">
-        <div class="opp-avatar">${p.isBot ? '🤖' : '👤'}</div>
-        <div class="opp-name">${p.name}</div>
-        <div class="opp-cards">🂠 ${p.hand.length}</div>
-      </div>
-    `).join('');
 
+    const cur = s.players[s.turnIdx];
+    document.getElementById('uiTurn').innerHTML = s.phase === 'ended'
+      ? 'Kết thúc'
+      : `Lượt: ${cur.name}`;
+
+    const turnsEl = document.getElementById('uiTurnsLeft');
+    if (s.turnsLeft > 1) { turnsEl.style.display = 'inline-block'; turnsEl.innerText = `×${s.turnsLeft}`; }
+    else turnsEl.style.display = 'none';
+
+    // Opponents
+    document.getElementById('opponentsArea').innerHTML = s.players
+      .filter(p => p.id !== me.id)
+      .map(p => `
+        <div class="glass opp ${cur.id === p.id ? 'turn' : ''} ${!p.alive ? 'dead' : ''}" style="--cut:12px">
+          <div class="av">${p.isBot ? '🤖' : '👤'}</div>
+          <div class="nm">${p.name}</div>
+          <div class="cnt">🂠 ${p.hand.length}</div>
+        </div>
+      `).join('');
+
+    // Discard pile
     const disc = document.getElementById('discardPile');
-    if(g.discard.length > 0) {
-      const top = g.discard[g.discard.length-1];
-      disc.innerHTML = `<div style="font-size:40px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.2))">${CARD_TYPES[top].icon}</div>`;
+    if (s.discard.length > 0) {
+      const top = s.discard[s.discard.length - 1];
+      disc.innerHTML = `<div style="font-size:38px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.2))">${CARDS[top].icon}</div>`;
     } else disc.innerHTML = '🗑️';
 
-    const handArea = document.getElementById('handArea');
-    const myTurn = g.players[g.turnIdx].id === me.id && g.phase === 'playing';
-    me.hand.sort();
-    
-    handArea.innerHTML = me.hand.map((c) => {
-      const isPlayable = myTurn && !g.pending && c !== 'EK' && c !== 'DEFUSE' && c !== 'NOPE';
-      const canPlayCat = CATS.includes(c) ? (me.hand.filter(x => x === c).length >= 2) : true;
-      const finalPlayable = isPlayable && canPlayCat;
-      
+    // Hand
+    const myTurn = cur.id === me.id && s.phase === 'playing';
+    const canPlay = myTurn && !s.pending && !s.awaitingChoice;
+    const deckEl = document.getElementById('deckPile');
+    deckEl.classList.toggle('can', myTurn && !s.pending && !s.awaitingChoice);
+    deckEl.classList.toggle('locked', !(myTurn && !s.pending && !s.awaitingChoice));
+
+    const handBox = document.getElementById('handArea');
+    const sorted = [...me.hand];
+    handBox.innerHTML = sorted.map(c => {
+      const card = CARDS[c];
+      const playable = canPlay && c !== 'EK' && c !== 'DEFUSE' && c !== 'NOPE'
+        && (CATS.includes(c) ? me.hand.filter(x => x === c).length >= 2 : true);
       return `
-        <div class="card c-${CARD_TYPES[c].class} ${finalPlayable ? '' : 'disabled'}" onclick="UI.clickCard('${c}')">
-          <div class="card-icon">${CARD_TYPES[c].icon}</div>
-          <div class="card-title">${CARD_TYPES[c].name}</div>
-          <div class="card-desc">${CARD_TYPES[c].desc}</div>
+        <div class="card c-${card.class} ${playable ? '' : 'dis'}" onclick="UI.clickCard('${c}')">
+          <div class="ic">${card.icon}</div>
+          <div class="tt">${card.name}</div>
+          <div class="ds">${card.desc || ''}</div>
         </div>
       `;
     }).join('');
 
-    document.getElementById('deckPile').classList.toggle('glow', myTurn && !g.pending);
+    // Game log
+    document.getElementById('gameLog').innerHTML = s.logs.slice(-4).map(l => `• ${l}`).join('<br>');
 
-    let nopeBtn = document.getElementById('nopeBtn');
-    if(g.pending && g.pending.playerId !== me.id && me.hand.includes('NOPE')) {
-      if(!nopeBtn) {
-        nopeBtn = document.createElement('button');
-        nopeBtn.id = 'nopeBtn';
-        nopeBtn.className = 'nope-btn';
-        nopeBtn.innerText = '🙅 NOPE!';
-        nopeBtn.onclick = () => this.sendAction('nope');
-        document.body.appendChild(nopeBtn);
-      }
-    } else if(nopeBtn) nopeBtn.remove();
+    // Nope button
+    this.updateNopeButton();
   },
 
-  renderLog() {
-    const el = document.getElementById('gameLog');
-    if(el && Game.state) {
-      el.innerHTML = Game.state.logs.slice(-4).map(l => `<div>• ${l}</div>`).join('');
+  updateNopeButton(){
+    const s = Engine.state;
+    const me = this.me();
+    let btn = document.getElementById('nopeBtn');
+    const show = s && me && me.alive && s.pending && s.pending.playerId !== me.id && me.hand.includes('NOPE');
+    if (show) {
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'nopeBtn';
+        btn.className = 'nope-btn';
+        btn.innerText = '🙅 NOPE!';
+        btn.onclick = () => this.act('nope');
+        document.body.appendChild(btn);
+      }
+    } else if (btn) btn.remove();
+  },
+
+  /* ---------- MODAL MANAGEMENT ---------- */
+  openModal(type, html){
+    this.currentModal = type;
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('overlayModal').classList.add('on');
+  },
+  closeModal(){
+    this.currentModal = null;
+    document.getElementById('overlayModal').classList.remove('on');
+  },
+
+  updateModals(){
+    const s = Engine.state;
+    if (!s) return;
+    const me = this.me();
+    if (!me) return;
+
+    // Defuse placement for me
+    if (s.awaitingChoice?.type === 'defuse' && s.awaitingChoice.playerId === this.myId) {
+      if (this.currentModal !== 'defuse') this.showDefuseModal();
+      return;
+    }
+
+    // Favor choice for me (as target)
+    if (s.awaitingChoice?.type === 'favor' && s.awaitingChoice.targetId === this.myId) {
+      if (this.currentModal !== 'favor') this.showFavorModal();
+      return;
+    }
+
+    // Peek for me
+    if (s.peekFor?.playerId === this.myId && !s.pending) {
+      if (this.currentModal !== 'peek') this.showPeekModal(s.peekFor.cards);
+      return;
+    }
+
+    // Auto-close state-driven modals that no longer apply
+    if (['defuse','favor','peek'].includes(this.currentModal)) {
+      this.closeModal();
+    }
+
+    // Win modal
+    if (s.phase === 'ended' && this.currentModal !== 'win') {
+      this.showWinModal();
     }
   },
 
-  clickCard(card) {
-    const g = Game.state;
-    const me = g.players.find(p => p.id === Game.myId);
-    if(g.players[g.turnIdx].id !== me.id || g.pending) return;
-    
-    if(CATS.includes(card) || card === 'FAVOR') this.showTargetModal(card);
-    else this.sendAction('play', card);
-  },
-
-  drawCard() {
-    const g = Game.state;
-    const me = g.players.find(p => p.id === Game.myId);
-    if(g.players[g.turnIdx].id !== me.id || g.pending || g.phase !== 'playing') return;
-    this.sendAction('draw');
-  },
-
-  /* ================= MODALS ================= */
-  openModal(html) {
-    document.getElementById('modalContent').innerHTML = html;
-    document.getElementById('overlayModal').classList.add('active');
-  },
-  closeModal() { document.getElementById('overlayModal').classList.remove('active'); },
-
-  showTargetModal(card) {
-    const targets = Game.state.players.filter(p => p.alive && p.id !== Game.myId);
-    this.openModal(`
-      <h2>Chọn mục tiêu</h2>
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        ${targets.map(t => `<button onclick="UI.sendAction('play', '${card}', '${t.id}'); UI.closeModal()">${t.name} (${t.hand.length} bài)</button>`).join('')}
-      </div>
-      <button onclick="UI.closeModal()" style="background:transparent; border:1px solid #ccc; color:#666; margin-top:10px;">Hủy</button>
-    `);
-  },
-
-  showDefuseModal() {
-    this.openModal(`
-      <h2>Bạn đã dùng DEFUSE!</h2>
-      <p>Chọn vị trí đặt lại Mèo Nổ:</p>
-      <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
-        <button class="btn-primary" onclick="UI.sendAction('defuse', null, 'top')">⬆️ Trên Cùng (Nguy hiểm)</button>
-        <button onclick="UI.sendAction('defuse', null, 'random')">🎲 Ngẫu Nhiên</button>
-        <button onclick="UI.sendAction('defuse', null, 'bottom')">⬇️ Dưới Cùng (An toàn)</button>
+  showDefuseModal(){
+    this.openModal('defuse', `
+      <h2>🧯 Bạn đã dùng DEFUSE!</h2>
+      <p>Chọn vị trí giấu lại Mèo Nổ (bí mật):</p>
+      <div class="mcol">
+        <button class="btn-d" onclick="UI.act('defuse',{pos:'top'}); UI.closeModal();">⬆️ Trên cùng (nguy hiểm cho người sau)</button>
+        <button onclick="UI.act('defuse',{pos:'random'}); UI.closeModal();">🎲 Ngẫu nhiên</button>
+        <button class="btn-p" onclick="UI.act('defuse',{pos:'bottom'}); UI.closeModal();">⬇️ Dưới cùng (an toàn)</button>
       </div>
     `);
   },
 
-  showPeekModal(cards) {
-    this.openModal(`
-      <h2>🔮 Nhìn Tương Lai</h2>
-      <p>3 lá bài trên cùng (theo thứ tự rút):</p>
-      <div style="display:flex; gap:10px; justify-content:center; margin:20px 0;">
-        ${cards.map(c => `<div class="card c-${CARD_TYPES[c].class}" style="width:80px; height:110px;"><div class="card-icon">${CARD_TYPES[c].icon}</div></div>`).join('')}
-      </div>
-      <button class="btn-primary" onclick="UI.closeModal(); Game.nextTurn(); if(UI.isHost) UI.syncState();">Đã Hiểu & Kết Thúc Lượt</button>
-    `);
-  },
-
-  showFavorModal(requester, target) {
-    this.openModal(`
-      <h2>${requester.name} xin bài</h2>
+  showFavorModal(){
+    const me = this.me();
+    const s = Engine.state;
+    const requester = s.players.find(p => p.id === s.awaitingChoice.fromId);
+    this.openModal('favor', `
+      <h2>🫴 ${requester?.name || 'Ai đó'} xin bài!</h2>
       <p>Chọn 1 lá để đưa:</p>
-      <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px;">
-        ${target.hand.map((c, i) => `<div class="card c-${CARD_TYPES[c].class}" onclick="UI.sendAction('favor', null, ${i})"><div class="card-icon">${CARD_TYPES[c].icon}</div></div>`).join('')}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+        ${me.hand.map((c, i) => `
+          <div class="card c-${CARDS[c].class}" onclick="UI.act('favor',{idx:${i}}); UI.closeModal();">
+            <div class="ic">${CARDS[c].icon}</div>
+            <div class="tt">${CARDS[c].name}</div>
+          </div>
+        `).join('')}
       </div>
     `);
   },
 
-  showWin(winner) {
-    this.openModal(`
-      <h1 style="color:var(--red); font-size:40px; margin-bottom:20px;">🎉 CHIẾN THẮNG!</h1>
-      <div style="font-size:80px; margin:20px 0;">🏆</div>
-      <h2>${winner ? winner.name : 'Không ai'} đã sống sót!</h2>
-      <button class="btn-primary" style="margin-top:20px;" onclick="UI.leaveLobby()">Về Trang Chủ</button>
+  showPeekModal(cards){
+    this.openModal('peek', `
+      <h2>🔮 Nhìn Tương Lai</h2>
+      <p>3 lá trên cùng (thứ tự rút từ trái → phải):</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin:15px 0;">
+        ${cards.map(c => `
+          <div class="card c-${CARDS[c].class}" style="width:76px;height:106px">
+            <div class="ic">${CARDS[c].icon}</div>
+            <div class="tt">${CARDS[c].name}</div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn-p" onclick="UI.act('clearPeek'); UI.closeModal();">Đã Hiểu</button>
     `);
   },
 
-  /* ================= CHAT ================= */
-  sendChat() {
+  showWinModal(){
+    const s = Engine.state;
+    const w = s.winner;
+    const rows = s.players
+      .sort((a,b) => (a.alive === b.alive) ? 0 : (a.alive ? -1 : 1))
+      .map(p => `
+        <div class="stat-row">
+          <span>${p.alive ? '🏆' : '💀'} ${p.name}</span>
+          <span>${p.stats.turns} lượt · ${p.stats.cardsPlayed} lá · ${p.stats.defuses} gỡ bom</span>
+        </div>
+      `).join('');
+
+    this.openModal('win', `
+      <h1 style="color:var(--red);font-size:36px;">🎉 CHIẾN THẮNG!</h1>
+      <div style="font-size:70px;margin:10px 0;">🏆</div>
+      <h2>${w?.name || 'Không ai'}</h2>
+      <div style="text-align:left;margin:15px 0;">${rows}</div>
+      <button class="btn-p" onclick="UI.leaveRoom()">Về Trang Chủ</button>
+    `);
+  },
+
+  /* ---------- CARD CLICKS ---------- */
+  clickCard(card){
+    const s = Engine.state;
+    if (!s || s.phase !== 'playing') return;
+    const me = this.me();
+    if (!me) return;
+    if (s.pending || s.awaitingChoice) return this.toast('Đang chờ hành động khác...');
+    if (s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt của bạn');
+    if (!me.alive) return;
+
+    const count = me.hand.filter(c => c === card).length;
+
+    if (CATS.includes(card)) {
+      if (count < 2) return this.toast('Cần ≥ 2 lá mèo giống để combo');
+      this.catFlow = { card, count };
+      if (count >= 3) this.showCatCountChoice();
+      else this.showCatTarget(2);
+      return;
+    }
+
+    if (card === 'FAVOR') {
+      const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
+      if (targets.length === 0) return this.toast('Không có ai để xin');
+      this.openModal('target', `
+        <h2>🫴 Xin bài từ ai?</h2>
+        <div class="mcol">
+          ${targets.map(t => `<button onclick="UI.act('play',{cards:['FAVOR'],targetId:'${t.id}'}); UI.closeModal();">${t.name} (${t.hand.length} lá)</button>`).join('')}
+        </div>
+        <button class="btn-o" onclick="UI.closeModal()">Hủy</button>
+      `);
+      return;
+    }
+
+    if (['ATTACK','SKIP','SHUFFLE','SEE_FUTURE'].includes(card)) {
+      this.act('play', { cards: [card] });
+      return;
+    }
+
+    // Should not reach here for EK/DEFUSE/NOPE
+    this.toast('Không thể đánh lá này trực tiếp');
+  },
+
+  showCatCountChoice(){
+    const { card, count } = this.catFlow;
+    this.openModal('catcount', `
+      <h2>${CARDS[card].icon} ${CARDS[card].name} ×${count}</h2>
+      <p>Bạn có ${count} lá. Chọn:</p>
+      <div class="mcol">
+        <button onclick="UI.showCatTarget(2)">Chơi 2 lá → Cướp bài ngẫu nhiên</button>
+        <button class="btn-p" onclick="UI.showCatTarget(3)">Chơi 3 lá → Gọi tên bài cụ thể</button>
+        <button class="btn-o" onclick="UI.cancelCatFlow()">Hủy</button>
+      </div>
+    `);
+  },
+
+  showCatTarget(count){
+    this.catFlow.count = count;
+    const s = Engine.state;
+    const me = this.me();
+    const targets = s.players.filter(p => p.alive && p.id !== me.id && p.hand.length > 0);
+    if (targets.length === 0) return this.cancelCatFlow();
+    this.openModal('cattarget', `
+      <h2>Chọn mục tiêu (${count} lá)</h2>
+      <div class="mcol">
+        ${targets.map(t => `<button onclick="UI.chooseCatTarget('${t.id}')">${t.name} (${t.hand.length} lá)</button>`).join('')}
+      </div>
+      <button class="btn-o" onclick="UI.cancelCatFlow()">Hủy</button>
+    `);
+  },
+
+  chooseCatTarget(targetId){
+    this.catFlow.targetId = targetId;
+    if (this.catFlow.count === 3) this.showCatName();
+    else {
+      this.act('play', {
+        cards: [this.catFlow.card, this.catFlow.card],
+        targetId
+      });
+      this.closeModal();
+      this.catFlow = null;
+    }
+  },
+
+  showCatName(){
+    const names = ['ATTACK','SKIP','FAVOR','SHUFFLE','SEE_FUTURE','NOPE',...CATS];
+    this.openModal('catname', `
+      <h2>Gọi tên lá muốn lấy</h2>
+      <div class="mgrid">
+        ${names.map(n => `<button onclick="UI.chooseCatName('${n}')">${CARDS[n].icon} ${CARDS[n].name}</button>`).join('')}
+      </div>
+      <button class="btn-o" onclick="UI.cancelCatFlow()">Hủy</button>
+    `);
+  },
+
+  chooseCatName(namedCard){
+    this.act('play', {
+      cards: [this.catFlow.card, this.catFlow.card, this.catFlow.card],
+      targetId: this.catFlow.targetId,
+      extra: { namedCard }
+    });
+    this.closeModal();
+    this.catFlow = null;
+  },
+
+  cancelCatFlow(){ this.catFlow = null; this.closeModal(); },
+
+  onDrawClick(){
+    const s = Engine.state;
+    if (!s || s.phase !== 'playing') return;
+    if (s.pending || s.awaitingChoice) return;
+    const me = this.me();
+    if (!me || !me.alive) return;
+    if (s.players[s.turnIdx].id !== me.id) return this.toast('Chưa đến lượt');
+    this.act('draw');
+  },
+
+  /* ---------- CHAT ---------- */
+  toggleChat(){
+    document.getElementById('chatPanel').classList.toggle('on');
+    document.getElementById('chatOverlay').classList.toggle('on');
+  },
+  sendChat(){
     const inp = document.getElementById('chatInput');
     const txt = inp.value.trim();
-    if(!txt) return;
+    if (!txt) return;
     inp.value = '';
-    const name = this.getPlayerName();
-    
+    const name = this.getMyName();
     this.addChatMsg(name, txt);
-    if(this.net) this.net.postMessage({ type: 'chat', name, text: txt });
+    if (Net.ch) Net.send({ type:'chat', name, text: txt });
   },
-
-  addChatMsg(name, text) {
+  addChatMsg(name, text){
     const box = document.getElementById('chatMsgs');
-    box.innerHTML += `<div class="chat-msg"><span class="usr">${name}:</span> ${text}</div>`;
+    const div = document.createElement('div');
+    div.innerHTML = `<span class="u">${name}:</span> ${this.escapeHtml(text)}`;
+    box.appendChild(div);
     box.scrollTop = box.scrollHeight;
+  },
+  escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 };
 
-// Khởi tạo
+/* ==================================================================
+   INIT
+   ================================================================== */
 document.addEventListener('DOMContentLoaded', () => UI.init());
 </script>
 </body>
-</html> 
+</html>
