@@ -3,18 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src * data:; connect-src *;">
-<title>Exploding Kittens</title>
-
+<title>Exploding Kittens - Online</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <link rel="stylesheet" href="css/base.css" />
 <link rel="stylesheet" href="css/screens.css" />
 <link rel="stylesheet" href="css/components.css" />
-
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 
-<!-- BACKGROUND -->
 <div class="bg-blob blob-1"></div>
 <div class="bg-blob blob-2"></div>
 <div class="bg-blob blob-3"></div>
@@ -22,8 +18,8 @@
 
 <!-- AUTH -->
 <div id="sc-auth" class="screen on">
-  <div class="liquid bevel auth-box">
-    <h1 class="auth-title">MÈO NỔ</h1>
+  <div class="liquid auth-box">
+    <h1 class="auth-title" id="authLogo">MÈO NỔ</h1>
     <p class="auth-sub">Exploding Kittens · Online</p>
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login" onclick="UI.switchAuthTab('login')">Đăng Nhập</button>
@@ -138,14 +134,11 @@
   </div>
 </div>
 
-<!-- PLAYED SHOWCASE / STEAL / NOTIFS -->
-
 <div class="played-showcase" id="playedShowcase">
   <div class="ps-card" id="psCard"></div>
   <div class="ps-info"><div class="ps-name" id="psName"></div><div class="ps-action" id="psAction"></div></div>
 </div>
 
-<!-- CHAT -->
 <div class="chat-ov" id="chatOverlay" onclick="UI.toggleChat()"></div>
 <div class="chat-p" id="chatPanel">
   <div class="chat-h"><span>Chat</span><span class="chat-x" onclick="UI.toggleChat()">×</span></div>
@@ -157,26 +150,20 @@
 </div>
 <div class="chat-f" id="chatFab" onclick="UI.toggleChat()">💬</div>
 
-<!-- MODAL -->
-<div class="ov" id="overlayModal"><div class="liquid bevel modal" id="modalContent"></div></div>
+<div class="ov" id="overlayModal"><div class="liquid modal" id="modalContent"></div></div>
 
-<!-- ========== LOAD ORDER QUAN TRỌNG ========== -->
-<!-- 1. Config & Utils (không phụ thuộc) -->
+<!-- SCRIPTS -->
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
-<!-- 2. STABLE zone (storage/users/session/social) -->
 <script src="js/storage.js"></script>
 <script src="js/users.js"></script>
 <script src="js/session.js"></script>
 <script src="js/social.js"></script>
-<!-- 3. GAME logic (engine/net) -->
 <script src="js/engine.js"></script>
 <script src="js/net.js"></script>
-<!-- 4. UI (ui/menu-ui/game-ui) -->
 <script src="js/ui.js"></script>
 <script src="js/menu-ui.js"></script>
 <script src="js/game-ui.js"></script>
-<!-- 5. Bootstrap -->
 <script src="js/main.js"></script>
 </body>
 </html>
