@@ -387,6 +387,22 @@ input,select,textarea{border-radius:12px;background:rgba(9,10,13,.42);border-col
 @keyframes catFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}@keyframes catRing{to{transform:rotate(360deg)}}@keyframes catColorSpin{to{transform:rotate(360deg)}}@keyframes catBlink{0%,44%,48%,100%{transform:scaleY(1)}46%{transform:scaleY(.12)}}@keyframes loadingDot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){#cat-loading *{animation:none!important;transition:none!important}}
 
+/* Auth redesign: clear contrast and compact mobile layout */
+#sc-auth{padding:20px 14px;align-items:center;justify-content:center;min-height:100dvh}
+.auth-box{width:min(100%,430px)!important;padding:clamp(22px,6vw,34px)!important;border-radius:26px!important;background:linear-gradient(145deg,rgba(43,35,39,.94),rgba(20,20,25,.96))!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:0 22px 70px rgba(0,0,0,.5),inset 0 1px rgba(255,255,255,.12)!important}
+.auth-title{font-size:clamp(32px,9vw,42px)!important;letter-spacing:.09em!important;color:#ffe5dc!important;background:none!important;-webkit-text-fill-color:#ffe5dc!important;margin:0 0 8px!important}
+.auth-sub{font-size:12px!important;letter-spacing:.13em!important;color:#c9a9a4!important;margin:0 0 24px!important}
+.auth-box .tabs{display:flex!important;gap:5px!important;padding:5px!important;background:#121217!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:15px!important;margin-bottom:20px!important}
+.auth-box .tab{flex:1!important;min-height:48px!important;border:0!important;background:transparent!important;color:#b9b5bd!important;font-weight:700!important;box-shadow:none!important}
+.auth-box .tab.active{background:linear-gradient(135deg,#ffb49e,#f17a66)!important;color:#281512!important;border:1px solid rgba(255,255,255,.28)!important;box-shadow:0 5px 20px rgba(237,106,82,.18)!important}
+.auth-box .form-col{display:flex!important;flex-direction:column!important;gap:12px!important}
+.auth-box input{width:100%!important;min-height:56px!important;padding:0 17px!important;border-radius:15px!important;background:rgba(10,10,14,.72)!important;border:1px solid rgba(255,255,255,.14)!important;color:#fff!important;font-size:16px!important;outline:none!important}
+.auth-box input::placeholder{color:#85838c!important}
+.auth-box input:focus{background:#1b1b23!important;border-color:#ff9c83!important;box-shadow:0 0 0 3px rgba(255,156,131,.12)!important}
+.auth-box .btn-primary{min-height:56px!important;border-radius:15px!important;margin-top:4px!important;background:linear-gradient(110deg,#ffb59f,#f27c68)!important;color:#281512!important;font-weight:800!important;font-size:16px!important;border:0!important;box-shadow:0 10px 26px rgba(220,80,59,.22)!important}
+.auth-msg{min-height:0!important;margin:14px 0 0!important;font-size:14px!important;line-height:1.5!important;color:#ffb3b3!important;overflow-wrap:anywhere}
+.auth-box .link-btn{margin-top:22px!important;color:#d0c0c0!important;text-decoration:none!important;text-align:center!important;display:block!important;font-size:14px!important}
+@media(max-width:480px){#sc-auth{padding:16px 12px}.auth-box{padding:24px 20px!important}.auth-sub{margin-bottom:20px!important}}
 </style>
 </head>
 <body>
