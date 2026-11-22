@@ -232,7 +232,7 @@ const UI = {
     } else if(this._friendsTab === 'add'){
       content = `
         <div class="search-row">
-          <input type="text" id="friendSearchInput" placeholder="Nhập ID người chơi..." maxlength="24" onkeypress="if(event.key==='Enter')UI.friendSearch()">
+          <input type="text" id="friendSearchInput" placeholder="Nhập ID người chơi..." maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,10)" onkeypress="if(event.key==='Enter')UI.friendSearch()">
           <button class="btn-primary bevel-sm" onclick="UI.friendSearch()">Kết Bạn</button>
         </div>
         <div id="friendSearchResult" style="min-height:20px;font-size:12px;padding:8px;color:#fff"></div>
@@ -276,7 +276,7 @@ const UI = {
     const result = document.getElementById('friendSearchResult');
     if(!input || !result) return;
     const val = input.value.trim();
-    if(!val){ result.textContent = 'Nhập ID người chơi'; result.style.color = '#ff8a7a'; return; }
+    if(!/^\d{10}$/.test(val)){ result.textContent = 'ID phải gồm đúng 10 chữ số'; result.style.color = '#ff8a7a'; return; }
     const user = this.currentUser();
     if(!user) return;
     const real = Auth.findUserById(val);
@@ -756,7 +756,7 @@ const UI = {
     document.getElementById('chatFab').classList.add('on');
     this._dealing = true;
     this.render(); this.updateModals(); this._processStateVFX();
-    setTimeout(() => { this._dealing = false; }, 1500);
+    setTimeout(() => { this._dealing = false; }, 1900);
     if(asHost) this.processBots();
   },
   leaveRoom(){
@@ -978,10 +978,10 @@ const UI = {
     const endY = endRect.top + endRect.height/2 - startY - 68;
     flyer.animate([
       {transform:'translate(0,0) rotate(0) scale(.75)', opacity:0.7},
-      {transform:`translate(${endX*0.18}px,${endY*0.18 - 95}px) rotate(-8deg) scale(1.75)`, opacity:1, offset:0.32},
-      {transform:`translate(${endX*0.42}px,${endY*0.42 - 35}px) rotate(4deg) scale(1.15)`, opacity:1, offset:0.62},
+      {transform:`translate(${endX*0.16}px,${endY*0.16 - 78}px) rotate(-6deg) scale(1.48)`, opacity:1, offset:0.38},
+      {transform:`translate(${endX*0.43}px,${endY*0.43 - 28}px) rotate(3deg) scale(1.12)`, opacity:1, offset:0.72},
       {transform:`translate(${endX}px,${endY}px) rotate(0) scale(0.72)`, opacity:0.2}
-    ], {duration:850, easing:'cubic-bezier(0.4,0,0.2,1)', fill:'forwards'}).onfinish = () => flyer.remove();
+    ], {duration:1350, easing:'cubic-bezier(0.4,0,0.2,1)', fill:'forwards'}).onfinish = () => flyer.remove();
   },
 
   /* ===== RENDER ===== */
