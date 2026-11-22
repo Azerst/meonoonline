@@ -10,7 +10,7 @@ const UI = {
   _friendsTab:'list', _alterCards:null,
   _showcaseTimeout:null, _nopeHighlightTimer:null, _hostWatchdogTimer:null,
   _lastAlive:null, _lastDeck:null, _lastTurn:null, _lastTurnsLeft:null,
-  _oppsSig:'', _discSig:'', _lastCanDraw:null, _lastLogSig:'',
+  _oppsSig:'', _discSig:'', _lastCanDraw:null, _lastLogSig:'',_notifTimer:null, _inviteQueue:[],
 
   async init(){
     await Auth.init();
