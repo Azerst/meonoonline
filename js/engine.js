@@ -42,6 +42,17 @@ const Engine = {
     for(let i=0;i<5;i++) deck.push(makeCard('NOPE'));
     for(let i=0;i<12;i++) deck.push(makeCard('CAT'));
     for(let i=0;i<2;i++) deck.push(makeCard('DEFUSE'));
+
+    // Mỗi người chơi tăng thêm 7 lá thường để bộ bài không bị cạn quá sớm.
+    // Không tăng số Mèo Nổ ngoài quy tắc n - 1 ở phía dưới.
+    const extraPlayers = Math.max(0, n - 2);
+    const bonusActions = ['ATTACK','SKIP','FAVOR','SEE_FUTURE','ALTER_FUTURE','SHUFFLE','RUT_TU_DAY'];
+    for(let p=0;p<extraPlayers;p++){
+      for(let i=0;i<4;i++) deck.push(makeCard('CAT'));
+      deck.push(makeCard('NOPE'));
+      deck.push(makeCard(bonusActions[(p * 2) % bonusActions.length]));
+      deck.push(makeCard(bonusActions[(p * 2 + 3) % bonusActions.length]));
+    }
     U.shuffle(deck);
     for(let i=0;i<5;i++) for(const p of this.state.players) p.hand.push(deck.pop());
     for(const p of this.state.players) p.hand.push(makeCard('DEFUSE'));
