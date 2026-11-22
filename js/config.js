@@ -29,17 +29,8 @@ const BOT_MODES = {
 };
 const BOT_NAMES = ['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo Khủng','Mèo Bự'];
 
-// ✅ ĐÃ XOÁ TOÀN BỘ AVATAR ĐỘNG VẬT
-// Chỉ giữ icon trừu tượng / đồ vật / nhân vật không phải động vật
-const AVATARS = [
-  '💎','🔥','⚡','🌟','✨','🎯','🎨','🎪','🎬','🎮',
-  '🎲','🎰','🃏','💀','☠️','⭐','🌙','☀️','⚔️','🗡️',
-  '🛡️','🏆','🥇','👑','🚀','🎸','🎭','😎','🤖','👾',
-  '👻','💫','🌈','🎆',
-  PHOTO_AVATAR, MAHIIRU_AVATAR
-];
+const AVATARS = ['👤','😎','🤖','👻','🎭','👑','⭐','🔥','💎','🌙','⚡','🎮'];
 
-/* ==================== HELPERS ==================== */
 const U = {
   uid: () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4),
   shuffle: a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; },
@@ -47,18 +38,6 @@ const U = {
   clone: o => JSON.parse(JSON.stringify(o)),
   pick: arr => arr[Math.floor(Math.random()*arr.length)]
 };
-
-// ✅ Sinh ID duy nhất cho mỗi user — tránh ký tự dễ nhầm (I, O, 0, 1)
-function generateUserId(users = {}){
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const existing = new Set(Object.values(users).map(u => u.id).filter(Boolean));
-  for(let attempt = 0; attempt < 50; attempt++){
-    let id = 'EK-';
-    for(let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
-    if(!existing.has(id)) return id;
-  }
-  return 'EK-' + Date.now().toString(36).toUpperCase().slice(-6);
-}
 
 function makeCard(type){
   const t = CARD_TYPES[type];
@@ -79,7 +58,7 @@ function renderAvatarHTML(avatar, size){
   if (avatar && typeof avatar === 'string' && avatar.startsWith('http')) {
     return `<img src="${avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
   }
-  return `<span style="font-size:${size*0.55}px;line-height:1">${avatar || '💎'}</span>`;
+  return `<span style="font-size:${size*0.55}px;line-height:1">${avatar || '👤'}</span>`;
 }
 
 const Sound = {
