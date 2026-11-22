@@ -11,6 +11,7 @@ const Crypto = {
         return 'sha256_' + Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
       } catch(e) {}
     }
+    // Fallback for file:// (không có secure context)
     let h = 5381;
     for (let i=0;i<text.length;i++) h = ((h<<5)+h) ^ text.charCodeAt(i);
     return 'fb_' + (h >>> 0).toString(16);
@@ -18,8 +19,9 @@ const Crypto = {
   salt(username){ return 'EK::' + String(username).toLowerCase(); }
 };
 
-/* ==================== STORAGE ==================== */
+/* ==================== STORAGE (ổn định qua mọi version) ==================== */
 const Storage = {
+  // KHOÁ CỐ ĐỊNH — KHÔNG ĐỔI KHI UPDATE APP
   KEYS: {
     USERS:   'EKGAME_USERS_STABLE_V1',
     SESSION: 'EKGAME_SESSION_STABLE_V1',
@@ -53,23 +55,14 @@ const Auth = {
     const users = Storage.users();
     let dirty = false;
 
-    // ✅ Migration: gán ID cho user cũ chưa có
-    for(const uname of Object.keys(users)){
-      if(!users[uname].id){
-        users[uname].id = generateUserId(users);
-        dirty = true;
-      }
-    }
-
     // Seed admin
     if(!users[this.ADMIN.username] || !users[this.ADMIN.username].password){
       const salt = Crypto.salt(this.ADMIN.username);
       const hashed = await Crypto.hash(this.ADMIN.password, salt);
       users[this.ADMIN.username] = {
-        id: users[this.ADMIN.username]?.id || generateUserId(users),
         password: hashed, salt,
         isAdmin: true, isManager: false, banned: false,
-        avatar: '👑', games: 0, wins: 0, createdAt: Date.now()
+        avatar: '👤', id: 'U'+U.uid().toUpperCase(), games: 0, wins: 0, createdAt: Date.now()
       };
       dirty = true;
     }
@@ -78,73 +71,31 @@ const Auth = {
       const salt = Crypto.salt(this.MANAGER.username);
       const hashed = await Crypto.hash(this.MANAGER.password, salt);
       users[this.MANAGER.username] = {
-        id: users[this.MANAGER.username]?.id || generateUserId(users),
         password: hashed, salt,
         isAdmin: false, isManager: true, banned: false,
-        avatar: '🎭', games: 0, wins: 0, createdAt: Date.now()
+        avatar: '👤', id: 'U'+U.uid().toUpperCase(), games: 0, wins: 0, createdAt: Date.now()
       };
       dirty = true;
     }
+    // Mỗi tài khoản có một ID công khai, ổn định và duy nhất. Bổ sung ID cho tài khoản cũ.
+    const used = new Set();
+    for(const [name, acc] of Object.entries(users)){
+      if(!acc.id || used.has(acc.id)){ do { acc.id = 'U' + U.uid().toUpperCase(); } while(used.has(acc.id)); dirty = true; }
+      used.add(acc.id);
+      if(!acc.avatar || ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','🐰','🐹','🦄','🐲','🐺'].includes(acc.avatar)){ acc.avatar='👤'; dirty=true; }
+    }
     if(dirty) Storage.saveUsers(users);
-
-    // ✅ Migration: chuyển social cũ (username) → mới (ID)
-    this._migrateSocial();
-  },
-
-  _migrateSocial(){
-    const s = Storage.social();
-    let dirty = false;
-    const users = Storage.users();
-
-    // Tìm ID từ tên
-    const findId = name => {
-      if(!name) return null;
-      const t = String(name).trim().toLowerCase();
-      for(const k of Object.keys(users)){
-        if(k.toLowerCase() === t) return users[k].id;
-      }
-      return null;
-    };
-
-    // Requests
-    if(Array.isArray(s.requests)){
-      s.requests = s.requests.map(r => {
-        if(r.fromId && r.toId) return r;
-        const fromId = findId(r.from);
-        const toId = findId(r.to);
-        if(fromId && toId){ dirty = true; return {fromId, toId, status:r.status, ts:r.ts}; }
-        return null;
-      }).filter(Boolean);
+    // Chuyển quan hệ bạn bè cũ (username) sang ID một lần để tương thích dữ liệu đã lưu.
+    const social = Storage.social();
+    let socialDirty = false;
+    for(const [owner, list] of Object.entries(social.friends||{})){
+      const ownerKey = Object.keys(users).find(k=>k.toLowerCase()===String(owner).toLowerCase());
+      if(!ownerKey) continue; const ownerId=users[ownerKey].id;
+      const ids=(list||[]).map(v=>{ const key=Object.keys(users).find(k=>k.toLowerCase()===String(v).toLowerCase()); return key?users[key].id:v; });
+      if(owner!==ownerId || JSON.stringify(ids)!==JSON.stringify(list)){ social.friends[ownerId]=[...new Set([...(social.friends[ownerId]||[]),...ids])]; delete social.friends[owner]; socialDirty=true; }
     }
-
-    // Friends: {username: [username]} → {id: [id]}
-    if(s.friends){
-      const nf = {};
-      for(const [key, list] of Object.entries(s.friends)){
-        const keyId = findId(key) || (key.startsWith('EK-') ? key : null);
-        if(!keyId) continue;
-        if(!nf[keyId]) nf[keyId] = [];
-        for(const item of (list || [])){
-          const itemId = findId(item) || (item.startsWith('EK-') ? item : null);
-          if(itemId && !nf[keyId].includes(itemId)) nf[keyId].push(itemId);
-        }
-        if(keyId !== key) dirty = true;
-      }
-      s.friends = nf;
-    }
-
-    // Invites
-    if(Array.isArray(s.invites)){
-      s.invites = s.invites.map(i => {
-        if(i.fromId && i.toId) return i;
-        const fromId = findId(i.from);
-        const toId = findId(i.to);
-        if(fromId && toId){ dirty = true; return {fromId, toId, roomCode:i.roomCode, status:i.status, ts:i.ts}; }
-        return null;
-      }).filter(Boolean);
-    }
-
-    if(dirty) Storage.saveSocial(s);
+    for(const r of social.requests||[]){ for(const f of ['from','to']){ const key=Object.keys(users).find(k=>k.toLowerCase()===String(r[f]).toLowerCase()); if(key && r[f]!==users[key].id){r[f]=users[key].id; socialDirty=true;} } }
+    if(socialDirty) Storage.saveSocial(social);
   },
 
   findUser(name){
@@ -157,23 +108,6 @@ const Auth = {
     return null;
   },
 
-  // ✅ Lấy ID từ username
-  getUserIdByName(name){
-    const real = this.findUser(name);
-    if(!real) return null;
-    return Storage.users()[real]?.id || null;
-  },
-
-  // ✅ Lấy user từ ID
-  getUserById(id){
-    if(!id) return null;
-    const users = Storage.users();
-    for(const [uname, u] of Object.entries(users)){
-      if(u.id === id) return { username: uname, ...u };
-    }
-    return null;
-  },
-
   async register(u, p){
     u = String(u||'').trim();
     if(u.length < 3) return {ok:false, msg:'Tên ≥ 3 ký tự'};
@@ -182,12 +116,7 @@ const Auth = {
     const users = Storage.users();
     const salt = Crypto.salt(u);
     const hashed = await Crypto.hash(p, salt);
-    users[u] = {
-      id: generateUserId(users),
-      password: hashed, salt,
-      isAdmin:false, isManager:false, banned:false,
-      avatar:'💎', games:0, wins:0, createdAt: Date.now()
-    };
+    users[u] = { password: hashed, salt, isAdmin:false, isManager:false, banned:false, avatar:'👤', id:'U'+U.uid().toUpperCase(), games:0, wins:0, createdAt: Date.now() };
     Storage.saveUsers(users);
     Storage.saveSession(u);
     return {ok:true};
@@ -207,27 +136,26 @@ const Auth = {
     return {ok:true};
   },
 
+  findUserById(id){ if(!id) return null; const users=Storage.users(); return Object.keys(users).find(k=>users[k].id===String(id).toUpperCase()) || null; },
+
   current(){
     const u = Storage.session();
     if(!u) return null;
     const users = Storage.users();
     const acc = users[u];
     if(!acc) return null;
-    return {
-      username:u, id:acc.id, avatar:acc.avatar||'💎',
-      games:acc.games||0, wins:acc.wins||0,
-      isAdmin:!!acc.isAdmin, isManager:!!acc.isManager, banned:!!acc.banned,
-      isGuest:false, createdAt: acc.createdAt
-    };
+    return { username:u, id:acc.id, avatar:acc.avatar||'👤', games:acc.games||0, wins:acc.wins||0,
+             isAdmin:!!acc.isAdmin, isManager:!!acc.isManager, banned:!!acc.banned,
+             isGuest:false, createdAt: acc.createdAt };
   },
 
   guest(){
     let g = Storage.guest();
-    if(!g){
-      g = { name:'Khách_' + Math.floor(Math.random()*9000+1000), avatar:'👾' };
-      Storage.saveGuest(g);
-    }
-    return { username:g.name, id:'GUEST', avatar:g.avatar, games:0, wins:0, isAdmin:false, isManager:false, isGuest:true };
+    if(!g){ g = { name:'Khách_' + Math.floor(Math.random()*9000+1000), id:'G'+U.uid().toUpperCase(), avatar:'👤' }; }
+    if(!g.id) g.id='G'+U.uid().toUpperCase();
+    if(!g.avatar || ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','🐰','🐹','🦄','🐲','🐺'].includes(g.avatar)) g.avatar='👤';
+    Storage.saveGuest(g);
+    return { username:g.name, id:g.id, avatar:g.avatar, games:0, wins:0, isAdmin:false, isManager:false, isGuest:true };
   },
 
   updateStats(won){
@@ -251,80 +179,52 @@ const Auth = {
 
   logout(){ Storage.saveSession(null); },
 
+  // Admin / Manager ops
   setAvatarAs(username, avatar){ const u = Storage.users(); if(u[username]) { u[username].avatar = avatar; Storage.saveUsers(u); } },
   deleteUser(username){ const u = Storage.users(); if(u[username]){ delete u[username]; Storage.saveUsers(u); return true; } return false; },
   toggleAdmin(username){ const u = Storage.users(); if(u[username]){ u[username].isAdmin = !u[username].isAdmin; Storage.saveUsers(u); } },
   toggleManager(username){ const u = Storage.users(); if(u[username]){ u[username].isManager = !u[username].isManager; Storage.saveUsers(u); } },
   toggleBan(username){ const u = Storage.users(); if(u[username]){ u[username].banned = !u[username].banned; Storage.saveUsers(u); } },
   resetUserStats(username){ const u = Storage.users(); if(u[username]){ u[username].games = 0; u[username].wins = 0; Storage.saveUsers(u); } },
-  resetAllStats(){ const u = Storage.users(); for(const k of Object.keys(u)){ u[k].games = 0; u[k].wins = 0; } Storage.saveUsers(u); }
+  resetAllStats(){ const u = Storage.users(); for(const k of Object.keys(u)){ u[k].games = 0; u[k].wins = 0; } Storage.saveUsers(u); },
+  changePassword(username, newPassword){
+    return new Promise(async resolve => {
+      const u = Storage.users();
+      if(!u[username]) return resolve(false);
+      const salt = u[username].salt || Crypto.salt(username);
+      u[username].password = await Crypto.hash(newPassword, salt);
+      u[username].salt = salt;
+      Storage.saveUsers(u);
+      resolve(true);
+    });
+  }
 };
 
-/* ==================== SOCIAL (BY ID) ==================== */
+/* ==================== SOCIAL ==================== */
 const Social = {
   get(){ return Storage.social(); },
   save(s){ Storage.saveSocial(s); },
-
-  // ✅ Kết bạn bằng ID
   sendRequest(fromId, toId){
-    if(!toId) return {ok:false, msg:'Nhập ID người cần kết bạn'};
-    const target = Auth.getUserById(toId);
-    if(!target) return {ok:false, msg:'Không tìm thấy ID này'};
-    if(fromId === toId) return {ok:false, msg:'Không thể tự kết bạn'};
-    const s = this.get();
-    if((s.friends[fromId]||[]).includes(toId)) return {ok:false, msg:'Đã là bạn bè'};
-    if(s.requests.some(r => r.fromId===fromId && r.toId===toId && r.status==='pending')) return {ok:false, msg:'Đã gửi lời mời rồi'};
-    if(s.requests.some(r => r.fromId===toId && r.toId===fromId && r.status==='pending')) return {ok:false, msg:'Người này đã gửi lời mời cho bạn'};
-    s.requests.push({fromId, toId, status:'pending', ts:Date.now()});
-    this.save(s);
-    return {ok:true, msg:`Đã gửi tới ${target.username}`, target};
+    if(!toId) return {ok:false,msg:'Nhập ID người chơi'};
+    const from=Auth.findUserById(fromId), real=Auth.findUserById(toId);
+    if(!from) return {ok:false,msg:'Tài khoản gửi không hợp lệ'};
+    if(!real) return {ok:false,msg:'Không tìm thấy ID người chơi'};
+    if(from===real) return {ok:false,msg:'Không thể tự kết bạn'};
+    const s=this.get(); const a=Storage.users()[from].id, b=Storage.users()[real].id;
+    if((s.friends[a]||[]).includes(b)) return {ok:false,msg:'Đã là bạn'};
+    if(s.requests.some(r=>r.from===a&&r.to===b&&r.status==='pending')) return {ok:false,msg:'Đã gửi lời mời'};
+    if(s.requests.some(r=>r.from===b&&r.to===a&&r.status==='pending')) return {ok:false,msg:'Người này đã gửi lời mời cho bạn'};
+    s.requests.push({from:a,to:b,status:'pending',ts:Date.now()+Math.random()}); this.save(s);
+    return {ok:true,msg:'Đã gửi lời mời kết bạn'};
   },
-
-  incoming(userId){ return this.get().requests.filter(r => r.toId===userId && r.status==='pending'); },
-  outgoing(userId){ return this.get().requests.filter(r => r.fromId===userId && r.status==='pending'); },
-
-  accept(ts){
-    const s = this.get();
-    const req = s.requests.find(r => r.ts===ts);
-    if(!req) return;
-    req.status = 'accepted';
-    if(!s.friends[req.fromId]) s.friends[req.fromId] = [];
-    if(!s.friends[req.toId]) s.friends[req.toId] = [];
-    if(!s.friends[req.fromId].includes(req.toId)) s.friends[req.fromId].push(req.toId);
-    if(!s.friends[req.toId].includes(req.fromId)) s.friends[req.toId].push(req.fromId);
-    this.save(s);
-  },
-
-  reject(ts){
-    const s = this.get();
-    const req = s.requests.find(r => r.ts===ts);
-    if(req){ req.status = 'rejected'; this.save(s); }
-  },
-
-  getFriends(userId){ return this.get().friends[userId] || []; },
-
-  removeFriend(aId, bId){
-    const s = this.get();
-    if(s.friends[aId]) s.friends[aId] = s.friends[aId].filter(x => x!==bId);
-    if(s.friends[bId]) s.friends[bId] = s.friends[bId].filter(x => x!==aId);
-    this.save(s);
-  },
-
-  sendInvite(fromId, toId, roomCode){
-    const s = this.get();
-    s.invites.push({fromId, toId, roomCode, status:'pending', ts:Date.now()});
-    this.save(s);
-  },
-  incomingInvites(userId){ return this.get().invites.filter(i => i.toId===userId && i.status==='pending'); },
-  acceptInvite(ts){
-    const s = this.get();
-    const inv = s.invites.find(i => i.ts===ts);
-    if(!inv) return null;
-    inv.status = 'accepted'; this.save(s); return inv;
-  },
-  rejectInvite(ts){
-    const s = this.get();
-    const inv = s.invites.find(i => i.ts===ts);
-    if(inv){ inv.status = 'rejected'; this.save(s); }
-  }
+  incoming(id){ return this.get().requests.filter(r=>r.to===id&&r.status==='pending'); },
+  outgoing(id){ return this.get().requests.filter(r=>r.from===id&&r.status==='pending'); },
+  accept(ts){ const s=this.get(),r=s.requests.find(x=>x.ts===ts&&x.status==='pending'); if(!r)return false; r.status='accepted'; s.friends[r.from] ||= []; s.friends[r.to] ||= []; if(!s.friends[r.from].includes(r.to))s.friends[r.from].push(r.to); if(!s.friends[r.to].includes(r.from))s.friends[r.to].push(r.from); this.save(s); return true; },
+  reject(ts){ const s=this.get(),r=s.requests.find(x=>x.ts===ts&&x.status==='pending'); if(r){r.status='rejected';this.save(s);} },
+  getFriends(id){ return this.get().friends[id] || []; },
+  removeFriend(a,b){ const s=this.get(); if(s.friends[a])s.friends[a]=s.friends[a].filter(x=>x!==b); if(s.friends[b])s.friends[b]=s.friends[b].filter(x=>x!==a); this.save(s); },
+  sendInvite(from,to,roomCode){ const s=this.get(); s.invites.push({from,to,roomCode,status:'pending',ts:Date.now()+Math.random()}); this.save(s); },
+  incomingInvites(username){ return this.get().invites.filter(i=>i.to===username&&i.status==='pending'); },
+  acceptInvite(ts){ const s=this.get(),i=s.invites.find(x=>x.ts===ts); if(!i)return null; i.status='accepted';this.save(s);return i; },
+  rejectInvite(ts){ const s=this.get(),i=s.invites.find(x=>x.ts===ts); if(i){i.status='rejected';this.save(s);} }
 };
