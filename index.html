@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Exploding Kittens</title>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script async src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 /* MEO NO — giao dien Liquid Glass moi, giu nguyen cac hook/class gameplay */
 :root{
@@ -1288,18 +1288,29 @@ const UI = {
   _oppsSig:'', _discSig:'', _lastCanDraw:null, _lastLogSig:'',
 
   async init(){
-    try{ await Auth.init(); }catch(err){ console.error('[Auth init]',err); }
-    this.myId = 'p_' + U.uid();
-    Engine.onChange = meta => this.onEngineChange(meta);
-    this.switchAuthTab('login');
-    const cur = Auth.current();
-    if(cur) this.enterMenu(cur);
-    else this.showScreen('sc-auth');
-    this._pollTimer = setInterval(() => this._pollSocial(), 2500);
-    this._setupModalDismiss();
-    this._setupExitGuards();
-    // Splash remains visible briefly for a polished first impression, then fades after UI is ready.
-    setTimeout(() => { const splash=document.getElementById('cat-loading'); if(splash) splash.classList.add('hide'); }, 1250);
+    // Luôn khởi tạo UI, không để splash phụ thuộc hoàn toàn vào Auth/storage.
+    const splash = document.getElementById('cat-loading');
+    const hideSplash = () => { if(splash) splash.classList.add('hide'); };
+    const safetyTimer = setTimeout(hideSplash, 3500);
+    try{
+      try{ await Auth.init(); }catch(err){ console.error('[Auth init]',err); }
+      this.myId = 'p_' + U.uid();
+      Engine.onChange = meta => this.onEngineChange(meta);
+      this.switchAuthTab('login');
+      const cur = Auth.current();
+      if(cur) this.enterMenu(cur);
+      else this.showScreen('sc-auth');
+      this._pollTimer = setInterval(() => this._pollSocial(), 2500);
+      this._setupModalDismiss();
+      this._setupExitGuards();
+    }catch(err){
+      console.error('[UI boot]', err);
+      try{ this.showScreen('sc-auth'); }catch(screenErr){ console.error('[Auth fallback]',screenErr); }
+    }finally{
+      clearTimeout(safetyTimer);
+      // Fade splash even if any initialization step failed.
+      setTimeout(hideSplash, 500);
+    }
   },
 
   _setupExitGuards(){
@@ -2762,7 +2773,15 @@ const UI = {
 'use strict';
 window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('error', e => console.error('[Global]', e.message));
-  UI.init();
+  // Failsafe boot: never leave the cat splash blocking the app indefinitely.
+  const splash = document.getElementById('cat-loading');
+  const bootFailsafe = setTimeout(() => { if(splash) splash.classList.add('hide'); }, 5000);
+  Promise.resolve().then(() => UI.init()).catch(err => {
+    console.error('[BOOT fatal]', err);
+    const auth = document.getElementById('sc-auth');
+    if(auth) auth.classList.add('active');
+    if(splash) splash.classList.add('hide');
+  }).finally(() => clearTimeout(bootFailsafe));
 });
 
 </script>
