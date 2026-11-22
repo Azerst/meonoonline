@@ -2,19 +2,22 @@
 
 /* ==================== CRYPTO ==================== */
 const Crypto = {
+  fallbackHash(password, salt = ''){
+    const text = salt + ':' + String(password);
+    let h = 5381;
+    for(let i=0;i<text.length;i++) h = ((h<<5)+h) ^ text.charCodeAt(i);
+    return 'fb_' + (h >>> 0).toString(16);
+  },
   async hash(password, salt = ''){
-    const text = salt + ':' + password;
-    if (window.crypto && crypto.subtle) {
-      try {
+    const text = salt + ':' + String(password);
+    if(window.crypto && crypto.subtle){
+      try{
         const data = new TextEncoder().encode(text);
         const buf = await crypto.subtle.digest('SHA-256', data);
         return 'sha256_' + Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-      } catch(e) {}
+      }catch(e){}
     }
-    // Fallback for file:// (không có secure context)
-    let h = 5381;
-    for (let i=0;i<text.length;i++) h = ((h<<5)+h) ^ text.charCodeAt(i);
-    return 'fb_' + (h >>> 0).toString(16);
+    return this.fallbackHash(password, salt);
   },
   salt(username){ return 'EK::' + String(username).toLowerCase(); }
 };
@@ -139,6 +142,8 @@ const Auth = {
     const hashed = await Crypto.hash(p, salt);
     users[u] = { password: hashed, salt, isAdmin:false, isManager:false, banned:false, avatar:'👤', id:this.makePlayerId(), games:0, wins:0, createdAt: Date.now() };
     Storage.saveUsers(users);
+    const saved = Storage.users();
+    if(!saved[u] || saved[u].password !== hashed) return {ok:false, msg:'Không thể lưu tài khoản. Hãy cho phép lưu dữ liệu trình duyệt và thử lại.'};
     Storage.saveSession(u);
     return {ok:true};
   },
@@ -152,7 +157,10 @@ const Auth = {
     if(acc.banned) return {ok:false, msg:'Tài khoản đã bị khóa'};
     const salt = acc.salt || Crypto.salt(real);
     const hashed = await Crypto.hash(p, salt);
-    if(acc.password !== hashed) return {ok:false, msg:'Mật khẩu sai'};
+    const fallback = Crypto.fallbackHash(p, salt);
+    if(acc.password !== hashed && acc.password !== fallback) return {ok:false, msg:'Mật khẩu sai'};
+    // Chuyển tài khoản cũ sang hash hiện tại sau đăng nhập thành công.
+    if(acc.password !== hashed){ acc.password = hashed; acc.salt = salt; Storage.saveUsers(users); }
     Storage.saveSession(real);
     return {ok:true};
   },
