@@ -202,3 +202,135 @@ select option{background:#fff;color:#26313b}
 .alter-slot-label{color:#687481}
 *{scrollbar-color:rgba(112,132,149,.34) transparent}
 ::-webkit-scrollbar-thumb{background:rgba(112,132,149,.32)}
+
+
+/* =========================================================
+   OBSIDIAN ARCADE — redesign giao diện hoàn chỉnh, không dùng nền trắng
+   Giữ nguyên tên class và cấu trúc gameplay để không phá logic.
+   ========================================================= */
+:root{
+  color-scheme:dark;
+  --bg:#080b16;--bg2:#11172a;--ink:#f5f2ff;--muted:#a7a5bd;
+  --line:rgba(174,161,255,.22);--line-strong:rgba(190,177,255,.48);
+  --glass:rgba(21,24,48,.78);--glass-hi:rgba(34,29,67,.9);
+  --cyan:#7de7e2;--blue:#9c8cff;--mint:#7fe0b5;--red:#ff647c;--gold:#ffc66d;
+  --shadow:0 22px 60px rgba(0,0,0,.48);
+  --cut:18px;
+}
+html,body{background:#080b16;color:var(--ink)}
+body{
+ background:
+ radial-gradient(ellipse at 15% 5%,rgba(93,61,160,.28),transparent 38%),
+ radial-gradient(ellipse at 90% 85%,rgba(16,133,139,.18),transparent 35%),
+ linear-gradient(145deg,#070a13 0%,#101329 48%,#090d19 100%);
+}
+body:before{opacity:.08;background-size:36px 36px}
+.glass{
+ background:linear-gradient(135deg,rgba(42,37,79,.82),rgba(16,22,43,.88) 58%,rgba(9,17,31,.94));
+ border:1px solid rgba(169,151,255,.32);
+ box-shadow:0 18px 48px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12);
+ backdrop-filter:blur(20px) saturate(135%);
+}
+.glass:after{background:linear-gradient(115deg,rgba(194,178,255,.11),transparent 35%,transparent 70%,rgba(77,223,214,.07))}
+button{
+ color:#f8f5ff;border-color:rgba(176,160,255,.36);
+ background:linear-gradient(135deg,rgba(104,83,174,.42),rgba(37,47,78,.62));
+ box-shadow:0 5px 16px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.1);
+}
+button:hover:not(:disabled){background:linear-gradient(135deg,rgba(134,108,219,.62),rgba(43,76,105,.72));border-color:rgba(192,180,255,.8)}
+.btn-primary{background:linear-gradient(120deg,#9c8cff,#65c9cf);color:#101226;border-color:#c7c0ff;box-shadow:0 8px 24px rgba(126,111,239,.28)}
+.btn-primary:hover:not(:disabled){background:linear-gradient(120deg,#b5aaff,#82e2df);color:#101226}
+.btn-danger{background:linear-gradient(120deg,rgba(180,48,79,.5),rgba(98,27,57,.7));color:#ffe8ef;border-color:rgba(255,119,151,.55)}
+input,select,textarea{background:rgba(5,9,22,.78);color:#f8f5ff;border-color:rgba(167,151,255,.3)}
+input:focus,select:focus,textarea:focus{border-color:#8cdbdf;background:rgba(11,17,37,.96);box-shadow:0 0 0 3px rgba(125,231,226,.13)}
+select option{background:#171a32;color:#fff}
+.auth-title{color:#f4eaff;text-shadow:0 0 28px rgba(164,130,255,.34)}
+.auth-sub,.lbl{color:#aaa7c8}
+.topbar,.lobby-box,.auth-box,.game-head,.menu-card,.modal,.chat-panel{
+ border-color:rgba(174,161,255,.3);
+}
+.topbar-name,.menu-card-title,.lobby-title,.profile-v2-name{color:#f7f1ff}
+.topbar-stats,.menu-card-sub,.profile-v2-role{color:#a9a4d2}
+.menu-card{background:linear-gradient(145deg,rgba(39,34,76,.86),rgba(15,25,45,.94));}
+.menu-card:hover{border-color:rgba(125,231,226,.72);box-shadow:0 16px 36px rgba(0,0,0,.35),0 0 25px rgba(125,231,226,.12)}
+.btn-hero{background:linear-gradient(105deg,#7d62dc,#4b9ba9);color:#fff;border:1px solid rgba(215,207,255,.7);box-shadow:0 16px 35px rgba(86,70,179,.3)}
+.btn-hero:hover{background:linear-gradient(105deg,#967bea,#60b6c0)}
+.badge{background:rgba(26,29,59,.88);border-color:rgba(171,158,255,.32);color:#dedaff}
+.badge.hot{background:linear-gradient(110deg,rgba(119,86,206,.4),rgba(27,114,123,.32));border-color:rgba(125,231,226,.45)}
+.opponents{gap:8px}
+.opp{background:linear-gradient(145deg,rgba(43,38,78,.9),rgba(16,25,44,.95));border:1px solid rgba(171,157,255,.26);box-shadow:0 8px 20px rgba(0,0,0,.2)}
+.opp.turn{border-color:#7de7e2;box-shadow:0 0 0 2px rgba(125,231,226,.16),0 0 24px rgba(125,231,226,.17)}
+.opp-name{color:#f2edff}.opp-cnt{color:#8fe0dc}
+.board{gap:clamp(16px,5vw,58px)}
+.pile{filter:drop-shadow(0 14px 22px rgba(0,0,0,.42))}
+.deck{
+ background:linear-gradient(145deg,#8d4fe0 0%,#4d3c9b 48%,#172e59 100%);
+ color:#fff;border:2px solid #d5c2ff;
+ box-shadow:0 14px 34px rgba(98,64,188,.48),inset 0 2px 0 rgba(255,255,255,.32);
+ border-radius:13px;font-weight:950;letter-spacing:.12em;
+}
+.deck:before{color:#e4d7ff}
+.deck.can{box-shadow:0 0 0 3px rgba(125,231,226,.2),0 14px 36px rgba(98,64,188,.6),0 0 26px rgba(125,231,226,.25)}
+.deck.locked{opacity:.42;filter:grayscale(.65)}
+.dis{background:linear-gradient(145deg,rgba(27,31,58,.9),rgba(8,13,27,.96));border:1px dashed rgba(180,166,255,.4)}
+.card{
+ border-radius:11px;border:2px solid rgba(208,194,255,.86);
+ background:linear-gradient(145deg,#282044,#11172a);
+ box-shadow:0 7px 18px rgba(0,0,0,.48),0 0 0 1px rgba(124,101,203,.18);
+}
+.card:hover:not(.dis):not(.selected):not(.nope-active){border-color:#7de7e2;box-shadow:0 16px 30px rgba(0,0,0,.58),0 0 20px rgba(125,231,226,.18)}
+.card.selected{border-color:#7fe0b5!important;box-shadow:0 0 0 3px rgba(127,224,181,.65),0 0 26px rgba(127,224,181,.5)!important}
+.card.selected:after{background:#55bd91;color:#071a19;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.card.nope-active{border-color:#ff647c!important;box-shadow:0 0 0 3px rgba(255,100,124,.5),0 0 28px rgba(255,100,124,.55)!important}
+.card.nope-active:before{background:#ff647c;color:#fff;border:1px solid #ffc0cc}
+.card.dis{opacity:.38;filter:grayscale(.7)}
+.card-fallback{color:#fff;background:linear-gradient(145deg,#7547c5,#203c70)}
+.anim-card{border:3px solid #d8caff;background:linear-gradient(145deg,#30224d,#10182d);box-shadow:0 24px 65px rgba(0,0,0,.75),0 0 32px rgba(156,140,255,.3)}
+.anim-back{background:repeating-linear-gradient(135deg,#8154cb 0 9px,#34266f 9px 18px);color:#f4eaff;border:7px solid rgba(215,198,255,.78)}
+.showcase-card{border:4px solid #d9caff;background:linear-gradient(145deg,#33234f,#11192e);box-shadow:0 28px 75px rgba(0,0,0,.72),0 0 45px rgba(156,140,255,.28)}
+.hand-area{background:linear-gradient(180deg,rgba(15,20,42,.08),rgba(7,11,24,.72));border-top:1px solid rgba(168,154,255,.22)}
+.hand-scroll{gap:clamp(3px,.8vw,9px);padding:10px 8px 14px}
+.profile-v2-head{background:linear-gradient(115deg,rgba(118,83,197,.3),rgba(27,131,139,.16));border-color:rgba(171,157,255,.3)}
+.profile-v2-avatar{background:linear-gradient(145deg,#51418c,#183e54);border-color:#a99aff}
+.profile-v2-role{color:#83e2dc}
+.profile-id,.profile-v2-level,.profile-v2-stats>div,.profile-stat,.profile-v2-note,.profile-guest-box{
+ background:rgba(111,92,176,.13);border-color:rgba(174,161,255,.22);color:#e9e4ff
+}
+.profile-id span,.profile-v2-level span,.profile-v2-stats span{color:#aaa5cb}
+.profile-progress-bar{background:rgba(5,9,22,.72)}
+.profile-progress-fill{background:linear-gradient(90deg,#8e78ee,#68d5cf)}
+.friend-row,.admin-row,.admin-stat,.card-list-item,.alter-slot{background:rgba(91,77,151,.16);border-color:rgba(174,161,255,.22)}
+.friend-row-sub,.admin-row-sub,.admin-stat-lbl,.card-list-desc{color:#aaa5c8}
+.card-list-thumb{background:#211a3b;border-color:rgba(191,175,255,.3)}
+.modal{
+ background:linear-gradient(145deg,rgba(31,28,62,.99),rgba(10,19,36,.99));
+ color:#f4efff;border-color:rgba(186,170,255,.55);
+ padding-top:58px;max-height:min(91dvh,850px);overscroll-behavior:contain;
+}
+.modal p{color:#c4bddf}
+.modal-close{
+ position:absolute;top:12px;right:12px;z-index:30;
+ width:38px;height:38px;border-radius:10px;
+ background:linear-gradient(135deg,#8c69dc,#375c83);
+ color:#fff;border:1px solid rgba(224,211,255,.7);
+ box-shadow:0 6px 18px rgba(0,0,0,.35);font-size:23px;
+}
+.overlay{z-index:9999;background:rgba(3,5,15,.82);backdrop-filter:blur(12px)}
+.overlay.on{touch-action:auto}
+.chat-panel{background:rgba(14,18,39,.98);color:#f5f1ff}
+.chat-head{color:#f4edff}
+.notif,.toast{background:linear-gradient(110deg,#6d4bc2,#236c79);color:#fff;border:1px solid rgba(220,210,255,.45)}
+.btn-quit{background:rgba(181,54,83,.24);border-color:rgba(255,115,145,.45)}
+@media(max-width:700px){
+ .modal{padding:58px 16px 20px;max-height:88dvh}
+ .modal-close{top:9px;right:9px;width:36px;height:36px}
+ .profile-v2-head{margin:-58px -16px 0;padding:22px 16px 18px}
+ .card{width:clamp(58px,10vw,78px);height:clamp(86px,14.5vw,112px)}
+ .hand-scroll{overflow-x:auto;overflow-y:hidden;justify-content:flex-start}
+ .opponents{max-height:25vh;overflow:auto}
+}
+@media(max-width:390px){
+ .modal{padding-left:13px;padding-right:13px}
+ .profile-v2-head{margin-left:-13px;margin-right:-13px}
+ .card{width:58px;height:86px}
+}
