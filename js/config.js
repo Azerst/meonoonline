@@ -29,7 +29,8 @@ const BOT_MODES = {
 };
 const BOT_NAMES = ['Mèo Béo','Mèo Ngáo','Mèo Điên','Mèo Lười','Mèo Khủng','Mèo Bự'];
 
-const AVATARS = ['👤','😎','🤖','👻','🎭','👑','⭐','🔥','💎','🌙','⚡','🎮'];
+// Hai avatar ảnh gốc dùng URL riêng được giữ nguyên; không còn avatar con vật.
+const AVATARS = [PHOTO_AVATAR, MAHIIRU_AVATAR, '👤', '😎', '🤖', '👻', '🎭', '👑', '⭐', '🔥', '💎', '🌙', '⚡', '🎮'];
 
 const U = {
   uid: () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4),
