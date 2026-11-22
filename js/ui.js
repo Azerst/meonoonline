@@ -954,34 +954,53 @@ const UI = {
     const s = Engine.state;
     const startRect = deckEl.getBoundingClientRect();
     let endEl;
-    if(isMe){ endEl = document.getElementById('handArea'); }
-    else {
+    if(isMe){
+      endEl = document.getElementById('handArea');
+    } else {
       const opps = document.querySelectorAll('.opp');
       const oppIdx = s.players.filter(p => p.id !== this.myId).findIndex(p => p.id === playerId);
       endEl = opps[oppIdx];
     }
     if(!endEl) return;
+
     const endRect = endEl.getBoundingClientRect();
     const flyer = document.createElement('div');
-    flyer.className = 'anim-card';
+    flyer.className = 'anim-card anim-draw-reveal';
     if(isMe){
       const img = cardImage(card), info = cardInfo(card);
       flyer.innerHTML = `<img src="${img}" onerror="this.closest('.anim-card').classList.add('no-img')" alt=""><div class="anim-fallback">${info.short}</div>`;
     } else {
       flyer.innerHTML = '<div class="anim-back">?</div>';
     }
-    const startX = startRect.left, startY = startRect.top;
+
+    const startX = startRect.left + startRect.width/2 - 47;
+    const startY = startRect.top + startRect.height/2 - 68;
     flyer.style.left = startX + 'px';
     flyer.style.top = startY + 'px';
     document.body.appendChild(flyer);
-    const endX = endRect.left + endRect.width/2 - startX - 47;
-    const endY = endRect.top + endRect.height/2 - startY - 68;
-    flyer.animate([
-      {transform:'translate(0,0) rotate(0) scale(.75)', opacity:0.7},
-      {transform:`translate(${endX*0.16}px,${endY*0.16 - 78}px) rotate(-6deg) scale(1.48)`, opacity:1, offset:0.38},
-      {transform:`translate(${endX*0.43}px,${endY*0.43 - 28}px) rotate(3deg) scale(1.12)`, opacity:1, offset:0.72},
-      {transform:`translate(${endX}px,${endY}px) rotate(0) scale(0.72)`, opacity:0.2}
-    ], {duration:1350, easing:'cubic-bezier(0.4,0,0.2,1)', fill:'forwards'}).onfinish = () => flyer.remove();
+
+    // Giai đoạn 1: rời chồng bài và bay lên giữa màn hình.
+    // Giai đoạn 2: phóng to, giữ nguyên một nhịp để nhìn rõ lá bài.
+    // Giai đoạn 3: thu nhỏ rồi mới bay về tay người chơi.
+    const centerX = window.innerWidth/2 - 47 - startX;
+    const centerY = window.innerHeight/2 - 68 - startY;
+    const endX = endRect.left + endRect.width/2 - 47 - startX;
+    const endY = endRect.top + endRect.height/2 - 68 - startY;
+
+    const animation = flyer.animate([
+      {transform:'translate(0,0) scale(.72) rotate(-5deg)', opacity:0, offset:0},
+      {transform:`translate(${centerX*.78}px,${centerY*.78}px) scale(1.65) rotate(3deg)`, opacity:1, offset:.30},
+      {transform:`translate(${centerX}px,${centerY}px) scale(2.12) rotate(0deg)`, opacity:1, offset:.43},
+      {transform:`translate(${centerX}px,${centerY}px) scale(2.12) rotate(0deg)`, opacity:1, offset:.66},
+      {transform:`translate(${centerX+(endX-centerX)*.48}px,${centerY+(endY-centerY)*.48}px) scale(1.35) rotate(-4deg)`, opacity:1, offset:.82},
+      {transform:`translate(${endX}px,${endY}px) scale(.68) rotate(0deg)`, opacity:.12, offset:1}
+    ], {
+      duration:2200,
+      easing:'cubic-bezier(.22,.72,.22,1)',
+      fill:'forwards'
+    });
+    animation.onfinish = () => flyer.remove();
+    animation.oncancel = () => flyer.remove();
   },
 
   /* ===== RENDER ===== */
