@@ -10,7 +10,7 @@ const Engine = {
       phase: 'playing',
       players: players.map(p => ({
         id: p.id, name: p.name, isBot: !!p.isBot,
-        avatar: p.avatar || (p.isBot ? '🤖' : '🐱'),
+        avatar: p.avatar || (p.isBot ? '🤖' : '👤'),
         hand: [], alive: true,
         stats: {turns:0, cardsPlayed:0, defuses:0}
       })),
@@ -136,7 +136,7 @@ const Engine = {
     const winMs = primaryType === 'FAVOR' ? NOPE_WINDOW_FAVOR : NOPE_WINDOW;
     this.state.pending = { playerId, primary, primaryType, cards: cardTypes, targetId, payload, nopeCount: 0, timestamp: Date.now(), windowMs: winMs };
     this.log(`${p.name} đánh ${CARD_TYPES[primaryType].name}${cardTypes.length>1?' ×'+cardTypes.length:''}`);
-    this.state.lastPlay = { playerId, card: primary, cards: cardTypes, id: Math.random() };
+    this.state.lastPlay = { playerId, card: primary, id: Math.random() };
     this.scheduleResolve();
     this.notify({type:'play', playerId, primaryType});
     return true;
