@@ -48,6 +48,11 @@ const Storage = {
 
 /* ==================== AUTH ==================== */
 const Auth = {
+  makePlayerId(used){
+    used = used || new Set([...(this._reservedPlayerIds || []), ...Object.values(Storage.users()).map(a => String(a.id || ''))]);
+    let id; do { id = String(Math.floor(1000000000 + Math.random() * 9000000000)); } while(used.has(id));
+    used.add(id); this._reservedPlayerIds = used; return id;
+  },
   ADMIN: { username:'vanbacazerst.vn2908', password:'aBc@2908vanbac0809' },
   MANAGER: { username:'T gaming', password:'1234231' },
 
@@ -62,7 +67,7 @@ const Auth = {
       users[this.ADMIN.username] = {
         password: hashed, salt,
         isAdmin: true, isManager: false, banned: false,
-        avatar: '👤', id: 'U'+U.uid().toUpperCase(), games: 0, wins: 0, createdAt: Date.now()
+        avatar: '👤', id: this.makePlayerId(), games: 0, wins: 0, createdAt: Date.now()
       };
       dirty = true;
     }
@@ -73,28 +78,44 @@ const Auth = {
       users[this.MANAGER.username] = {
         password: hashed, salt,
         isAdmin: false, isManager: true, banned: false,
-        avatar: '👤', id: 'U'+U.uid().toUpperCase(), games: 0, wins: 0, createdAt: Date.now()
+        avatar: '👤', id: this.makePlayerId(), games: 0, wins: 0, createdAt: Date.now()
       };
       dirty = true;
     }
-    // Mỗi tài khoản có một ID công khai, ổn định và duy nhất. Bổ sung ID cho tài khoản cũ.
-    const used = new Set();
+    // Chuẩn hóa ID người chơi thành đúng 10 chữ số; giữ ID cũ để chuyển quan hệ bạn bè.
+    const used = new Set(), oldToNew = new Map(), nameToId = new Map();
     for(const [name, acc] of Object.entries(users)){
-      if(!acc.id || used.has(acc.id)){ do { acc.id = 'U' + U.uid().toUpperCase(); } while(used.has(acc.id)); dirty = true; }
-      used.add(acc.id);
-      if(!acc.avatar || ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','🐰','🐹','🦄','🐲','🐺'].includes(acc.avatar)){ acc.avatar='👤'; dirty=true; }
+      const oldId = String(acc.id || '');
+      if(!/^\d{10}$/.test(oldId) || used.has(oldId)) acc.id = this.makePlayerId(used);
+      else used.add(oldId);
+      if(oldId && oldId !== acc.id) oldToNew.set(oldId, acc.id);
+      nameToId.set(name.toLowerCase(), acc.id);
+      if(!acc.avatar || ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','🐰','🐹','🦄','🐲','🐺'].includes(acc.avatar)) acc.avatar = '👤';
+      if(dirty || oldId !== acc.id) dirty = true;
     }
     if(dirty) Storage.saveUsers(users);
-    // Chuyển quan hệ bạn bè cũ (username) sang ID một lần để tương thích dữ liệu đã lưu.
+
+    // Chuyển dữ liệu kết bạn cũ (username/ID cũ) sang ID 10 số.
     const social = Storage.social();
     let socialDirty = false;
-    for(const [owner, list] of Object.entries(social.friends||{})){
-      const ownerKey = Object.keys(users).find(k=>k.toLowerCase()===String(owner).toLowerCase());
-      if(!ownerKey) continue; const ownerId=users[ownerKey].id;
-      const ids=(list||[]).map(v=>{ const key=Object.keys(users).find(k=>k.toLowerCase()===String(v).toLowerCase()); return key?users[key].id:v; });
-      if(owner!==ownerId || JSON.stringify(ids)!==JSON.stringify(list)){ social.friends[ownerId]=[...new Set([...(social.friends[ownerId]||[]),...ids])]; delete social.friends[owner]; socialDirty=true; }
+    const resolveId = value => {
+      const raw = String(value || '').trim();
+      if(oldToNew.has(raw)) return oldToNew.get(raw);
+      if(/^\d{10}$/.test(raw) && [...used].includes(raw)) return raw;
+      return nameToId.get(raw.toLowerCase()) || raw;
+    };
+    const migratedFriends = {};
+    for(const [owner, list] of Object.entries(social.friends || {})){
+      const ownerId = resolveId(owner);
+      if(!/^\d{10}$/.test(ownerId)) continue;
+      migratedFriends[ownerId] = [...new Set([...(migratedFriends[ownerId] || []), ...(list || []).map(resolveId).filter(x => /^\d{10}$/.test(x))])];
+      if(owner !== ownerId || (list || []).some(v => resolveId(v) !== v)) socialDirty = true;
     }
-    for(const r of social.requests||[]){ for(const f of ['from','to']){ const key=Object.keys(users).find(k=>k.toLowerCase()===String(r[f]).toLowerCase()); if(key && r[f]!==users[key].id){r[f]=users[key].id; socialDirty=true;} } }
+    if(JSON.stringify(migratedFriends) !== JSON.stringify(social.friends || {})){ social.friends = migratedFriends; socialDirty = true; }
+    for(const req of social.requests || []){
+      const from = resolveId(req.from), to = resolveId(req.to);
+      if(from !== req.from || to !== req.to){ req.from = from; req.to = to; socialDirty = true; }
+    }
     if(socialDirty) Storage.saveSocial(social);
   },
 
@@ -116,7 +137,7 @@ const Auth = {
     const users = Storage.users();
     const salt = Crypto.salt(u);
     const hashed = await Crypto.hash(p, salt);
-    users[u] = { password: hashed, salt, isAdmin:false, isManager:false, banned:false, avatar:'👤', id:'U'+U.uid().toUpperCase(), games:0, wins:0, createdAt: Date.now() };
+    users[u] = { password: hashed, salt, isAdmin:false, isManager:false, banned:false, avatar:'👤', id:this.makePlayerId(), games:0, wins:0, createdAt: Date.now() };
     Storage.saveUsers(users);
     Storage.saveSession(u);
     return {ok:true};
@@ -136,7 +157,7 @@ const Auth = {
     return {ok:true};
   },
 
-  findUserById(id){ if(!id) return null; const users=Storage.users(); return Object.keys(users).find(k=>users[k].id===String(id).toUpperCase()) || null; },
+  findUserById(id){ if(!id) return null; const value=String(id).trim(); if(!/^\d{10}$/.test(value)) return null; const users=Storage.users(); return Object.keys(users).find(k=>String(users[k].id)===value) || null; },
 
   current(){
     const u = Storage.session();
@@ -151,8 +172,8 @@ const Auth = {
 
   guest(){
     let g = Storage.guest();
-    if(!g){ g = { name:'Khách_' + Math.floor(Math.random()*9000+1000), id:'G'+U.uid().toUpperCase(), avatar:'👤' }; }
-    if(!g.id) g.id='G'+U.uid().toUpperCase();
+    if(!g){ g = { name:'Khách_' + Math.floor(Math.random()*9000+1000), id:this.makePlayerId(), avatar:'👤' }; }
+    if(!/^\d{10}$/.test(String(g.id||''))) g.id=this.makePlayerId();
     if(!g.avatar || ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐵','🐰','🐹','🦄','🐲','🐺'].includes(g.avatar)) g.avatar='👤';
     Storage.saveGuest(g);
     return { username:g.name, id:g.id, avatar:g.avatar, games:0, wins:0, isAdmin:false, isManager:false, isGuest:true };
@@ -205,12 +226,13 @@ const Social = {
   get(){ return Storage.social(); },
   save(s){ Storage.saveSocial(s); },
   sendRequest(fromId, toId){
-    if(!toId) return {ok:false,msg:'Nhập ID người chơi'};
+    fromId=String(fromId||'').trim(); toId=String(toId||'').trim();
+    if(!/^\d{10}$/.test(toId)) return {ok:false,msg:'ID phải gồm đúng 10 chữ số'};
     const from=Auth.findUserById(fromId), real=Auth.findUserById(toId);
     if(!from) return {ok:false,msg:'Tài khoản gửi không hợp lệ'};
     if(!real) return {ok:false,msg:'Không tìm thấy ID người chơi'};
     if(from===real) return {ok:false,msg:'Không thể tự kết bạn'};
-    const s=this.get(); const a=Storage.users()[from].id, b=Storage.users()[real].id;
+    const s=this.get(); const a=String(Storage.users()[from].id), b=String(Storage.users()[real].id);
     if((s.friends[a]||[]).includes(b)) return {ok:false,msg:'Đã là bạn'};
     if(s.requests.some(r=>r.from===a&&r.to===b&&r.status==='pending')) return {ok:false,msg:'Đã gửi lời mời'};
     if(s.requests.some(r=>r.from===b&&r.to===a&&r.status==='pending')) return {ok:false,msg:'Người này đã gửi lời mời cho bạn'};
