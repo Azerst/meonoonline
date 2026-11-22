@@ -79,3 +79,164 @@ select option{background:#132330;color:#fff}
 @media(max-width:700px){.menu-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-width:470px}.menu-card{min-height:100px}.topbar{margin:9px 9px 0;padding:12px}.menu-body{padding:22px 12px 28px;gap:18px}.btn-hero{padding:18px 26px;font-size:16px}.screen{padding:9px}.lobby-box{padding:22px}.room-code{font-size:29px;letter-spacing:.18em}.pile{width:94px;height:132px}.card{width:72px;height:104px}.hand-area{min-height:140px}.hand-scroll{max-height:205px;gap:5px}.game-head{padding:7px 9px}.badge{font-size:9px;padding:5px 7px}.opp{min-width:65px;padding:6px 7px}.opp-av{width:30px;height:30px}.opp-name{max-width:72px;font-size:9px}.board{gap:20px}.game-log{max-width:125px;font-size:8px}.showcase-card{width:156px;height:226px}.modal{padding:22px 17px}.profile-v2-head{margin:-22px -17px 0;padding:20px 17px}.profile-v2-avatar{width:65px;height:65px}.profile-v2-name{font-size:17px}.chat-panel{width:min(100%,360px);right:0;top:auto;bottom:0;height:55vh;transform:translateY(110%)}.chat-panel.on{transform:translateY(0)}.chat-fab{bottom:17%}.notif{bottom:20%;font-size:10px;padding:9px 14px}.card-list-grid{grid-template-columns:1fr}}
 @media(max-width:390px){.menu-card{min-height:88px;padding:13px 10px}.menu-card-title{font-size:10px}.menu-card-sub{font-size:9px}.auth-box{padding:27px 20px}.auth-title{font-size:32px}.profile-v2-stats b{font-size:18px}.code-slot{width:35px;height:48px}.game-head{gap:4px}.badge{padding:4px 5px;font-size:8px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+
+
+/* CARD SKIN RESTORE — giữ màu và diện mạo thẻ bài gốc */
+:root{--w-red:#ff4757;--w-gold:#ffd60a}
+.deck{background:linear-gradient(135deg,#ff6b5b,var(--w-red));cursor:pointer;border:3px solid #fff;box-shadow:0 14px 34px rgba(255,71,87,.55),inset 0 2px 0 rgba(255,255,255,.4);color:#fff;font-weight:900;font-size:22px;letter-spacing:2px}
+.deck:hover{transform:translateY(-5px) scale(1.03)}
+.deck.can{box-shadow:0 14px 34px rgba(255,71,87,.7),0 0 25px rgba(255,71,87,.8),inset 0 2px 0 rgba(255,255,255,.4)}
+.deck.locked{opacity:.55;cursor:not-allowed;filter:grayscale(.6)}
+.card{width:94px;height:136px;border-radius:10px;flex-shrink:0;cursor:pointer;position:relative;background:#1a0f0d;box-shadow:0 4px 14px rgba(0,0,0,.4);border:2.5px solid rgba(255,255,255,.9);transition:transform .2s,box-shadow .2s;overflow:hidden;display:flex;align-items:center;justify-content:center;transform:translateZ(0)}
+.card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.card:hover:not(.dis):not(.selected):not(.nope-active){transform:translateY(-14px) scale(1.06) translateZ(0);z-index:10;box-shadow:0 15px 30px rgba(0,0,0,.6);border-color:var(--w-gold)}
+.card.dis{opacity:.4;filter:grayscale(.8);cursor:not-allowed}
+.card.nope-active{border-color:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,.5),0 0 25px rgba(255,255,255,.9),0 0 50px rgba(255,214,10,.7)!important;cursor:pointer!important;z-index:9}
+.card.nope-active::before{content:'NOPE!';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;color:#ff4757;font-size:10px;font-weight:900;padding:2px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:10}
+.card-fallback{display:none;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:11px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff6b5b,#d93828);width:100%;height:100%;line-height:1.2;text-transform:uppercase;letter-spacing:.5px}
+.card.no-img img{display:none}
+.card.no-img .card-fallback{display:flex}
+.card.selected{border-color:#00ff88!important;box-shadow:0 0 0 3px #00cc66,0 0 25px #00ff88!important;z-index:8!important}
+.card.selected::after{content:'✓';position:absolute;top:-8px;right:-8px;background:#00cc66;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;z-index:10}
+.anim-card{position:fixed;width:94px;height:136px;display:flex;align-items:center;justify-content:center;background:#1a0f0d;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.85),0 0 30px rgba(255,255,255,.4);border:3px solid rgba(255,255,255,.9);overflow:hidden;z-index:5000;transform:translateZ(0)}
+.anim-card img{width:100%;height:100%;object-fit:cover}
+.anim-card.no-img img{display:none}
+.anim-card.no-img .anim-fallback{display:flex}
+.anim-back{width:100%;height:100%;display:grid;place-items:center;background:repeating-linear-gradient(135deg,#ff6b5b 0 8px,#c93434 8px 16px);color:rgba(255,255,255,.85);font-size:42px;font-weight:900;border:7px solid rgba(255,255,255,.18)}
+.showcase-card{width:220px;height:320px;border-radius:20px;overflow:hidden;border:4px solid #fff;background:#1a0f0d;box-shadow:0 30px 80px rgba(0,0,0,.9),0 0 60px rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center}
+.showcase-card img{width:100%;height:100%;object-fit:cover}
+.card-list-thumb{width:56px;height:76px;flex-shrink:0;border-radius:6px;overflow:hidden;background:#1a0f0d;display:flex;align-items:center;justify-content:center}
+.card-list-thumb img{width:100%;height:100%;object-fit:cover}
+@media(max-width:700px){.card{width:78px;height:112px}.showcase-card{width:160px;height:230px}}
+
+/* =========================================================
+   PEARL / SILVER THEME — recolor toàn bộ giao diện và thẻ bài
+   Bảng màu: trắng ngọc trai, bạc, than chì, xanh băng nhạt.
+   Giữ nguyên class/DOM và logic gameplay.
+   ========================================================= */
+:root{
+  color-scheme:light;
+  --bg:#f4f6f8;--bg2:#e8edf1;--ink:#202832;--muted:#687481;
+  --line:rgba(89,105,120,.20);--line-strong:rgba(91,108,124,.34);
+  --glass:rgba(255,255,255,.70);--glass-hi:rgba(255,255,255,.88);
+  --cyan:#8ea8bd;--blue:#a8bacb;--mint:#8eaaa4;--red:#c76f76;--gold:#b6a47d;
+  --shadow:0 16px 42px rgba(44,57,69,.12);
+}
+html,body{background:#f4f6f8;color:#202832}
+body{
+  background:
+    radial-gradient(ellipse at 12% 0%,rgba(255,255,255,.98),transparent 42%),
+    radial-gradient(ellipse at 90% 100%,rgba(210,220,229,.72),transparent 38%),
+    linear-gradient(145deg,#f8fafb,#edf1f4 56%,#e6ebef);
+  color:#202832;
+}
+body:before{
+  opacity:.28;
+  background-image:linear-gradient(rgba(119,136,151,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(119,136,151,.09) 1px,transparent 1px);
+}
+.glass{
+  background:linear-gradient(138deg,rgba(255,255,255,.91),rgba(247,249,251,.76) 48%,rgba(222,230,236,.62));
+  border-color:rgba(103,120,136,.27);
+  box-shadow:0 16px 42px rgba(55,69,82,.12),inset 0 1px 0 rgba(255,255,255,.98),inset 0 -1px 0 rgba(94,111,126,.06);
+  backdrop-filter:blur(26px) saturate(135%);
+  -webkit-backdrop-filter:blur(26px) saturate(135%);
+}
+.glass:after{background:linear-gradient(112deg,rgba(255,255,255,.68),transparent 30%,transparent 72%,rgba(179,198,213,.12));opacity:.85}
+button{
+  color:#26313b;
+  border-color:rgba(102,119,135,.28);
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(225,231,236,.86));
+  box-shadow:0 3px 10px rgba(49,64,78,.07),inset 0 1px 0 #fff;
+}
+button:hover:not(:disabled){background:linear-gradient(145deg,#fff,#e4ebf0);border-color:rgba(105,132,153,.52);box-shadow:0 7px 18px rgba(49,64,78,.11)}
+.btn-primary,.btn-hero,.keypad-key.confirm{
+  color:#263440;
+  background:linear-gradient(120deg,#fff,#dce5ec);
+  border-color:rgba(112,132,149,.46);
+  box-shadow:0 9px 22px rgba(74,95,114,.12),inset 0 1px 0 #fff;
+}
+.btn-primary:hover:not(:disabled),.btn-hero:hover:not(:disabled){background:linear-gradient(120deg,#fff,#e8eef2)}
+.btn-danger{color:#8d3e48;background:rgba(202,111,119,.12);border-color:rgba(190,103,112,.32)}
+input,select,textarea{
+  color:#26313b;background:rgba(255,255,255,.84);border-color:rgba(105,121,136,.25);
+  box-shadow:inset 0 1px 3px rgba(49,64,78,.035);
+}
+input::placeholder,textarea::placeholder{color:#8b97a2}
+input:focus,select:focus,textarea:focus{border-color:#9aafc1;background:#fff;box-shadow:0 0 0 3px rgba(151,177,198,.17)}
+select option{background:#fff;color:#26313b}
+.auth-title{color:#263440}
+.auth-sub,.lbl,.menu-card-sub,.topbar-stats,.profile-progress-label,.friend-row-sub,.admin-row-sub,.admin-stat-lbl,.card-list-desc{color:#687481}
+.tabs,.admin-tabs{background:rgba(225,231,236,.72);border-color:rgba(103,120,136,.20)}
+.tab{color:#687481}.tab.active{color:#263440;background:rgba(255,255,255,.92);border-color:rgba(111,132,150,.28)}
+.link-btn{color:#687481}.link-btn:hover{color:#202832}
+.topbar-avatar,.pitem .av,.admin-row-av,.profile-v2-avatar,.profile-avatar{background:#e2e8ed;border-color:rgba(103,120,136,.32)}
+.topbar-stats b,.menu-card-title,.profile-v2-name,.profile-name,.friend-row-name,.admin-row-name,.admin-stat-val{color:#263440}
+.role-admin,.role-level{color:#8d7440}.role-manager{color:#547c8b}.role-guest{color:#687481}.role-banned{color:#a94750}
+.role-badge,.badge{background:rgba(255,255,255,.72);border-color:rgba(103,120,136,.22);color:#53616d}
+.menu-card,.menu-card:hover{background:linear-gradient(145deg,rgba(255,255,255,.84),rgba(226,233,238,.67));border-color:rgba(103,120,136,.24)}
+.menu-card:before{background:#9aafc1}
+.menu-card-badge{background:#bd6870;color:#fff}
+.lobby-box,.auth-box,.modal,.profile-v2,.chat-panel{color:#26313b}
+.room-code{color:#344b5e;border-color:rgba(103,120,136,.22)}
+.pitem,.friend-row,.admin-row,.admin-stat,.card-list-item,.alter-slot,.profile-v2-note,.profile-guest-box{
+  background:rgba(255,255,255,.70);border-color:rgba(103,120,136,.20);color:#34404b;
+}
+.pitem .st{color:#668b7e}
+#sc-game{
+  background:radial-gradient(ellipse at 50% 45%,rgba(205,216,225,.72),transparent 58%),linear-gradient(145deg,#edf1f4,#e4e9ed 72%,#dce3e9);
+}
+.game-head,.opp,.badge{color:#34404b}
+.opp{background:rgba(255,255,255,.76);border-color:rgba(103,120,136,.22)}
+.opp.turn{border-color:#91aabd;background:rgba(211,225,235,.88);box-shadow:0 0 0 1px rgba(127,157,180,.16)}
+.opp.dead{opacity:.42}
+.badge.hot{background:rgba(194,214,228,.62);border-color:rgba(111,143,166,.42);color:#354e60}
+.badge.hot b,.badge b{color:#263b4b}
+.btn-quit{color:#944d55;background:rgba(202,111,119,.12);border-color:rgba(190,103,112,.32)}
+.game-log,.profile-v2-stats,.profile-v2-actions{color:#34404b}
+.admin-danger-zone{background:rgba(202,111,119,.08);border-color:rgba(190,103,112,.28)}
+.danger-title{color:#9c4c55}
+.keypad-display .code-slot{background:rgba(255,255,255,.85);border-color:rgba(103,120,136,.25);color:#263440}
+.code-slot.filled{background:#e1e9ef;border-color:#9aafc1}.code-slot.active{border-color:#738da3}
+.keypad-key{background:linear-gradient(145deg,#fff,#e4eaf0);color:#263440}
+.keypad-key.del{color:#984d56;background:rgba(202,111,119,.12)}
+.alter-slot-label{color:#687481}
+*{scrollbar-color:rgba(112,132,149,.34) transparent}
+::-webkit-scrollbar-thumb{background:rgba(112,132,149,.32)}
+
+/* Thẻ bài: tông trắng ngọc trai - bạc, không đổi ảnh mặt bài gốc */
+:root{--card-white:#fff;--card-silver:#dce2e8;--card-ice:#b9c9d7;--card-ink:#34414d}
+.deck{
+  color:#34414d;
+  background:linear-gradient(145deg,#fff 0%,#edf1f4 48%,#cbd5de 100%);
+  border:2.5px solid #fff;
+  box-shadow:0 14px 30px rgba(72,88,104,.22),inset 0 2px 0 #fff, inset 0 -2px 5px rgba(89,105,120,.12);
+}
+.deck:before{color:#71879a}
+.deck.can{box-shadow:0 14px 30px rgba(72,88,104,.24),0 0 0 3px rgba(179,199,216,.48),0 0 24px rgba(171,192,210,.55),inset 0 2px 0 #fff}
+.deck.locked{opacity:.5;filter:grayscale(.25)}
+.card{
+  background:linear-gradient(145deg,#fff,#e8edf1 60%,#d4dde5);
+  border:2.5px solid rgba(255,255,255,.98);
+  box-shadow:0 5px 15px rgba(47,61,74,.20),inset 0 0 0 1px rgba(111,129,145,.16);
+}
+.card:hover:not(.dis):not(.selected):not(.nope-active){border-color:#a9bdce;box-shadow:0 15px 28px rgba(47,61,74,.22)}
+.card.dis{opacity:.42;filter:grayscale(.7)}
+.card.nope-active{border-color:#fff!important;box-shadow:0 0 0 3px rgba(156,178,197,.58),0 0 24px rgba(149,174,194,.75),0 0 42px rgba(255,255,255,.9)!important}
+.card.nope-active::before{background:#fff;color:#536c80;border:1px solid #cbd6df;box-shadow:0 3px 9px rgba(47,61,74,.16)}
+.card-fallback{color:#34414d;background:linear-gradient(145deg,#fff,#dce4eb)}
+.card.selected{border-color:#8daec7!important;box-shadow:0 0 0 3px #b9cbd9,0 0 22px rgba(139,169,192,.62)!important}
+.card.selected::after{background:#8faec4;color:#fff;box-shadow:0 2px 8px rgba(55,76,94,.2)}
+.anim-card{
+  background:linear-gradient(145deg,#fff,#e8edf1 60%,#d4dde5);
+  border:3px solid #fff;
+  box-shadow:0 20px 55px rgba(47,61,74,.30),0 0 28px rgba(174,194,211,.42);
+}
+.anim-back{
+  background:repeating-linear-gradient(135deg,#fff 0 9px,#e2e8ed 9px 18px);
+  color:#8195a7;border:7px solid rgba(255,255,255,.9);
+}
+.showcase-card{
+  border:4px solid #fff;background:linear-gradient(145deg,#fff,#e5ebf0);
+  box-shadow:0 28px 70px rgba(47,61,74,.24),0 0 45px rgba(174,194,211,.42);
+}
+.card-list-thumb{background:#e6ebef;border:1px solid rgba(103,120,136,.2)}
