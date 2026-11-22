@@ -1460,6 +1460,7 @@ const UI = {
             return `<div class="friend-row">
               <div class="friend-av">${renderAvatarHTML(av, 38)}</div>
               <div class="friend-name">${this.escapeHtml(Auth.findUserById(f)||'Tài khoản không còn tồn tại')} <small>${this.escapeHtml(f)}</small></div>
+              ${this.roomCode ? `<button class="btn-primary bevel-sm" onclick="UI.sendTeamInvite('${this.escapeHtml(f)}')">Mời chơi</button>` : ''}
               <button class="btn-danger bevel-sm" onclick="UI.friendRemove('${this.escapeHtml(f)}')">Xóa</button>
             </div>`;
           }).join('');
@@ -1961,6 +1962,8 @@ const UI = {
     const user = this.currentUser();
     if(!user || !this.roomCode) return;
     const target=Auth.findUserById(to); if(!target) return this.toast('Không tìm thấy người chơi');
+    const pending = Social.incomingInvites(target).some(i => i.from===user.username && i.roomCode===this.roomCode);
+    if(pending) return this.toast('Đã gửi lời mời này rồi');
     Social.sendInvite(user.username, target, this.roomCode);
     this.toast(`Đã gửi lời mời tới ${target}`);
   },
@@ -2564,13 +2567,20 @@ const UI = {
     this.closeModal();
   },
   doFavor(idx){ this.closeModal(); this.act('favor', {idx}); },
+  rematchRoom(){
+    if(!this.isHost || !Engine.state) return this.toast('Chỉ chủ phòng mới bắt đầu ván mới');
+    const players=Engine.state.players.map(p=>({id:p.id,name:p.name,isBot:!!p.isBot,avatar:p.avatar}));
+    if(players.length<2) return this.toast('Cần ít nhất 2 người để chơi lại');
+    Engine.createGame(players,this.myId,Engine.state.botMode||'smart');
+    Net.send({type:'start',state:U.clone(Engine.state)}); this.closeModal(); this.enterGame(true);
+  },
   showWinModal(msg){
     const s = Engine.state, w = s?.winner;
     const isMe = w?.id === this.myId;
     this.openModal('win', `
       <h2 style="font-size:32px">${isMe?'CHIẾN THẮNG':'THUA RỒI'}</h2>
       <p style="font-size:15px">${msg || (w ? `${w.name} là người sống sót cuối cùng` : 'Không có người thắng')}</p>
-      <button class="btn-primary bevel-sm" onclick="UI.leaveRoom()">Về Menu</button>
+      <div class="row-2"><button class="btn-outline bevel-sm" onclick="UI.closeModal()">Ở lại phòng</button>${this.isHost ? '<button class="btn-primary bevel-sm" onclick="UI.rematchRoom()">Chơi lại</button>' : '<button class="btn-primary bevel-sm" onclick="UI.closeModal()">Chờ chủ phòng</button>'}</div>
     `);
   },
 
