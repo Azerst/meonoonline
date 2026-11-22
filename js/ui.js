@@ -10,7 +10,7 @@ const UI = {
   _friendsTab:'list', _alterCards:null,
   _showcaseTimeout:null, _nopeHighlightTimer:null, _hostWatchdogTimer:null,
   _lastAlive:null, _lastDeck:null, _lastTurn:null, _lastTurnsLeft:null,
-  _oppsSig:'', _discSig:'', _lastCanDraw:null, _lastLogSig:'',_notifTimer:null, _inviteQueue:[],
+  _oppsSig:'', _discSig:'', _lastCanDraw:null, _lastLogSig:'',
 
   async init(){
     await Auth.init();
@@ -47,7 +47,7 @@ const UI = {
   _pollSocial(){
     const acc = Auth.current();
     if(!acc || acc.isGuest) return;
-    const incoming = Social.incoming(acc.username);
+    const incoming = Social.incoming(acc.id);
     const badge = document.getElementById('friendsBadge');
     if(badge){
       if(incoming.length > 0){ badge.textContent = incoming.length; badge.style.display = 'flex'; }
@@ -128,7 +128,7 @@ const UI = {
     document.getElementById('topbarName').textContent = user.username;
     document.getElementById('topbarGames').textContent = user.games || 0;
     document.getElementById('topbarWins').textContent = user.wins || 0;
-    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(user.avatar || '🐱', 66);
+    document.getElementById('topbarAvatar').innerHTML = renderAvatarHTML(user.avatar || '👤', 66);
 
     const badge = document.getElementById('topbarRoleBadge');
     if(user.isAdmin){ badge.textContent = 'ADMIN'; badge.className = 'role-badge role-admin'; badge.style.display='inline-flex'; }
@@ -141,7 +141,7 @@ const UI = {
       document.getElementById('topbarFriends').textContent = '—';
       document.getElementById('friendsCard').classList.add('locked');
     } else {
-      document.getElementById('topbarFriends').textContent = Social.getFriends(user.username).length;
+      document.getElementById('topbarFriends').textContent = Social.getFriends(user.id).length;
       document.getElementById('friendsCard').classList.remove('locked');
     }
     this.showScreen('sc-menu');
@@ -161,49 +161,19 @@ const UI = {
 
   /* ===== PROFILE ===== */
   openProfile(){
-    const user = this.currentUser();
-    if(!user) return;
-    const winRate = user.games ? Math.round((user.wins / user.games) * 100) : 0;
-    const level = user.games < 5 ? 'Tân Binh' : user.games < 20 ? 'Chiến Binh' : user.games < 50 ? 'Cao Thủ' : 'Huyền Thoại';
-    const progress = Math.min(100, (user.games % 50) * 2);
+    const user=this.currentUser(); if(!user)return;
+    const winRate=user.games?Math.round(user.wins/user.games*100):0;
+    const level=user.games<5?'Tân binh':user.games<20?'Chiến binh':user.games<50?'Cao thủ':'Huyền thoại';
+    const progress=Math.min(100,(user.games%50)*2);
     this.openModal('profile', `
-      <div class="profile-cover">
-        <div class="profile-avatar-wrap" onclick="UI.openAvatarPicker()">
-          <div class="profile-avatar">${renderAvatarHTML(user.avatar || '🐱', 110)}</div>
-        </div>
-      </div>
-      <div class="profile-info">
-        <h2 class="profile-name">${this.escapeHtml(user.username)}</h2>
-        <div class="profile-tags">
-          ${user.isAdmin ? '<span class="role-badge role-admin">ADMIN</span>' : ''}
-          ${user.isManager ? '<span class="role-badge role-manager">MANAGER</span>' : ''}
-          ${user.isGuest ? '<span class="role-badge role-guest">GUEST</span>' : ''}
-          ${!user.isGuest ? `<span class="role-badge role-level">${level}</span>` : ''}
-        </div>
-      </div>
-      ${user.isGuest ? `
-        <div class="profile-guest-box">
-          Đăng ký tài khoản để lưu trận, kết bạn và chơi đội
-        </div>
-        <button class="btn-primary bevel-sm" onclick="UI.closeModal();UI.showScreen('sc-auth')">Đăng Ký Ngay</button>
-      ` : `
-        <div class="profile-progress">
-          <div class="profile-progress-label">
-            <span>Cấp độ ${level}</span><span>${progress}%</span>
-          </div>
-          <div class="profile-progress-bar"><div class="profile-progress-fill" style="width:${progress}%"></div></div>
-        </div>
-        <div class="profile-stats">
-          <div class="profile-stat"><div class="profile-stat-val">${user.games || 0}</div><div class="profile-stat-lbl">Trận</div></div>
-          <div class="profile-stat"><div class="profile-stat-val">${user.wins || 0}</div><div class="profile-stat-lbl">Thắng</div></div>
-          <div class="profile-stat"><div class="profile-stat-val">${winRate}%</div><div class="profile-stat-lbl">Tỷ lệ</div></div>
-        </div>
-        <div class="profile-actions">
-          <button class="btn-primary bevel-sm" onclick="UI.openAvatarPicker()">Đổi Avatar</button>
-          <button class="btn-danger bevel-sm" onclick="UI.doLogout()">Đăng Xuất</button>
-        </div>
-      `}
-    `);
+      <section class="profile-v2">
+        <div class="profile-v2-head"><div class="profile-v2-orbit"></div><div class="profile-v2-avatar" onclick="UI.openAvatarPicker()">${renderAvatarHTML(user.avatar||'👤',92)}<span class="profile-edit">✎</span></div><div class="profile-v2-name">${this.escapeHtml(user.username)}</div><div class="profile-v2-role">${user.isAdmin?'ADMIN':user.isManager?'QUẢN LÝ':user.isGuest?'KHÁCH':level.toUpperCase()}</div></div>
+        <div class="profile-id"><span>ID NGƯỜI CHƠI</span><strong>${this.escapeHtml(user.id||'—')}</strong><button onclick="navigator.clipboard?.writeText('${this.escapeHtml(user.id||'')}').then(()=>UI.toast('Đã sao chép ID'))">Sao chép</button></div>
+        ${user.isGuest?'<p class="profile-v2-note">Đăng ký tài khoản để lưu thành tích và kết bạn.</p><button class="btn-primary" onclick="UI.closeModal();UI.showScreen(\'sc-auth\')">Đăng ký ngay</button>':`
+        <div class="profile-v2-level"><div><b>${level}</b><span>${progress}% tiến độ</span></div><div class="profile-progress-bar"><div class="profile-progress-fill" style="width:${progress}%"></div></div></div>
+        <div class="profile-v2-stats"><div><b>${user.games||0}</b><span>TRẬN ĐẤU</span></div><div><b>${user.wins||0}</b><span>CHIẾN THẮNG</span></div><div><b>${winRate}%</b><span>TỈ LỆ THẮNG</span></div></div>
+        <div class="profile-v2-actions"><button class="btn-primary" onclick="UI.openAvatarPicker()">Đổi ảnh đại diện</button><button class="btn-danger" onclick="UI.doLogout()">Đăng xuất</button></div>`}
+      </section>`);
   },
   openAvatarPicker(){
     const user = this.currentUser();
@@ -244,38 +214,38 @@ const UI = {
     const user = this.currentUser();
     if(!user || user.isGuest){ this.toast('Cần đăng nhập'); return; }
     const accs = Storage.users();
-    const friends = Social.getFriends(user.username);
-    const incoming = Social.incoming(user.username);
-    const outgoing = Social.outgoing(user.username);
+    const friends = Social.getFriends(user.id);
+    const incoming = Social.incoming(user.id);
+    const outgoing = Social.outgoing(user.id);
     let content = '';
     if(this._friendsTab === 'list'){
       content = friends.length === 0
         ? `<div class="empty"><div class="empty-txt">Chưa có bạn bè</div></div>`
         : friends.map(f => {
-            const av = accs[f]?.avatar || '🐱';
+            const av = accs[Auth.findUserById(f)]?.avatar || '👤';
             return `<div class="friend-row">
               <div class="friend-av">${renderAvatarHTML(av, 38)}</div>
-              <div class="friend-name">${this.escapeHtml(f)}</div>
+              <div class="friend-name">${this.escapeHtml(Auth.findUserById(f)||'Tài khoản không còn tồn tại')} <small>${this.escapeHtml(f)}</small></div>
               <button class="btn-danger bevel-sm" onclick="UI.friendRemove('${this.escapeHtml(f)}')">Xóa</button>
             </div>`;
           }).join('');
     } else if(this._friendsTab === 'add'){
       content = `
         <div class="search-row">
-          <input type="text" id="friendSearchInput" placeholder="Nhập tên user..." maxlength="20" onkeypress="if(event.key==='Enter')UI.friendSearch()">
+          <input type="text" id="friendSearchInput" placeholder="Nhập ID người chơi..." maxlength="24" onkeypress="if(event.key==='Enter')UI.friendSearch()">
           <button class="btn-primary bevel-sm" onclick="UI.friendSearch()">Kết Bạn</button>
         </div>
         <div id="friendSearchResult" style="min-height:20px;font-size:12px;padding:8px;color:#fff"></div>
-        <div style="font-size:11px;color:var(--white-dim);margin-top:8px;text-align:left">Nhập đúng tên user.</div>
+        <div style="font-size:11px;color:var(--white-dim);margin-top:8px;text-align:left">Nhập ID riêng của người chơi để gửi lời mời.</div>
       `;
     } else if(this._friendsTab === 'incoming'){
       content = incoming.length === 0
         ? `<div class="empty"><div class="empty-txt">Không có lời mời</div></div>`
         : incoming.map(r => {
-            const av = accs[r.from]?.avatar || '🐱';
+            const av = accs[Auth.findUserById(r.from)]?.avatar || '👤';
             return `<div class="friend-row">
               <div class="friend-av">${renderAvatarHTML(av, 38)}</div>
-              <div class="friend-name">${this.escapeHtml(r.from)}</div>
+              <div class="friend-name">${this.escapeHtml(Auth.findUserById(r.from)||'Người chơi')} <small>${this.escapeHtml(r.from)}</small></div>
               <button class="btn-primary bevel-sm" onclick="UI.friendAccept(${r.ts})">Đồng ý</button>
               <button class="btn-danger bevel-sm" onclick="UI.friendReject(${r.ts})">Từ chối</button>
             </div>`;
@@ -285,7 +255,7 @@ const UI = {
         ? `<div class="empty"><div class="empty-txt">Không có lời mời đã gửi</div></div>`
         : outgoing.map(r => `<div class="friend-row">
             <div class="friend-av">…</div>
-            <div class="friend-name">${this.escapeHtml(r.to)}</div>
+            <div class="friend-name">${this.escapeHtml(Auth.findUserById(r.to)||'Người chơi')} <small>${this.escapeHtml(r.to)}</small></div>
             <span style="font-size:11px;color:var(--white-dim)">Đang chờ</span>
           </div>`).join('');
     }
@@ -306,15 +276,15 @@ const UI = {
     const result = document.getElementById('friendSearchResult');
     if(!input || !result) return;
     const val = input.value.trim();
-    if(!val){ result.textContent = 'Nhập tên user'; result.style.color = '#ff8a7a'; return; }
+    if(!val){ result.textContent = 'Nhập ID người chơi'; result.style.color = '#ff8a7a'; return; }
     const user = this.currentUser();
     if(!user) return;
-    const real = Auth.findUser(val);
+    const real = Auth.findUserById(val);
     if(!real){
-      result.textContent = `Không tìm thấy "${val}"`;
+      result.textContent = `Không tìm thấy ID "${val}"`;
       result.style.color = '#ff8a7a'; return;
     }
-    const res = Social.sendRequest(user.username, real);
+    const res = Social.sendRequest(user.id, val);
     result.textContent = res.ok ? `Đã gửi tới "${real}"` : res.msg;
     result.style.color = res.ok ? '#8affa8' : '#ffc766';
     if(res.ok) setTimeout(() => this.openFriends(), 800);
@@ -325,7 +295,7 @@ const UI = {
     const user = this.currentUser();
     if(!user) return;
     if(!confirm(`Xóa "${name}" khỏi danh sách bạn bè?`)) return;
-    Social.removeFriend(user.username, name);
+    Social.removeFriend(user.id, name);
     this.toast('Đã xóa'); this.openFriends();
   },
 
@@ -459,7 +429,7 @@ const UI = {
     return `
       <div class="admin-row" data-username="${this.escapeHtml(name.toLowerCase())}">
         <div class="admin-row-main">
-          <div class="admin-row-av">${renderAvatarHTML(a.avatar||'🐱', 40)}</div>
+          <div class="admin-row-av">${renderAvatarHTML(a.avatar||'👤', 40)}</div>
           <div style="min-width:0">
             <div class="admin-row-name">
               <b>${this.escapeHtml(name)}</b>
@@ -731,7 +701,7 @@ const UI = {
   openInviteFriends(){
     const user = this.currentUser();
     if(!user || user.isGuest) return this.toast('Cần đăng nhập');
-    const friends = Social.getFriends(user.username);
+    const friends = Social.getFriends(user.id);
     const accs = Storage.users();
     if(friends.length === 0){
       this.openModal('invite', `<h2>Mời Bạn Bè</h2><div class="empty"><div class="empty-txt">Chưa có bạn bè</div></div><button class="btn-primary bevel-sm" onclick="UI.closeModal();UI.openFriends()">Mở Bạn Bè</button>`);
@@ -742,10 +712,10 @@ const UI = {
       <p>Phòng <b>${this.roomCode}</b></p>
       <div style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;text-align:left">
         ${friends.map(f => {
-          const av = accs[f]?.avatar || '🐱';
+          const av = accs[Auth.findUserById(f)]?.avatar || '👤';
           return `<div class="friend-row">
             <div class="friend-av">${renderAvatarHTML(av, 38)}</div>
-            <div class="friend-name">${this.escapeHtml(f)}</div>
+            <div class="friend-name">${this.escapeHtml(Auth.findUserById(f)||'Tài khoản không còn tồn tại')} <small>${this.escapeHtml(f)}</small></div>
             <button class="btn-primary bevel-sm" onclick="UI.sendTeamInvite('${this.escapeHtml(f)}')">Mời</button>
           </div>`;
         }).join('')}
@@ -756,8 +726,9 @@ const UI = {
   sendTeamInvite(to){
     const user = this.currentUser();
     if(!user || !this.roomCode) return;
-    Social.sendInvite(user.username, to, this.roomCode);
-    this.toast(`Đã gửi tới ${to}`);
+    const target=Auth.findUserById(to); if(!target) return this.toast('Không tìm thấy người chơi');
+    Social.sendInvite(user.username, target, this.roomCode);
+    this.toast(`Đã gửi lời mời tới ${target}`);
   },
   startMultiplayerGame(){
     if(this.lobbyPlayers.length < 2) return this.toast('Cần ≥ 2 người');
@@ -882,7 +853,7 @@ const UI = {
       const player = Engine.byId(s.lastPlay.playerId);
       const info = CARD_TYPES[cardType(s.lastPlay.card)];
       if(player && info){
-        this.showPlayedCard(s.lastPlay.card, player.name, info.short);
+        this.showPlayedCard(s.lastPlay.card, player.name, info.short, player.id);
         this.showNotif(`${player.name} đã dùng ${info.name}`);
       }
     }
@@ -942,6 +913,8 @@ const UI = {
     el.classList.remove('show');
     void el.offsetWidth;
     el.classList.add('show');
+    clearTimeout(this._notifTimeout);
+    this._notifTimeout=setTimeout(()=>el.classList.remove('show'),2100);
   },
 
   // Show a card overlay (used for played & steal)
@@ -955,12 +928,25 @@ const UI = {
     cardEl.innerHTML = `<img src="${cardImage(card)}" onerror="this.parentElement.innerHTML='<div style=&quot;padding:20px;font-size:24px;font-weight:900;color:#fff;text-align:center;line-height:1.4&quot;>${info.short}</div>'" alt="">`;
     labelEl.textContent = label;
     actionEl.textContent = action;
-    sc.classList.add('show');
     clearTimeout(this._showcaseTimeout);
-    this._showcaseTimeout = setTimeout(() => sc.classList.remove('show'), 2600);
+    sc.classList.remove('fast'); void sc.offsetWidth;
+    sc.classList.add('show');
+    this._showcaseTimeout = setTimeout(() => sc.classList.remove('show'), 1900);
   },
-  showPlayedCard(card, playerName, actionText){
+  showPlayedCard(card, playerName, actionText, playerId){
+    const type=cardType(card);
+    if(playerId!==this.myId || ['SHUFFLE','SKIP','ATTACK'].includes(type)){ this.animatePlayedToTable(card, playerId); return; }
     this.showcaseCard(card, playerName, actionText);
+  },
+  animatePlayedToTable(card, playerId){
+    const source=playerId===this.myId?document.getElementById('handArea'):document.querySelector(`.opp[data-player-id="${CSS.escape(String(playerId||''))}"]`);
+    const table=document.getElementById('tableArea')||document.getElementById('gameTable')||document.getElementById('deckPile');
+    if(!source||!table)return; const a=source.getBoundingClientRect(),b=table.getBoundingClientRect();
+    const el=document.createElement('div'); el.className='anim-card anim-to-table';
+    const info=cardInfo(card); el.innerHTML=`<img src="${cardImage(card)}" onerror="this.closest('.anim-card').classList.add('no-img')" alt=""><div class="anim-fallback">${info.short}</div>`;
+    el.style.left=(a.left+a.width/2-47)+'px'; el.style.top=(a.top+a.height/2-68)+'px'; document.body.appendChild(el);
+    const dx=b.left+b.width/2-(a.left+a.width/2),dy=b.top+b.height/2-(a.top+a.height/2);
+    el.animate([{transform:'translate(0,0) scale(.82)',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(.58) rotate(8deg)`,opacity:.25}],{duration:480,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'}).onfinish=()=>el.remove();
   },
   animateDraw(playerId, card, isMe, fromBottom=false){
     const deckEl = document.getElementById('deckPile');
@@ -991,10 +977,11 @@ const UI = {
     const endX = endRect.left + endRect.width/2 - startX - 47;
     const endY = endRect.top + endRect.height/2 - startY - 68;
     flyer.animate([
-      {transform:'translate(0,0) rotate(0) scale(1)', opacity:1},
-      {transform:`translate(${endX*0.4}px,${endY*0.4 - 70}px) rotate(-15deg) scale(1.15)`, opacity:1, offset:0.5},
-      {transform:`translate(${endX}px,${endY}px) rotate(0) scale(0.8)`, opacity:0.9}
-    ], {duration:1200, easing:'cubic-bezier(0.4,0,0.2,1)', fill:'forwards'}).onfinish = () => flyer.remove();
+      {transform:'translate(0,0) rotate(0) scale(.75)', opacity:0.7},
+      {transform:`translate(${endX*0.18}px,${endY*0.18 - 95}px) rotate(-8deg) scale(1.75)`, opacity:1, offset:0.32},
+      {transform:`translate(${endX*0.42}px,${endY*0.42 - 35}px) rotate(4deg) scale(1.15)`, opacity:1, offset:0.62},
+      {transform:`translate(${endX}px,${endY}px) rotate(0) scale(0.72)`, opacity:0.2}
+    ], {duration:850, easing:'cubic-bezier(0.4,0,0.2,1)', fill:'forwards'}).onfinish = () => flyer.remove();
   },
 
   /* ===== RENDER ===== */
@@ -1026,7 +1013,7 @@ const UI = {
       document.getElementById('opponentsArea').innerHTML = opps.map(p => {
         const isTurn = p.id === cur?.id;
         const av = p.avatar || (p.isBot ? '🤖' : '👤');
-        return `<div class="opp ${isTurn?'turn':''} ${p.alive?'':'dead'}">
+        return `<div data-player-id="${this.escapeHtml(p.id)}" class="opp ${isTurn?'turn':''} ${p.alive?'':'dead'}">
           <div class="opp-av">${p.isBot ? '🤖' : renderAvatarHTML(av, 38)}</div>
           <div class="opp-name">${this.escapeHtml(p.name)}</div>
           <div class="opp-cnt">${p.hand.length} lá</div>
@@ -1423,10 +1410,10 @@ const UI = {
     box.scrollTop = box.scrollHeight;
   },
   toast(msg){
-    const el = document.createElement('div');
-    el.className = 'toast';
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2500);
+    let el=document.getElementById('appToast');
+    if(!el){el=document.createElement('div');el.id='appToast';document.body.appendChild(el);}
+    el.className='toast'; el.textContent=String(msg); el.classList.remove('toast-hide'); void el.offsetWidth;
+    clearTimeout(this._toastTimer); clearTimeout(this._toastRemoveTimer);
+    this._toastTimer=setTimeout(()=>{el.classList.add('toast-hide');this._toastRemoveTimer=setTimeout(()=>el.remove(),300);},2300);
   }
 };
