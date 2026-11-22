@@ -21,6 +21,7 @@ const UI = {
     if(cur) this.enterMenu(cur);
     else this.showScreen('sc-auth');
     this._pollTimer = setInterval(() => this._pollSocial(), 2500);
+    this._setupModalDismiss();
     this._setupExitGuards();
   },
 
@@ -149,14 +150,37 @@ const UI = {
   },
 
   openModal(id, html){
+    const overlay = document.getElementById('overlayModal');
+    const content = document.getElementById('modalContent');
+    if(!overlay || !content) return;
     this.currentModal = id;
-    document.getElementById('modalContent').innerHTML =
-      `<button class="modal-close" onclick="UI.closeModal()" aria-label="Đóng">×</button>${html}`;
-    document.getElementById('overlayModal').classList.add('on');
+    content.innerHTML =
+      `<button class="modal-close" type="button" onclick="UI.closeModal()" aria-label="Đóng">×</button>${html}`;
+    overlay.classList.add('on');
+    overlay.setAttribute('aria-hidden', 'false');
   },
   closeModal(){
-    document.getElementById('overlayModal').classList.remove('on');
+    const overlay = document.getElementById('overlayModal');
+    if(overlay){
+      overlay.classList.remove('on');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
     this.currentModal = null;
+  },
+  _setupModalDismiss(){
+    const overlay = document.getElementById('overlayModal');
+    if(overlay && !overlay.dataset.dismissBound){
+      overlay.dataset.dismissBound = '1';
+      overlay.addEventListener('click', e => {
+        if(e.target === overlay) this.closeModal();
+      });
+    }
+    if(!this._modalEscapeBound){
+      this._modalEscapeBound = true;
+      window.addEventListener('keydown', e => {
+        if(e.key === 'Escape' && this.currentModal) this.closeModal();
+      });
+    }
   },
 
   /* ===== PROFILE ===== */
