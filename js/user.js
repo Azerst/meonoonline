@@ -31,13 +31,20 @@ const Storage = {
     SOCIAL:  'EKGAME_SOCIAL_STABLE_V1',
     GUEST:   'EKGAME_GUEST_STABLE_V1'
   },
+  _memory: {},
   read(key, def){
-    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; }
+    const parse = v => { try { return v === null || v === undefined ? undefined : JSON.parse(v); } catch(e){ return undefined; } };
+    try { const v = parse(window.localStorage.getItem(key)); if(v !== undefined) return v; } catch(e){}
+    try { const v = parse(window.sessionStorage.getItem(key)); if(v !== undefined) return v; } catch(e){}
+    return Object.prototype.hasOwnProperty.call(this._memory,key) ? this._memory[key] : def;
   },
   write(key, val){
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){ console.error('[Storage]',e); }
+    const json = JSON.stringify(val); this._memory[key] = val;
+    try { window.localStorage.setItem(key,json); return true; } catch(e){}
+    try { window.sessionStorage.setItem(key,json); return true; } catch(e){}
+    console.warn('[Storage] Browser storage unavailable; using temporary memory.'); return false;
   },
-  remove(key){ try { localStorage.removeItem(key); } catch(e){} },
+  remove(key){ delete this._memory[key]; try { window.localStorage.removeItem(key); } catch(e){} try { window.sessionStorage.removeItem(key); } catch(e){} },
 
   users(){ return this.read(this.KEYS.USERS, {}); },
   saveUsers(u){ this.write(this.KEYS.USERS, u); },
