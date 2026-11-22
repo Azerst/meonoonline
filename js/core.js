@@ -11,7 +11,6 @@ const Crypto = {
         return 'sha256_' + Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
       } catch(e) {}
     }
-    // Fallback for file:// (không có secure context)
     let h = 5381;
     for (let i=0;i<text.length;i++) h = ((h<<5)+h) ^ text.charCodeAt(i);
     return 'fb_' + (h >>> 0).toString(16);
@@ -19,9 +18,8 @@ const Crypto = {
   salt(username){ return 'EK::' + String(username).toLowerCase(); }
 };
 
-/* ==================== STORAGE (ổn định qua mọi version) ==================== */
+/* ==================== STORAGE ==================== */
 const Storage = {
-  // KHOÁ CỐ ĐỊNH — KHÔNG ĐỔI KHI UPDATE APP
   KEYS: {
     USERS:   'EKGAME_USERS_STABLE_V1',
     SESSION: 'EKGAME_SESSION_STABLE_V1',
@@ -55,11 +53,20 @@ const Auth = {
     const users = Storage.users();
     let dirty = false;
 
+    // ✅ Migration: gán ID cho user cũ chưa có
+    for(const uname of Object.keys(users)){
+      if(!users[uname].id){
+        users[uname].id = generateUserId(users);
+        dirty = true;
+      }
+    }
+
     // Seed admin
     if(!users[this.ADMIN.username] || !users[this.ADMIN.username].password){
       const salt = Crypto.salt(this.ADMIN.username);
       const hashed = await Crypto.hash(this.ADMIN.password, salt);
       users[this.ADMIN.username] = {
+        id: users[this.ADMIN.username]?.id || generateUserId(users),
         password: hashed, salt,
         isAdmin: true, isManager: false, banned: false,
         avatar: '👑', games: 0, wins: 0, createdAt: Date.now()
@@ -71,6 +78,7 @@ const Auth = {
       const salt = Crypto.salt(this.MANAGER.username);
       const hashed = await Crypto.hash(this.MANAGER.password, salt);
       users[this.MANAGER.username] = {
+        id: users[this.MANAGER.username]?.id || generateUserId(users),
         password: hashed, salt,
         isAdmin: false, isManager: true, banned: false,
         avatar: '🎭', games: 0, wins: 0, createdAt: Date.now()
@@ -78,6 +86,65 @@ const Auth = {
       dirty = true;
     }
     if(dirty) Storage.saveUsers(users);
+
+    // ✅ Migration: chuyển social cũ (username) → mới (ID)
+    this._migrateSocial();
+  },
+
+  _migrateSocial(){
+    const s = Storage.social();
+    let dirty = false;
+    const users = Storage.users();
+
+    // Tìm ID từ tên
+    const findId = name => {
+      if(!name) return null;
+      const t = String(name).trim().toLowerCase();
+      for(const k of Object.keys(users)){
+        if(k.toLowerCase() === t) return users[k].id;
+      }
+      return null;
+    };
+
+    // Requests
+    if(Array.isArray(s.requests)){
+      s.requests = s.requests.map(r => {
+        if(r.fromId && r.toId) return r;
+        const fromId = findId(r.from);
+        const toId = findId(r.to);
+        if(fromId && toId){ dirty = true; return {fromId, toId, status:r.status, ts:r.ts}; }
+        return null;
+      }).filter(Boolean);
+    }
+
+    // Friends: {username: [username]} → {id: [id]}
+    if(s.friends){
+      const nf = {};
+      for(const [key, list] of Object.entries(s.friends)){
+        const keyId = findId(key) || (key.startsWith('EK-') ? key : null);
+        if(!keyId) continue;
+        if(!nf[keyId]) nf[keyId] = [];
+        for(const item of (list || [])){
+          const itemId = findId(item) || (item.startsWith('EK-') ? item : null);
+          if(itemId && !nf[keyId].includes(itemId)) nf[keyId].push(itemId);
+        }
+        if(keyId !== key) dirty = true;
+      }
+      s.friends = nf;
+    }
+
+    // Invites
+    if(Array.isArray(s.invites)){
+      s.invites = s.invites.map(i => {
+        if(i.fromId && i.toId) return i;
+        const fromId = findId(i.from);
+        const toId = findId(i.to);
+        if(fromId && toId){ dirty = true; return {fromId, toId, roomCode:i.roomCode, status:i.status, ts:i.ts}; }
+        return null;
+      }).filter(Boolean);
+    }
+
+    if(dirty) Storage.saveSocial(s);
   },
 
   findUser(name){
@@ -90,6 +157,23 @@ const Auth = {
     return null;
   },
 
+  // ✅ Lấy ID từ username
+  getUserIdByName(name){
+    const real = this.findUser(name);
+    if(!real) return null;
+    return Storage.users()[real]?.id || null;
+  },
+
+  // ✅ Lấy user từ ID
+  getUserById(id){
+    if(!id) return null;
+    const users = Storage.users();
+    for(const [uname, u] of Object.entries(users)){
+      if(u.id === id) return { username: uname, ...u };
+    }
+    return null;
+  },
+
   async register(u, p){
     u = String(u||'').trim();
     if(u.length < 3) return {ok:false, msg:'Tên ≥ 3 ký tự'};
@@ -98,7 +182,12 @@ const Auth = {
     const users = Storage.users();
     const salt = Crypto.salt(u);
     const hashed = await Crypto.hash(p, salt);
-    users[u] = { password: hashed, salt, isAdmin:false, isManager:false, banned:false, avatar:'🐱', games:0, wins:0, createdAt: Date.now() };
+    users[u] = {
+      id: generateUserId(users),
+      password: hashed, salt,
+      isAdmin:false, isManager:false, banned:false,
+      avatar:'💎', games:0, wins:0, createdAt: Date.now()
+    };
     Storage.saveUsers(users);
     Storage.saveSession(u);
     return {ok:true};
@@ -124,18 +213,21 @@ const Auth = {
     const users = Storage.users();
     const acc = users[u];
     if(!acc) return null;
-    return { username:u, avatar:acc.avatar||'🐱', games:acc.games||0, wins:acc.wins||0,
-             isAdmin:!!acc.isAdmin, isManager:!!acc.isManager, banned:!!acc.banned,
-             isGuest:false, createdAt: acc.createdAt };
+    return {
+      username:u, id:acc.id, avatar:acc.avatar||'💎',
+      games:acc.games||0, wins:acc.wins||0,
+      isAdmin:!!acc.isAdmin, isManager:!!acc.isManager, banned:!!acc.banned,
+      isGuest:false, createdAt: acc.createdAt
+    };
   },
 
   guest(){
     let g = Storage.guest();
     if(!g){
-      g = { name:'Khách_' + Math.floor(Math.random()*9000+1000), avatar:'🎭' };
+      g = { name:'Khách_' + Math.floor(Math.random()*9000+1000), avatar:'👾' };
       Storage.saveGuest(g);
     }
-    return { username:g.name, avatar:g.avatar, games:0, wins:0, isAdmin:false, isManager:false, isGuest:true };
+    return { username:g.name, id:'GUEST', avatar:g.avatar, games:0, wins:0, isAdmin:false, isManager:false, isGuest:true };
   },
 
   updateStats(won){
@@ -159,76 +251,71 @@ const Auth = {
 
   logout(){ Storage.saveSession(null); },
 
-  // Admin / Manager ops
   setAvatarAs(username, avatar){ const u = Storage.users(); if(u[username]) { u[username].avatar = avatar; Storage.saveUsers(u); } },
   deleteUser(username){ const u = Storage.users(); if(u[username]){ delete u[username]; Storage.saveUsers(u); return true; } return false; },
   toggleAdmin(username){ const u = Storage.users(); if(u[username]){ u[username].isAdmin = !u[username].isAdmin; Storage.saveUsers(u); } },
   toggleManager(username){ const u = Storage.users(); if(u[username]){ u[username].isManager = !u[username].isManager; Storage.saveUsers(u); } },
   toggleBan(username){ const u = Storage.users(); if(u[username]){ u[username].banned = !u[username].banned; Storage.saveUsers(u); } },
   resetUserStats(username){ const u = Storage.users(); if(u[username]){ u[username].games = 0; u[username].wins = 0; Storage.saveUsers(u); } },
-  resetAllStats(){ const u = Storage.users(); for(const k of Object.keys(u)){ u[k].games = 0; u[k].wins = 0; } Storage.saveUsers(u); },
-  changePassword(username, newPassword){
-    return new Promise(async resolve => {
-      const u = Storage.users();
-      if(!u[username]) return resolve(false);
-      const salt = u[username].salt || Crypto.salt(username);
-      u[username].password = await Crypto.hash(newPassword, salt);
-      u[username].salt = salt;
-      Storage.saveUsers(u);
-      resolve(true);
-    });
-  }
+  resetAllStats(){ const u = Storage.users(); for(const k of Object.keys(u)){ u[k].games = 0; u[k].wins = 0; } Storage.saveUsers(u); }
 };
 
-/* ==================== SOCIAL ==================== */
+/* ==================== SOCIAL (BY ID) ==================== */
 const Social = {
   get(){ return Storage.social(); },
   save(s){ Storage.saveSocial(s); },
 
-  sendRequest(from, to){
-    if(!to) return {ok:false, msg:'Nhập tên'};
-    const real = Auth.findUser(to);
-    if(!real) return {ok:false, msg:'Không tìm thấy user'};
-    if(from === real) return {ok:false, msg:'Không thể tự kết bạn'};
+  // ✅ Kết bạn bằng ID
+  sendRequest(fromId, toId){
+    if(!toId) return {ok:false, msg:'Nhập ID người cần kết bạn'};
+    const target = Auth.getUserById(toId);
+    if(!target) return {ok:false, msg:'Không tìm thấy ID này'};
+    if(fromId === toId) return {ok:false, msg:'Không thể tự kết bạn'};
     const s = this.get();
-    if((s.friends[from]||[]).includes(real)) return {ok:false, msg:'Đã là bạn'};
-    if(s.requests.some(r => r.from===from && r.to===real && r.status==='pending')) return {ok:false, msg:'Đã gửi'};
-    if(s.requests.some(r => r.from===real && r.to===from && r.status==='pending')) return {ok:false, msg:'Họ đã gửi cho bạn!'};
-    s.requests.push({from, to:real, status:'pending', ts:Date.now()});
+    if((s.friends[fromId]||[]).includes(toId)) return {ok:false, msg:'Đã là bạn bè'};
+    if(s.requests.some(r => r.fromId===fromId && r.toId===toId && r.status==='pending')) return {ok:false, msg:'Đã gửi lời mời rồi'};
+    if(s.requests.some(r => r.fromId===toId && r.toId===fromId && r.status==='pending')) return {ok:false, msg:'Người này đã gửi lời mời cho bạn'};
+    s.requests.push({fromId, toId, status:'pending', ts:Date.now()});
     this.save(s);
-    return {ok:true, msg:'Đã gửi tới ' + real};
+    return {ok:true, msg:`Đã gửi tới ${target.username}`, target};
   },
-  incoming(username){ return this.get().requests.filter(r => r.to===username && r.status==='pending'); },
-  outgoing(username){ return this.get().requests.filter(r => r.from===username && r.status==='pending'); },
+
+  incoming(userId){ return this.get().requests.filter(r => r.toId===userId && r.status==='pending'); },
+  outgoing(userId){ return this.get().requests.filter(r => r.fromId===userId && r.status==='pending'); },
+
   accept(ts){
     const s = this.get();
     const req = s.requests.find(r => r.ts===ts);
     if(!req) return;
     req.status = 'accepted';
-    if(!s.friends[req.from]) s.friends[req.from] = [];
-    if(!s.friends[req.to]) s.friends[req.to] = [];
-    if(!s.friends[req.from].includes(req.to)) s.friends[req.from].push(req.to);
-    if(!s.friends[req.to].includes(req.from)) s.friends[req.to].push(req.from);
+    if(!s.friends[req.fromId]) s.friends[req.fromId] = [];
+    if(!s.friends[req.toId]) s.friends[req.toId] = [];
+    if(!s.friends[req.fromId].includes(req.toId)) s.friends[req.fromId].push(req.toId);
+    if(!s.friends[req.toId].includes(req.fromId)) s.friends[req.toId].push(req.fromId);
     this.save(s);
   },
+
   reject(ts){
     const s = this.get();
     const req = s.requests.find(r => r.ts===ts);
-    if(req) { req.status = 'rejected'; this.save(s); }
+    if(req){ req.status = 'rejected'; this.save(s); }
   },
-  getFriends(username){ return this.get().friends[username] || []; },
-  removeFriend(a, b){
+
+  getFriends(userId){ return this.get().friends[userId] || []; },
+
+  removeFriend(aId, bId){
     const s = this.get();
-    if(s.friends[a]) s.friends[a] = s.friends[a].filter(x => x!==b);
-    if(s.friends[b]) s.friends[b] = s.friends[b].filter(x => x!==a);
+    if(s.friends[aId]) s.friends[aId] = s.friends[aId].filter(x => x!==bId);
+    if(s.friends[bId]) s.friends[bId] = s.friends[bId].filter(x => x!==aId);
     this.save(s);
   },
-  sendInvite(from, to, roomCode){
+
+  sendInvite(fromId, toId, roomCode){
     const s = this.get();
-    s.invites.push({from, to, roomCode, status:'pending', ts:Date.now()});
+    s.invites.push({fromId, toId, roomCode, status:'pending', ts:Date.now()});
     this.save(s);
   },
-  incomingInvites(username){ return this.get().invites.filter(i => i.to===username && i.status==='pending'); },
+  incomingInvites(userId){ return this.get().invites.filter(i => i.toId===userId && i.status==='pending'); },
   acceptInvite(ts){
     const s = this.get();
     const inv = s.invites.find(i => i.ts===ts);
