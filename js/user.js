@@ -223,7 +223,7 @@ const Auth = {
 
 /* ==================== SOCIAL ==================== */
 const Social = {
-  get(){ return Storage.social(); },
+  get(){ const s=Storage.social()||{}; if(!Array.isArray(s.requests))s.requests=[]; if(!s.friends||typeof s.friends!=='object')s.friends={}; if(!Array.isArray(s.invites))s.invites=[]; return s; },
   save(s){ Storage.saveSocial(s); },
   sendRequest(fromId, toId){
     fromId=String(fromId||'').trim(); toId=String(toId||'').trim();
@@ -234,15 +234,16 @@ const Social = {
     if(from===real) return {ok:false,msg:'Không thể tự kết bạn'};
     const s=this.get(); const a=String(Storage.users()[from].id), b=String(Storage.users()[real].id);
     if((s.friends[a]||[]).includes(b)) return {ok:false,msg:'Đã là bạn'};
+    s.requests=s.requests.filter(r=>!(r.from===a&&r.to===b&&r.status!=='pending'));
     if(s.requests.some(r=>r.from===a&&r.to===b&&r.status==='pending')) return {ok:false,msg:'Đã gửi lời mời'};
-    if(s.requests.some(r=>r.from===b&&r.to===a&&r.status==='pending')) return {ok:false,msg:'Người này đã gửi lời mời cho bạn'};
+    if(s.requests.some(r=>r.from===b&&r.to===a&&r.status==='pending')) return {ok:false,msg:'Người này đã gửi lời mời cho bạn — kiểm tra tab Đến'};
     s.requests.push({from:a,to:b,status:'pending',ts:Date.now()+Math.random()}); this.save(s);
     return {ok:true,msg:'Đã gửi lời mời kết bạn'};
   },
   incoming(id){ return this.get().requests.filter(r=>r.to===id&&r.status==='pending'); },
   outgoing(id){ return this.get().requests.filter(r=>r.from===id&&r.status==='pending'); },
-  accept(ts){ const s=this.get(),r=s.requests.find(x=>x.ts===ts&&x.status==='pending'); if(!r)return false; r.status='accepted'; s.friends[r.from] ||= []; s.friends[r.to] ||= []; if(!s.friends[r.from].includes(r.to))s.friends[r.from].push(r.to); if(!s.friends[r.to].includes(r.from))s.friends[r.to].push(r.from); this.save(s); return true; },
-  reject(ts){ const s=this.get(),r=s.requests.find(x=>x.ts===ts&&x.status==='pending'); if(r){r.status='rejected';this.save(s);} },
+  accept(ts){ const s=this.get(),r=s.requests.find(x=>Number(x.ts)===Number(ts)&&x.status==='pending'); if(!r || !Auth.findUserById(r.from) || !Auth.findUserById(r.to))return false; r.status='accepted'; s.friends[r.from] ||= []; s.friends[r.to] ||= []; if(!s.friends[r.from].includes(r.to))s.friends[r.from].push(r.to); if(!s.friends[r.to].includes(r.from))s.friends[r.to].push(r.from); this.save(s); return true; },
+  reject(ts){ const s=this.get(),r=s.requests.find(x=>Number(x.ts)===Number(ts)&&x.status==='pending'); if(r){r.status='rejected';this.save(s);} },
   getFriends(id){ return this.get().friends[id] || []; },
   removeFriend(a,b){ const s=this.get(); if(s.friends[a])s.friends[a]=s.friends[a].filter(x=>x!==b); if(s.friends[b])s.friends[b]=s.friends[b].filter(x=>x!==a); this.save(s); },
   sendInvite(from,to,roomCode){ const s=this.get(); s.invites.push({from,to,roomCode,status:'pending',ts:Date.now()+Math.random()}); this.save(s); },
